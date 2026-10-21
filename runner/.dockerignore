@@ -1,0 +1,6 @@
+# Секреты и локь-состояние не должны попадать в образ
+.env
+agent/auth.json
+agent/models.resolved.json
+node_modules
+chat/server-dbg*.mjs

@@ -1,0 +1,29 @@
+# Подключение чата Баюна к вашему nginx.
+# Скопируйте location в свой server { } (сайт «Хранитель Сказки») и перечитайте конфиг:
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# Контейнер поднимается docker compose (см. docker-compose.yml в корне репозитория)
+# и подключён к внешней сети ai-net — nginx-контейнер в этой же сети ходит на чат
+# по имени сервиса. Если nginx хостовой, раскомментируйте ports в compose
+# и замените proxy_pass на http://127.0.0.1:8130/.
+
+# Чат Баюна: страница UI и SSE-API.
+# proxy_pass с завершающим «/» срезает префикс /bayun/,
+# поэтому относительный fetch('api/chat') из UI попадает в /api/chat бэкенда.
+location /bayun/ {
+    proxy_pass http://bayun:8130/;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    # SSE: без буферизации, иначе ответы Баюна дойдут только в конце
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 300s;
+}
+
+# Статика сайта (пример раскладки; пути замените на свои):
+# location /        { root /var/www/park-skazka/landing; index index.html; }
+# location /game/   { alias /var/www/park-skazka/game/;   index index.html; }
+# location /defense/{ alias /var/www/park-skazka/defense/; index index.html; }
