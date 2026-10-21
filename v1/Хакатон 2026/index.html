@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Хранитель Сказки</title>
+<meta name="description" content="Игра-квест по парку «Сказка»: статусы аттракционов и причины остановок, рейтинг любимых, голосование за ремонт и конструктор новых аттракционов.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="#map"><span class="brand-mark">✦</span><span class="brand-t">Хранитель Сказки</span></a>
+  <span class="demo-chip" title="Статусы, рейтинг и голоса смоделированы. Погода — настоящая.">демо-данные</span>
+  <button class="lvl-chip" id="lvlChip" data-go="quest" title="Уровень и награды">🥾 Путник</button>
+  <button class="coins-pill" id="coinsPill" data-go="quest" title="Монеты">💰 <b id="coinsTop">0</b></button>
+</header>
+
+<main id="main">
+
+<!-- ============ КАРТА ============ -->
+<section class="screen" id="s-map" data-screen="map">
+  <div class="hero" id="heroBox">
+    <div class="scene" id="scene">
+      <div class="scene-photo" id="scenePhoto"></div>
+      <div class="scene-sky" id="sceneSky"></div>
+      <div class="sun" id="sceneSun"></div>
+      <div class="clouds" id="sceneClouds"><i></i><i></i><i></i><i></i></div>
+      <canvas id="sceneFx"></canvas>
+      <div class="scene-fade"></div>
+    </div>
+    <div class="hero-in">
+      <div class="hero-text">
+        <p class="eyebrow" id="heroWhen">—</p>
+        <h1 id="heroTitle">Загружаю…</h1>
+        <p class="hero-sub" id="heroSub"></p>
+        <div class="chips" id="heroChips"></div>
+        <button class="btn small ghost when-link" data-go="when">📅 Когда идти — прогноз на 60 дней</button>
+        <div class="scrub">
+          <label for="hourSlider">Время визита <b id="hourLabel">12:00</b></label>
+          <input type="range" id="hourSlider" min="10" max="21" step="1" value="12">
+        </div>
+      </div>
+      <aside class="guide">
+        <div class="bubble" id="bubble">Мяу! Я Кот Баюн. Пойдём искать сказку?</div>
+        <svg class="cat" viewBox="0 0 200 210" role="img" aria-label="Кот Баюн">
+          <ellipse cx="100" cy="196" rx="62" ry="8" fill="rgba(0,0,0,.3)"/>
+          <path d="M52 150 Q40 186 76 190 L124 190 Q160 186 148 150 Q130 120 100 120 Q70 120 52 150Z" fill="#6c4bd1"/>
+          <path d="M84 126 L100 150 L116 126 Z" fill="#f5b83d"/>
+          <circle cx="100" cy="84" r="52" fill="#f2a65a"/>
+          <path d="M54 62 L50 22 L84 46Z" fill="#f2a65a"/><path d="M146 62 L150 22 L116 46Z" fill="#f2a65a"/>
+          <path d="M58 56 L56 32 L76 46Z" fill="#ffd1b0"/><path d="M142 56 L144 32 L124 46Z" fill="#ffd1b0"/>
+          <path d="M70 52 Q100 36 130 52 L126 40 Q100 20 74 40Z" fill="#6c4bd1"/>
+          <path d="M86 24 L100 -2 L114 24Z" fill="#6c4bd1"/><circle cx="100" cy="-2" r="6" fill="#f5b83d"/>
+          <g class="eyes"><ellipse cx="80" cy="84" rx="9" ry="11" fill="#fff"/><ellipse cx="120" cy="84" rx="9" ry="11" fill="#fff"/>
+          <circle cx="82" cy="86" r="5" fill="#1d1b4b"/><circle cx="118" cy="86" r="5" fill="#1d1b4b"/></g>
+          <path d="M94 100 L106 100 L100 107Z" fill="#e0556b"/>
+          <path d="M100 107 Q100 116 90 116 M100 107 Q100 116 110 116" stroke="#7a3b1e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <g stroke="#7a3b1e" stroke-width="2" stroke-linecap="round"><path d="M70 102 L40 98"/><path d="M70 108 L42 112"/><path d="M130 102 L160 98"/><path d="M130 108 L158 112"/></g>
+          <path d="M148 168 Q190 160 184 120" stroke="#f2a65a" stroke-width="14" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="ask" id="ask">
+          <button data-q="today">Что сегодня?</button>
+          <button data-q="closed">Что не работает?</button>
+          <button data-q="kids">С малышом</button>
+          <button data-q="thrill">Адреналин</button>
+          <button data-q="quest">Мой квест</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="status-strip" id="statusStrip"></div>
+
+    <div class="sec-head">
+      <h2>Карта парка</h2>
+      <p>Нажмите на точку — увидите, работает ли аттракцион, почему стоит и когда вернётся. Схема условная, не в масштабе.</p>
+    </div>
+    <div class="map-legend" id="mapLegend"></div>
+    <div class="fmap-box"><svg id="fmap" viewBox="0 0 1000 720" role="img" aria-label="Схема парка с аттракционами"></svg></div>
+
+    <div class="sec-head" id="roadHead">
+      <h2>Как добраться</h2>
+      <p>Парк «Сказка», ул. Крылатская, 18. Отметки и монеты в парке работают по геолокации (радиус <span id="radiusLbl">700</span> м).</p>
+    </div>
+    <div class="road">
+      <div id="leaflet" class="leaflet-box" aria-label="Карта"></div>
+      <div class="panel geo">
+        <p id="geoStatus" class="geo-status">Положение не определено.</p>
+        <button class="btn" id="geoBtn">📍 Где я?</button>
+        <div class="geo-actions">
+          <a class="btn ghost" id="gis" target="_blank" rel="noopener">2ГИС</a>
+          <a class="btn ghost" id="gisRoute" target="_blank" rel="noopener">Маршрут</a>
+        </div>
+        <ul class="how">
+          <li><b>Метро:</b> «Крылатское» + бесплатный автобус парка.</li>
+          <li><b>Авто:</b> парковка платная (по отзывам ~300 ₽).</li>
+        </ul>
+        <label class="switch"><input type="checkbox" id="demoMode"> <span>Демо-режим: можно отмечаться без геолокации, время берётся с ползунка</span></label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ИГРА С ИИ-ВЕДУЩИМ ============ -->
+<section class="screen" id="s-game" data-screen="game" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Игра: Хранитель Сказки</h2>
+      <p>Онлайн-стратегия на 5 ходов. Ведущий — Кот Баюн: рассказывает, что происходит в парке, предлагает 2–3 решения и описывает последствия. Погода в игре настоящая.</p>
+    </div>
+    <div id="gameRoot" class="game-root"></div>
+  </div>
+</section>
+
+<!-- ============ КВЕСТ ============ -->
+<section class="screen" id="s-quest" data-screen="quest" hidden>
+  <div class="wrap">
+    <div class="level-card" id="levelCard"></div>
+    <div class="sec-head">
+      <h2>Сюжетный квест</h2>
+      <p>Проходите главы вместе с Котом Баюном: часть заданий — до визита (дома), часть — в парке. Если аттракцион на ремонте, задание заменится другим.</p>
+    </div>
+    <div class="chapters" id="chapters"></div>
+
+    <div class="sec-head"><h2>Награды</h2><p>Демонстрация механики — условия и партнёров определяет парк.</p></div>
+    <div class="rewards" id="rewards"></div>
+    <button class="btn small ghost danger" id="resetBtn">Сбросить прогресс</button>
+  </div>
+</section>
+
+<!-- ============ АТТРАКЦИОНЫ ============ -->
+<section class="screen" id="s-rides" data-screen="rides" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Что работает и что нет</h2>
+      <p>Статус, причина остановки и срок возврата — до того, как вы пришли. «Ветер» и «гроза» считаются по настоящему прогнозу, ремонты — демо.</p>
+    </div>
+    <div class="filters">
+      <label class="field">Для кого<select id="catWho"></select></label>
+      <label class="field" id="catHWrap" style="display:none">Рост, см<input id="catH" type="number" min="0" max="220" value="120" inputmode="numeric"></label>
+      <label class="field">Поиск<input id="catQ" type="search" placeholder="Бумеранг, дино…"></label>
+      <label class="field">Сортировка<select id="catSort">
+        <option value="hit">Сначала хиты</option><option value="love">Любимые</option><option value="wait">Меньше ожидание</option><option value="height">Для малышей</option><option value="name">По алфавиту</option></select></label>
+    </div>
+    <div class="hchips"><span class="fineprint">Рост:</span>
+      <button type="button" data-h="80">80</button><button type="button" data-h="100">100</button><button type="button" data-h="110">110</button><button type="button" data-h="120">120</button><button type="button" data-h="130">130</button><button type="button" data-h="140">140</button><button type="button" data-h="160">160+</button>
+    </div>
+    <div class="tabs" id="catTypes">
+      <button class="on" data-t="all">Все</button><button data-t="extreme">🎢 Экстрим</button><button data-t="family">🎡 Семейные</button><button data-t="kids">🎠 Детям</button><button data-t="interactive">👻 Интерактив</button><button data-t="zone">🦖 Зоны</button>
+    </div>
+    <div class="tabs st" id="catStatus">
+      <button class="on" data-s="all">Любой статус</button><button data-s="ok">🟢 Работает</button><button data-s="warn">🟡 Ветер/гроза</button><button data-s="bad">🔴 Ремонт</button>
+    </div>
+    <label class="switch"><input type="checkbox" id="catOnly" checked> <span>Только подходящие по росту</span></label>
+    <p class="fineprint" id="catCount"></p>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+</section>
+
+<!-- ============ ТОП ============ -->
+<section class="screen" id="s-top" data-screen="top" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Что любят больше всего</h2>
+      <p>Рейтинг складывается из игр, отметок и сердечек гостей. Так парк видит, какие аттракционы по-настоящему нравятся. <span class="tag">демо: часть голосов смоделирована</span></p>
+    </div>
+    <div class="top-grid">
+      <div class="panel"><h3>🏆 Любимые аттракционы</h3><ol class="board" id="board"></ol></div>
+      <div class="panel"><h3>🛠 Починить! <small>аттракционы на ремонте</small></h3>
+        <p class="fineprint">Голос — это сигнал парку: что вернуть в первую очередь. Один бесплатный голос в день за аттракцион; ещё +5 голосов — за 20 💰.</p>
+        <div id="repairList" class="repair-list"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ СТРОЙКА ============ -->
+<section class="screen" id="s-build" data-screen="build" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Стройка: придумай аттракцион</h2>
+      <p>Соберите аттракцион из деталей, посмотрите модель и оценку интереса по похожим аттракционам. Лучшие идеи получают голоса и попадают в рейтинг «Хотим построить».</p>
+    </div>
+    <div class="build-grid">
+      <div class="panel builder">
+        <div class="bpreview"><svg id="bsvg" viewBox="0 0 320 230" role="img" aria-label="Модель аттракциона"></svg></div>
+        <h3 id="bname">Новый аттракцион</h3>
+        <div class="bstats" id="bstats"></div>
+      </div>
+      <div class="panel bctl">
+        <label class="field">Тип
+          <select id="bType">
+            <option value="coaster">🎢 Американские горки</option><option value="wheel">🎡 Колесо</option><option value="tower">🗼 Башня падения</option>
+            <option value="carousel">🎠 Карусель</option><option value="ship">🚢 Качели-корабль</option><option value="dark">👻 Дом / лабиринт</option></select></label>
+        <label class="field">Тема
+          <select id="bTheme"><option value="dino">🦖 Динозавры</option><option value="space">🚀 Космос</option><option value="pirate">⚓ Пираты</option><option value="fairy">🏰 Русские сказки</option><option value="ocean">🐙 Подводный мир</option><option value="winter">❄️ Зимняя сказка</option></select></label>
+        <label class="field">Сила ощущений: <b id="bThrillV">3</b>
+          <input type="range" id="bThrill" min="1" max="5" value="3"></label>
+        <label class="field">Минимальный рост: <b id="bHeightV">110</b> см
+          <input type="range" id="bHeight" min="0" max="140" step="5" value="110"></label>
+        <div class="mods" id="bMods"></div>
+        <label class="field">Название (по желанию)<input id="bTitle" maxlength="34" placeholder="Придумается само"></label>
+        <button class="btn big" id="bSubmit">Предложить парку (+30 💰)</button>
+      </div>
+    </div>
+    <div class="sec-head"><h2>Хотим построить</h2><p>Идеи игроков — голосуйте за те, которые хотите увидеть в парке.</p></div>
+    <div class="ideas" id="ideas"></div>
+  </div>
+</section>
+
+<!-- ============ КОГДА ============ -->
+<section class="screen" id="s-when" data-screen="when" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Когда идти</h2>
+      <p>До 16 дней — настоящий почасовой прогноз. Дальше, до 60 дней, — климат за 11 лет («как обычно бывает»). Цвет — ожидаемая загрузка днём.</p>
+    </div>
+    <div class="legend"><span class="lg lg-1">тихо</span><span class="lg lg-2">комфортно</span><span class="lg lg-3">людно</span><span class="lg lg-4">очереди</span></div>
+    <div class="calendar" id="calendar"></div>
+    <div class="panel day-detail" id="dayDetail">
+      <div class="dd-head"><h3 id="ddTitle">—</h3><span class="tag" id="ddSrc"></span></div>
+      <p id="ddBest" class="dd-best"></p>
+      <div class="hours" id="hours"></div>
+      <p class="fineprint">Загрузка — оценка модели (день недели, время, погода, праздники, ваши отметки). Живых данных парка пока нет.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ОПЕРАТОР ============ -->
+<section class="screen" id="s-op" data-screen="op" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Режим оператора парка</h2>
+      <p>Что видит парк: какие аттракционы любят, что просят починить и что хотят построить. Здесь же меняются статусы и причины — гости получают уведомление. В боевой версии этот экран закрыт авторизацией.</p>
+    </div>
+    <div class="op-kpis" id="opKpis"></div>
+    <div class="top-grid">
+      <div class="panel"><h3>Спрос на ремонт</h3><div id="opRepair"></div></div>
+      <div class="panel"><h3>Идеи игроков</h3><div id="opIdeas"></div></div>
+    </div>
+    <div class="panel"><h3>Статусы аттракционов</h3>
+      <div class="op-table" id="opTable"></div></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <p>Прототип для хакатона. Фото, названия, цены «от» и ограничения по росту — с официального сайта <a href="https://parkskazka.com/" target="_blank" rel="noopener">parkskazka.com</a>. Погода — Open-Meteo. Статусы ремонтов, рейтинг, голоса и очереди — смоделированы. <a href="#op" id="opLink">Режим оператора</a> · <a href="landing/index.html">презентация проекта</a> · <a href="v1/index.html">прежняя версия</a></p>
+</footer>
+
+<nav class="tabbar" id="tabbar">
+  <a href="#map" data-go="map"><i>🗺️</i><span>Карта</span></a>
+  <a href="#game" data-go="game"><i>🎮</i><span>Игра</span></a>
+  <a href="#quest" data-go="quest"><i>📜</i><span>Квест</span></a>
+  <a href="#rides" data-go="rides"><i>🎢</i><span>Статус</span></a>
+  <a href="#top" data-go="top"><i>🏆</i><span>Топ</span></a>
+  <a href="#build" data-go="build"><i>🛠️</i><span>Стройка</span></a>
+</nav>
+
+<!-- карточка аттракциона -->
+<div class="sheet-bg" id="sheetBg" hidden></div>
+<aside class="sheet" id="sheet" hidden aria-live="polite"></aside>
+<div class="modal-bg" id="modalBg" hidden><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="data.js"></script>
+<script src="core.js"></script>
+<script src="scene.js"></script>
+<script src="world.js"></script>
+<script src="ui.js"></script>
+<script src="screens.js"></script>
+<script src="quest.js"></script>
+<script src="build.js"></script>
+<script src="host.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

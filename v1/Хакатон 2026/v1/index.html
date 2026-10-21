@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сказка: когда идти и что делать</title>
+<meta name="description" content="Погода по часам, загрузка парка «Сказка», маршрут для семьи, карта и квесты с бонусами. Проводник — Кот Баюн.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="#hero"><span class="brand-mark">✦</span> Сказка · проводник</a>
+  <nav>
+    <a href="#when">Когда идти</a>
+    <a href="#route">Маршрут</a>
+    <a href="#catalog">Каталог</a>
+    <a href="#map">Карта</a>
+    <a href="#quest">Квесты</a>
+  </nav>
+  <button class="coins-pill" id="coinsPill" title="Ваши сказочные монеты и уровень">💰 <b id="coinsTop">0</b></button>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="hero">
+  <div class="scene" id="scene">
+    <div class="scene-photo" id="scenePhoto"></div>
+    <div class="scene-sky" id="sceneSky"></div>
+    <div class="sun" id="sceneSun"></div>
+    <div class="clouds" id="sceneClouds"><i></i><i></i><i></i><i></i></div>
+    <canvas id="sceneFx"></canvas>
+    <div class="scene-fade"></div>
+  </div>
+
+  <div class="hero-inner">
+    <div class="hero-main">
+      <p class="eyebrow" id="heroWhen">—</p>
+      <h1 id="heroTitle">Загружаю погоду…</h1>
+      <p class="hero-sub" id="heroSub"></p>
+
+      <div class="chips" id="heroChips"></div>
+
+      <div class="scrub">
+        <label for="hourSlider">Время визита: <b id="hourLabel">12:00</b></label>
+        <input type="range" id="hourSlider" min="10" max="21" step="1" value="12">
+        <div class="scrub-ticks"><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20</span><span>22</span></div>
+      </div>
+    </div>
+
+    <aside class="guide" id="guide">
+      <div class="bubble" id="bubble">Мяу! Я Кот Баюн. Расскажу, когда идти в «Сказку».</div>
+      <svg class="cat" viewBox="0 0 200 210" role="img" aria-label="Кот Баюн — проводник по парку">
+        <ellipse cx="100" cy="196" rx="62" ry="8" fill="rgba(0,0,0,.25)"/>
+        <path d="M52 150 Q40 186 76 190 L124 190 Q160 186 148 150 Q130 120 100 120 Q70 120 52 150Z" fill="#6c4bd1"/>
+        <path d="M84 126 L100 150 L116 126 Z" fill="#f5b83d"/>
+        <circle cx="100" cy="84" r="52" fill="#f2a65a"/>
+        <path d="M54 62 L50 22 L84 46Z" fill="#f2a65a"/><path d="M146 62 L150 22 L116 46Z" fill="#f2a65a"/>
+        <path d="M58 56 L56 32 L76 46Z" fill="#ffd1b0"/><path d="M142 56 L144 32 L124 46Z" fill="#ffd1b0"/>
+        <path d="M70 52 Q100 36 130 52 L126 40 Q100 20 74 40Z" fill="#6c4bd1"/>
+        <path d="M86 24 L100 -2 L114 24Z" fill="#6c4bd1"/><circle cx="100" cy="-2" r="6" fill="#f5b83d"/>
+        <g class="eyes"><ellipse cx="80" cy="84" rx="9" ry="11" fill="#fff"/><ellipse cx="120" cy="84" rx="9" ry="11" fill="#fff"/>
+        <circle class="pupil" cx="82" cy="86" r="5" fill="#1d1b4b"/><circle class="pupil" cx="118" cy="86" r="5" fill="#1d1b4b"/></g>
+        <path d="M94 100 L106 100 L100 107Z" fill="#e0556b"/>
+        <path d="M100 107 Q100 116 90 116 M100 107 Q100 116 110 116" stroke="#7a3b1e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <g stroke="#7a3b1e" stroke-width="2" stroke-linecap="round"><path d="M70 102 L40 98"/><path d="M70 108 L42 112"/><path d="M130 102 L160 98"/><path d="M130 108 L158 112"/></g>
+        <path d="M148 168 Q190 160 184 120" stroke="#f2a65a" stroke-width="14" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="ask" id="ask">
+        <button data-q="when">Когда идти?</button>
+        <button data-q="rain">А если дождь?</button>
+        <button data-q="kids">Куда с малышом?</button>
+        <button data-q="thrill">Хочу адреналин</button>
+        <button data-q="quiet">Где тише?</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<main>
+
+<!-- ================= WHEN ================= -->
+<section id="when" class="block">
+  <div class="block-head">
+    <h2>Когда идти: погода и очереди</h2>
+    <p>До 16 дней — настоящий прогноз по часам. Дальше, до 60 дней, — климатический ориентир за 11 лет наблюдений (это не прогноз, а «как обычно бывает»).</p>
+  </div>
+
+  <div class="legend">
+    <span class="lg lg-1">тихо</span><span class="lg lg-2">комфортно</span><span class="lg lg-3">людно</span><span class="lg lg-4">очереди</span>
+    <span class="lg-note">Цвет — средняя ожидаемая загрузка парка днём (11–17).</span>
+  </div>
+
+  <div class="calendar" id="calendar" aria-label="Календарь на 60 дней"></div>
+
+  <div class="day-detail" id="dayDetail">
+    <div class="dd-head">
+      <h3 id="ddTitle">—</h3>
+      <span class="tag" id="ddSrc"></span>
+    </div>
+    <p id="ddBest" class="dd-best"></p>
+    <div class="hours" id="hours"></div>
+    <p class="fineprint">Загрузка — оценка нашей модели (день недели, время, погода, праздники и ваши отметки). Живых данных турникетов у нас пока нет — когда парк подключит их, оценка станет точной.</p>
+  </div>
+</section>
+
+<!-- ================= ROUTE ================= -->
+<section id="route" class="block alt">
+  <div class="block-head">
+    <h2>Мой сказочный маршрут</h2>
+    <p>Скажите, кто идёт, — подберу аттракционы по росту и расставлю по часам так, чтобы к самым популярным попасть в «тихие» окна.</p>
+  </div>
+
+  <div class="route-layout">
+    <div class="card family">
+      <h3>Семья</h3>
+      <div id="familyList" class="family-list"></div>
+      <form id="familyForm" class="family-form">
+        <input id="fName" placeholder="Имя" maxlength="14" required>
+        <input id="fHeight" type="number" min="50" max="210" placeholder="Рост, см" required>
+        <button class="btn small">+ Добавить</button>
+      </form>
+      <label class="field">Что любите
+        <select id="fMood">
+          <option value="mix">Всего понемногу</option>
+          <option value="thrill">Адреналин</option>
+          <option value="calm">Спокойно, с малышами</option>
+          <option value="animals">Животные и динозавры</option>
+        </select>
+      </label>
+      <p class="fineprint">Учитываю самый маленький рост в группе. Ограничения взяты с сайта парка — на месте проверяют линейкой.</p>
+    </div>
+
+    <div class="route-out">
+      <div class="route-summary" id="routeSummary"></div>
+      <ol class="route-list" id="routeList"></ol>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CATALOG ================= -->
+<section id="catalog" class="block">
+  <div class="block-head">
+    <h2>Каталог аттракционов</h2>
+    <p>Все 60 позиций парка с ограничениями по росту. Выберите, для кого смотрим, — скрою то, что не подойдёт, и покажу ожидание на выбранные день и время.</p>
+  </div>
+
+  <div class="cat-bar">
+    <label class="field">Для кого
+      <select id="catWho"></select>
+    </label>
+    <label class="field" style="display:none">Рост, см
+      <input id="catH" type="number" min="0" max="220" value="120" inputmode="numeric">
+    </label>
+    <label class="field">Поиск
+      <input id="catQ" type="search" placeholder="Бумеранг, Дино, лабиринт…">
+    </label>
+    <label class="field">Сортировка
+      <select id="catSort">
+        <option value="hit">Сначала хиты</option>
+        <option value="wait">Меньше ожидание</option>
+        <option value="height">Сначала для малышей</option>
+        <option value="name">По алфавиту</option>
+      </select>
+    </label>
+    <label class="switch"><input type="checkbox" id="catOnly" checked> <span>Только подходящие по росту</span></label>
+  </div>
+  <div class="hchips" aria-label="Быстрый выбор роста">
+    <span class="fineprint" style="margin:0 4px 0 0">Рост:</span>
+    <button type="button" data-h="80">80</button><button type="button" data-h="100">100</button><button type="button" data-h="110">110</button><button type="button" data-h="120">120</button><button type="button" data-h="130">130</button><button type="button" data-h="140">140</button><button type="button" data-h="160">160+</button>
+  </div>
+  <div class="tabs" id="catTypes">
+    <button class="on" data-t="all">Все</button><button data-t="extreme">🎢 Экстрим</button><button data-t="family">🎡 Семейные</button><button data-t="kids">🎠 Детям</button><button data-t="interactive">👻 Интерактив</button><button data-t="zone">🦖 Зоны</button>
+  </div>
+  <p class="fineprint" id="catCount"></p>
+  <div class="cat-grid" id="catGrid"></div>
+  <p class="fineprint">Ограничения по росту — с сайта парка; на входе проверяют линейкой. «Может не работать» — типовые правила (гроза, сильный ветер); актуальный статус смотрите в парке.</p>
+</section>
+
+<!-- ================= MAP ================= -->
+<section id="map" class="block">
+  <div class="block-head">
+    <h2>Карта и дорога</h2>
+    <p>Парк «Сказка», ул. Крылатская, 18. Переключайте схему и спутник, смотрите расстояние от вас и стройте маршрут в 2ГИС.</p>
+  </div>
+
+  <div class="map-layout">
+    <div id="leaflet" class="leaflet-box" aria-label="Карта парка"></div>
+    <div class="card geo">
+      <h3>Где вы</h3>
+      <p id="geoStatus" class="geo-status">Положение не определено.</p>
+      <button class="btn" id="geoBtn">📍 Определить моё положение</button>
+      <div class="geo-actions">
+        <a class="btn ghost" id="gis" target="_blank" rel="noopener">Открыть в 2ГИС</a>
+        <a class="btn ghost" id="gisRoute" target="_blank" rel="noopener">Маршрут в 2ГИС</a>
+      </div>
+      <ul class="how">
+        <li><b>Метро:</b> «Крылатское», дальше бесплатный автобус парка (пешком около 35 минут).</li>
+        <li><b>Авто:</b> парковка платная (по отзывам — около 300 ₽).</li>
+        <li><b>Радиус «я в парке»:</b> <span id="radiusLbl">700</span> м от центра.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= QUEST ================= -->
+<section id="quest" class="block alt">
+  <div class="block-head">
+    <h2>Квесты, монеты и антиочередь</h2>
+    <p>Отмечайтесь на аттракционах — получайте монеты. В «тихие» часы монет больше: так проще не стоять в очереди, а парку — разгрузить пики.</p>
+  </div>
+
+  <div class="quest-layout">
+    <div class="card level" id="levelCard"></div>
+
+    <div class="card checkin">
+      <h3>Отметиться</h3>
+      <label class="field">Аттракцион
+        <select id="ciPick"></select>
+      </label>
+      <div class="ci-now" id="ciNow"></div>
+      <button class="btn big" id="ciBtn">✔ Я здесь!</button>
+      <label class="switch"><input type="checkbox" id="demoMode"> <span>Демо-режим (без геолокации, время берётся с ползунка)</span></label>
+      <div class="report">
+        <b>Сообщить очередь</b>
+        <div class="report-row">
+          <input id="repMin" type="number" min="0" max="120" placeholder="Минут">
+          <button class="btn small ghost" id="repBtn">Отправить +10 💰</button>
+        </div>
+        <p class="fineprint">Ваши данные уточняют оценку для выбранного аттракциона.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Семейные челленджи</h3>
+      <div class="challenges" id="challenges"></div>
+    </div>
+
+    <div class="card rewards">
+      <h3>Награды</h3>
+      <div id="rewards" class="reward-list"></div>
+      <p class="fineprint">Награды — демонстрация механики. Условия, партнёров и промокоды определяет парк.</p>
+      <button class="btn small ghost danger" id="resetBtn">Сбросить прогресс</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <p>Прототип для хакатона. Фото, названия, цены «от» и ограничения по росту — с официального сайта <a href="https://parkskazka.com/" target="_blank" rel="noopener">parkskazka.com</a>. Погода — Open-Meteo. Карта — OpenStreetMap и Esri. Загрузка и время ожидания — оценка модели, не данные парка.</p>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

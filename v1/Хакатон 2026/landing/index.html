@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Хранитель Сказки — WIDE Hakaton team</title>
+<meta name="description" content="Кейс 09 «Парк «Сказка»»: онлайн-стратегия с ИИ-ведущим. Проблема, концепция игры, сайт, прототип и доказательства — одной страницей.">
+<style>
+:root{
+  --blue:#006EB7; --red:#E4013A; --orange:#F39200; --green:#76B729; --purple:#7B4FC4; --teal:#00A3AD;
+  --ink:#1F2A44; --muted:#6B7A90; --light:#EEF5FC; --white:#fff;
+  --night:#07070d; --night2:#12121c; --amber:#F39200;
+  --shadow:0 10px 30px rgba(31,78,121,.16); --r:22px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{margin:0;font:17px/1.55 Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#dcecfa 0,#eaf4fc 40%,#f4f9fe 100%);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;line-height:1.12;font-weight:800}
+a{color:var(--blue)}
+img{max-width:100%;display:block}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+.mono{font-family:"Courier New",monospace;letter-spacing:.14em;text-transform:uppercase;font-weight:700;font-size:13px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+/* ---------- верхняя панель с вехами ---------- */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;background:rgba(7,7,13,.82);backdrop-filter:blur(12px);color:#fff}
+.nav .wrap{display:flex;align-items:center;gap:14px;height:62px}
+.nav .brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:800;white-space:nowrap}
+.nav .brand img{width:38px;height:38px}
+.steps{display:flex;gap:2px;margin-left:auto;overflow:auto;scrollbar-width:none}
+.steps::-webkit-scrollbar{display:none}
+.steps a{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;color:#c9d3e3;text-decoration:none;font-size:14.5px;white-space:nowrap}
+.steps a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.14);font-size:12px}
+.steps a.on{background:#fff;color:var(--ink)}
+.steps a.on b{background:var(--orange);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:13px 22px;font-weight:800;text-decoration:none;color:#fff;background:var(--blue);box-shadow:0 6px 18px rgba(0,110,183,.35)}
+.btn:hover{filter:brightness(1.1)}
+.btn.orange{background:var(--orange);color:#2a1700;box-shadow:0 6px 18px rgba(243,146,0,.35)}
+.btn.ghost{background:transparent;border:2px solid rgba(255,255,255,.55);box-shadow:none}
+.btn.small{padding:8px 14px;font-size:14px;border-radius:12px}
+@media(max-width:860px){.nav .brand span{display:none}}
+
+/* ---------- hero (детектив) ---------- */
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;color:#fff;background:#07070d url(img/bg_title.png) center/cover;overflow:hidden;isolation:isolate}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,7,13,.92) 0,rgba(7,7,13,.55) 55%,rgba(7,7,13,.1) 100%);z-index:-1}
+.hero .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center;padding-top:90px;padding-bottom:50px}
+.hero .tagline{color:var(--orange);margin-bottom:16px}
+.hero h1{font-size:clamp(46px,8vw,108px);letter-spacing:-.01em}
+.hero .lead{font-size:clamp(18px,2.2vw,23px);max-width:34em;margin:20px 0 28px;color:#e6eef7}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.motto{margin-top:30px;font-style:italic;font-size:20px;color:#fff}
+.motto b{color:var(--orange);font-style:normal}
+.hero .chars{position:relative;height:min(560px,70vh)}
+.hero .chars img{position:absolute;bottom:0;filter:drop-shadow(0 12px 24px rgba(0,0,0,.5))}
+.hero .chars .c1{left:0;height:92%}.hero .chars .c2{left:28%;height:80%}.hero .chars .c3{right:0;height:98%}
+.stamp{position:absolute;right:4%;top:6%;border:3px solid #ff4a6b;color:#ff4a6b;padding:8px 16px;transform:rotate(-9deg);font:700 20px "Courier New",monospace;letter-spacing:.1em;background:rgba(7,7,13,.4)}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}.hero .chars{height:300px;order:-1}.hero::after{background:rgba(7,7,13,.75)}}
+.facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.facts span{padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);font-size:14.5px}
+
+/* ---------- секции ---------- */
+section{padding:86px 0}
+.sec-head{max-width:760px;margin-bottom:34px}
+.sec-head .mono{color:var(--red);display:block;margin-bottom:10px}
+.sec-head h2{font-size:clamp(32px,4.6vw,52px);color:var(--blue)}
+.sec-head p{margin:14px 0 0;font-size:19px;color:var(--muted)}
+.vexa{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--orange);color:#fff;font-weight:800;font-size:22px;margin-right:12px;vertical-align:middle}
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:26px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.g2,.g3,.g4{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+.dot{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;color:#fff;font-size:24px}
+
+/* улики */
+.ev .mono{font-size:12px;margin-bottom:6px;display:block}
+.ev h3{font-size:22px;margin-bottom:8px}.ev p{margin:0;color:var(--muted);font-size:15.5px}
+.bignum{font-size:54px;font-weight:800;line-height:1}
+.bignum small{font-size:18px;color:var(--muted);font-weight:600;display:block;margin-top:8px}
+
+/* игра: ресурсы и зоны */
+.res{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:620px){.res{grid-template-columns:1fr}}
+.res .card{text-align:center}
+.res .em{font-size:44px}
+.zones{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.zone{background:#fff;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.zone .ph{aspect-ratio:16/10;background:#cfe3f4 center/cover}
+.zone .bd{padding:12px 14px 14px}
+.zone h4{font-size:18px}.zone p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12.5px;padding:3px 9px;border-radius:999px;background:var(--light);font-weight:700}
+.loop{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;counter-reset:l}
+@media(max-width:820px){.loop{grid-template-columns:1fr 1fr}}
+.loop div{background:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow);position:relative}
+.loop div::before{counter-increment:l;content:counter(l);position:absolute;top:-14px;left:16px;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800}
+.loop b{display:block;margin:6px 0 4px;font-size:18px}
+.loop span{font-size:14.5px;color:var(--muted)}
+
+/* демо-ход */
+.play{background:linear-gradient(160deg,#0c0c18,#1b1740);color:#fff;border-radius:28px;padding:28px;box-shadow:0 20px 50px rgba(7,7,13,.5)}
+.play .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.meters{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+@media(max-width:620px){.meters{grid-template-columns:1fr}}
+.meter{background:rgba(255,255,255,.08);border-radius:16px;padding:12px 14px}
+.meter .lab{display:flex;justify-content:space-between;font-weight:700}
+.meter .bar{height:9px;border-radius:5px;background:rgba(255,255,255,.14);margin-top:8px;overflow:hidden}
+.meter .bar i{display:block;height:100%;width:50%;background:var(--green);transition:width .6s,background .3s}
+.host{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:start}
+.host img{width:90px}
+.bubble{background:#fff;color:var(--ink);border-radius:20px;padding:16px 18px;font-size:17px;min-height:70px}
+.bubble b{color:var(--blue)}
+.opts{display:grid;gap:10px;margin-top:14px}
+.opt{text-align:left;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);color:#fff;border-radius:16px;padding:14px 16px;transition:.2s}
+.opt:hover:not(:disabled){background:rgba(255,255,255,.2);transform:translateY(-2px)}
+.opt:disabled{opacity:.55;cursor:default}
+.opt.pick{background:var(--orange);border-color:var(--orange);color:#2a1700;opacity:1}
+.opt small{display:block;color:inherit;opacity:.8;margin-top:2px}
+.result{margin-top:14px;padding:14px 16px;border-radius:16px;background:rgba(118,183,41,.18);border:1px solid rgba(118,183,41,.5)}
+.demo-note{margin-top:14px;font-size:13.5px;color:#aab6ce}
+
+/* сайт игры */
+.phones{display:flex;gap:18px;overflow:auto;padding:6px 4px 24px;scroll-snap-type:x mandatory}
+.phone{flex:0 0 auto;width:210px;scroll-snap-align:start}
+.phone .fr{background:#10121C;border:2px solid #3A3F52;border-radius:26px;padding:8px;box-shadow:var(--shadow)}
+.phone img{border-radius:18px}
+.phone p{margin:10px 0 0;font-weight:700;text-align:center;font-size:15px}
+.rules li{margin:8px 0}
+.heroes{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.heroes img{height:190px}
+
+/* ведущий (пример) */
+.chat{max-width:560px;margin:0 auto;background:#fff;border-radius:26px;box-shadow:var(--shadow);padding:20px}
+.msg{padding:12px 14px;border-radius:16px;margin:8px 0;font-size:16px}
+.msg.ai{background:var(--light);border-top-left-radius:4px}
+.msg.me{background:var(--blue);color:#fff;margin-left:48px;border-top-right-radius:4px}
+.status-tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.status-tbl td,.status-tbl th{padding:12px 16px;text-align:left;border-bottom:1px solid #e3edf7;font-size:16px}
+.status-tbl th{background:var(--light);font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pill{padding:3px 11px;border-radius:999px;font-weight:800;font-size:13px;white-space:nowrap}
+.pill.ok{background:#e3f4d0;color:#4a7a0e}.pill.wip{background:#ffe8c2;color:#8a5200}.pill.plan{background:#e7eefb;color:#2c5aa0}
+pre.prompt{background:#0c0c18;color:#cfe3ff;border-radius:18px;padding:18px;font:14px/1.55 "Courier New",monospace;overflow:auto;white-space:pre-wrap}
+
+/* доказательство */
+.chart{background:#fff;border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+.chart svg{width:100%;height:auto;display:block}
+.legend{display:flex;gap:16px;font-size:14px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:5px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+/* трейлер */
+.story{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:900px){.story{grid-template-columns:repeat(2,1fr)}}
+.story div{background:#0c0c18;color:#fff;border-radius:16px;padding:16px;min-height:150px}
+.story b{display:block;color:var(--orange);font-family:"Courier New",monospace;margin-bottom:6px}
+
+/* команда / финал */
+.team{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+@media(max-width:900px){.team{grid-template-columns:repeat(2,1fr)}}
+.member{background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:22px 14px;text-align:center}
+.member .dot{margin:0 auto 12px;width:64px;height:64px;font-size:30px}
+.member b{font-size:22px;display:block}
+.member small{color:var(--muted)}
+.finale{background:#07070d url(img/bg_title.png) center/cover;color:#fff;text-align:center;position:relative;isolation:isolate}
+.finale::after{content:"";position:absolute;inset:0;background:rgba(7,7,13,.7);z-index:-1}
+.finale h2{font-size:clamp(40px,7vw,86px)}
+footer{background:#07070d;color:#9aa7bd;padding:30px 0;font-size:14px}
+footer a{color:#cfe3ff}
+.src{font-size:13px;color:var(--muted);margin-top:14px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="img/emblem_w.png" alt="WIDE"><span>Хранитель Сказки</span></a>
+    <nav class="steps" id="steps" aria-label="Вехи проекта">
+      <a href="#problem" data-s="problem"><b>1</b>Проблема</a>
+      <a href="#concept" data-s="concept"><b>2</b>Концепция</a>
+      <a href="#site" data-s="site"><b>3</b>Сайт игры</a>
+      <a href="#host" data-s="host"><b>4</b>ИИ-ведущий</a>
+      <a href="#proof" data-s="proof"><b>5</b>Доказательство</a>
+      <a href="#team" data-s="team"><b>6</b>Команда</a>
+    </nav>
+    <a class="btn orange small" href="../index.html#game">▶ Играть</a>
+  </div>
+</header>
+
+<!-- ======== HERO ======== -->
+<div class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <div class="tagline mono">Кейс 09 · Парк «Сказка» · ИИ-хакатон МЭШ · 19–23 октября 2026</div>
+      <h1>ХРАНИТЕЛЬ<br>СКАЗКИ</h1>
+      <p class="lead">Онлайн-стратегия о парке: стройте зоны, ухаживайте за животными, привлекайте гостей. На каждом ходу ИИ-ведущий Кот Баюн расскажет, что случилось в парке, предложит 2–3 решения и покажет последствия.</p>
+      <div class="cta">
+        <a class="btn orange" href="../index.html#game">▶ Войти в игру</a>
+        <a class="btn ghost" href="#play">Сыграть демо-ход</a>
+      </div>
+      <div class="facts"><span>3–5 ходов</span><span>3 ресурса</span><span>Реальная погода и отметки в парке</span></div>
+      <p class="motto"><b>WIDE Hakaton team:</b> «Наши идеи сегодня делают будущее завтра»</p>
+    </div>
+    <div class="chars" aria-hidden="true">
+      <div class="stamp">ДЕЛО №09</div>
+      <img class="c1" src="img/teacher2.png" alt="">
+      <img class="c2" src="img/boy7.png" alt="">
+      <img class="c3" src="img/girl7.png" alt="">
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- ======== 1. ПРОБЛЕМА ======== -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="mono">Веха 1 · Проблема</span>
+      <h2><span class="vexa">1</span>Парк живёт один день в визите</h2>
+      <p>Парк просит, чтобы с ним можно было взаимодействовать не только в день визита, но и онлайн. Мы изучили отзывы и сайт — и нашли, где гость теряет интерес.</p>
+    </div>
+    <div class="grid g4 reveal" style="margin-bottom:22px">
+      <div class="card"><div class="bignum" style="color:var(--blue)" data-n="70" data-suf="+">0<small>развлечений на 9 гектарах</small></div></div>
+      <div class="card"><div class="bignum" style="color:var(--green)" data-n="2016">0<small>год открытия, круглый год</small></div></div>
+      <div class="card"><div class="bignum" style="color:var(--orange)" data-n="7">0<small>тематических зон: динозавры, хаски, альпаки…</small></div></div>
+      <div class="card"><div class="bignum" style="color:var(--red)" data-n="1">0<small>день — столько длится контакт с парком</small></div></div>
+    </div>
+    <div class="grid g2">
+      <div class="card ev reveal"><div class="dot" style="background:var(--red);margin-bottom:12px">💸</div><span class="mono" style="color:var(--red)">Улика №1</span><h3>Дорого</h3><p>Билет, еда и платная парковка — главные минусы в отзывах гостей.</p></div>
+      <div class="card ev reveal"><div class="dot" style="background:var(--orange);margin-bottom:12px">🚇</div><span class="mono" style="color:var(--orange)">Улика №2</span><h3>Далеко</h3><p>От метро «Крылатское» около 35 минут пешком; про бесплатный автобус надо знать заранее.</p></div>
+      <div class="card ev reveal"><div class="dot" style="background:var(--purple);margin-bottom:12px">🔁</div><span class="mono" style="color:var(--purple)">Улика №3</span><h3>Нет повода вернуться</h3><p>Гости пишут, что второй раз вряд ли поедут: «разовое удовольствие».</p></div>
+      <div class="card ev reveal"><div class="dot" style="background:var(--blue);margin-bottom:12px">❓</div><span class="mono" style="color:var(--blue)">Улика №4</span><h3>Тёмные пятна</h3><p>Не видно, какой аттракцион не работает и почему; неочевидно, кому что подходит по росту.</p></div>
+    </div>
+    <p class="src">Источники: описание кейса, отзывы на Otzovik, обзоры KudaGo и Т—Ж, разбор сайта parkskazka.com.</p>
+  </div>
+</section>
+
+<!-- ======== 2. КОНЦЕПЦИЯ ======== -->
+<section id="concept" style="background:rgba(255,255,255,.55)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="mono">Веха 2 · Концепция игры</span>
+      <h2><span class="vexa">2</span>Вы — Хранитель Сказки</h2>
+      <p><b>Цель игрока:</b> за 5 ходов — один день парка с 10:00 до 22:00 — сделать «Сказку» любимой: набрать гостей и хорошее настроение, не потратив все монеты.</p>
+    </div>
+
+    <h3 class="reveal" style="margin:0 0 14px">Три ресурса</h3>
+    <div class="res reveal">
+      <div class="card"><div class="em">💰</div><h3>Монеты</h3><p style="color:var(--muted);margin:6px 0 0">Тратятся на постройку и улучшение, зарабатываются от гостей и событий.</p></div>
+      <div class="card"><div class="em">👥</div><h3>Гости</h3><p style="color:var(--muted);margin:6px 0 0">Растут, когда в парке есть чем заняться и погода не подводит.</p></div>
+      <div class="card"><div class="em">😊</div><h3>Настроение</h3><p style="color:var(--muted);margin:6px 0 0">Падает от очередей, поломок и ветра; растёт от заботы о животных и честных объявлений.</p></div>
+    </div>
+
+    <h3 class="reveal" style="margin:36px 0 6px">Что можно строить и улучшать</h3>
+    <p class="reveal" style="color:var(--muted);margin:0 0 16px">Реальные зоны парка превращаются в «постройки» игры. Фото — с сайта парка.</p>
+    <div class="zones" id="zones"></div>
+
+    <h3 class="reveal" style="margin:36px 0 14px">Какие события случаются</h3>
+    <div class="grid g4 reveal">
+      <div class="card"><b>🌧 Дождь</b><p style="margin:6px 0 0;color:var(--muted);font-size:15px">Пустеют открытые зоны, выигрывают лабиринты и дома.</p></div>
+      <div class="card"><b>💨 Сильный ветер</b><p style="margin:6px 0 0;color:var(--muted);font-size:15px">Высотные аттракционы останавливают — что скажете гостям?</p></div>
+      <div class="card"><b>🔧 Поломка</b><p style="margin:6px 0 0;color:var(--muted);font-size:15px">Ремонт стоит монет, но возвращает любимый аттракцион.</p></div>
+      <div class="card"><b>🚌 Школьная экскурсия</b><p style="margin:6px 0 0;color:var(--muted);font-size:15px">Много гостей сразу: готов ли парк?</p></div>
+    </div>
+
+    <h3 class="reveal" style="margin:36px 0 14px">Как идёт ход</h3>
+    <div class="loop reveal">
+      <div><b>Рассказ</b><span>Ведущий описывает, что происходит в парке.</span></div>
+      <div><b>Выбор</b><span>2–3 варианта решения с ценой.</span></div>
+      <div><b>Последствия</b><span>Ведущий объясняет, что получилось и почему.</span></div>
+      <div><b>Рост</b><span>Ресурсы обновляются, растёт уровень: от Путника до Хранителя Сказки.</span></div>
+    </div>
+    <p class="reveal" style="margin-top:20px"><b>Победа:</b> к 22:00 набрать не меньше 120 гостей при настроении от 70% — и получить титул «Хранитель Сказки».</p>
+
+    <div id="play" style="margin-top:44px"></div>
+    <div class="play reveal" id="game">
+      <div class="top"><div><span class="mono" style="color:var(--orange)">Сыграйте ход · демо по сценарию</span><h3 style="font-size:26px;margin-top:6px" id="turnTitle">Ход 1 из 3</h3></div><button class="btn ghost small" id="restart">↺ Заново</button></div>
+      <div class="meters">
+        <div class="meter"><div class="lab"><span>💰 Монеты</span><b id="vCoin">100</b></div><div class="bar"><i id="bCoin"></i></div></div>
+        <div class="meter"><div class="lab"><span>👥 Гости</span><b id="vGuest">40</b></div><div class="bar"><i id="bGuest"></i></div></div>
+        <div class="meter"><div class="lab"><span>😊 Настроение</span><b id="vMood">60</b></div><div class="bar"><i id="bMood"></i></div></div>
+      </div>
+      <div class="host"><img src="img/teacher6.png" alt="Ведущий"><div><div class="bubble" id="story"></div><div class="opts" id="opts"></div><div class="result" id="result" hidden></div></div></div>
+      <p class="demo-note">Это короткое демо по сценарию. В самой игре реплики и варианты на каждом ходу пишет ИИ-ведущий — по реальной погоде и вашим решениям.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======== 3. САЙТ ИГРЫ ======== -->
+<section id="site">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="mono">Веха 3 · Сайт игры</span>
+      <h2><span class="vexa">3</span>Правила, герои, визуалы и вход</h2>
+      <p>Игра живёт на сайте: правила — в трёх строках, герои — рядом, а вход — одной кнопкой.</p>
+    </div>
+    <div class="grid g2" style="align-items:start">
+      <div class="card reveal">
+        <h3 style="margin-bottom:10px">Правила игры</h3>
+        <ol class="rules">
+          <li>Игра длится 3–5 ходов — это один день парка.</li>
+          <li>У вас три ресурса: монеты, гости, настроение.</li>
+          <li>На каждом ходу ведущий предлагает 2–3 решения: выберите одно.</li>
+          <li>Реальная погода и отметки в парке меняют события и дают бонусы.</li>
+          <li>К вечеру ≥ 120 гостей и настроение ≥ 70% — вы Хранитель Сказки.</li>
+        </ol>
+        <a class="btn" href="../index.html#game" style="margin-top:12px">▶ Войти в игру</a>
+      </div>
+      <div class="card reveal">
+        <h3 style="margin-bottom:10px">Герои</h3>
+        <p style="margin:0 0 10px;color:var(--muted)"><b>Кот Баюн</b> — ведущий игры. С ним играют <b>WIDE-учитель, мальчик и девочка</b> (персонажи созданы с помощью ИИ).</p>
+        <div class="heroes"><img src="img/teacher2.png" alt="Учитель WIDE"><img src="img/boy6.png" alt="Мальчик WIDE"><img src="img/girl6.png" alt="Девочка WIDE"></div>
+      </div>
+    </div>
+    <h3 class="reveal" style="margin:34px 0 8px">Визуалы сайта</h3>
+    <div class="phones reveal">
+      <div class="phone"><div class="fr"><img src="img/hero.png" alt="Главный экран"></div><p>Погода по часам и Кот Баюн</p></div>
+      <div class="phone"><div class="fr"><img src="img/map.png" alt="Карта парка"></div><p>Карта парка со статусами</p></div>
+      <div class="phone"><div class="fr"><img src="img/sheet.png" alt="Карточка аттракциона"></div><p>Причина остановки</p></div>
+      <div class="phone"><div class="fr"><img src="img/quest.png" alt="Квест"></div><p>Квест, баллы и уровни</p></div>
+      <div class="phone"><div class="fr"><img src="img/top.png" alt="Починить"></div><p>«Починить!» — голоса гостей</p></div>
+      <div class="phone"><div class="fr"><img src="img/build.png" alt="Стройка"></div><p>Стройка: свой аттракцион</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== 4. ИИ-ВЕДУЩИЙ ======== -->
+<section id="host" style="background:rgba(255,255,255,.55)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="mono">Веха 4 · Играбельный прототип</span>
+      <h2><span class="vexa">4</span>ИИ-ведущий Кот Баюн</h2>
+      <p>Ведущий рассказывает, что происходит в парке, предлагает 2–3 варианта и описывает последствия. Вот как выглядит один ход в игре:</p>
+    </div>
+    <div class="chat reveal">
+      <div class="msg ai"><b>Кот Баюн · ход 2 из 5, 12:30</b><br>Ветер усилился до 14 м/с. «Смерч» и колесо обозрения придётся остановить, у касс уже ропот. Что делаем?<br>
+        <b>А)</b> Остановить и честно объяснить в приложении причину (0 💰).<br><b>Б)</b> Раздать горячий чай в «Базилике» (−15 💰).<br><b>В)</b> Ничего не менять (0 💰).</div>
+      <div class="msg me">А — остановить и объяснить причину.</div>
+      <div class="msg ai"><b>Последствия:</b> гости недовольны ветром, но ценят честность: 😊 +10, 👥 −5. «Смерч» вернётся, когда ветер стихнет. Следующий ход — школьная экскурсия в 15:00.</div>
+    </div>
+
+    <h3 class="reveal" style="margin:40px 0 12px">Роль ведущего (фрагмент промпта)</h3>
+    <pre class="prompt reveal">Ты — Кот Баюн, ведущий игры «Хранитель Сказки» (парк «Сказка», Москва).
+Игра идёт 5 ходов (один день парка). Ресурсы игрока: монеты, гости, настроение.
+На каждом ходу:
+1) в 2–3 предложениях расскажи, что происходит (используй реальную погоду);
+2) предложи 2–3 варианта решения с ценой в монетах;
+3) после выбора опиши последствия и новые значения ресурсов.
+Говори тепло, по-русски, коротко. Не выдумывай факты о парке.</pre>
+
+    <h3 class="reveal" style="margin:40px 0 12px">Что уже играет, что в работе</h3>
+    <table class="status-tbl reveal">
+      <tr><th>Часть</th><th>Статус</th></tr>
+      <tr><td>Сайт с картой, статусами и причинами остановок</td><td><span class="pill ok">готово</span></td></tr>
+      <tr><td>Квест с баллами, уровни, награды, отметки по геолокации</td><td><span class="pill ok">готово</span></td></tr>
+      <tr><td>Рейтинг любимых, «Починить!», стройка и режим оператора</td><td><span class="pill ok">готово</span></td></tr>
+      <tr><td>Реальная погода и оценка загрузки по часам</td><td><span class="pill ok">готово</span></td></tr>
+      <tr><td>Демо-ходы по сценарию (выше)</td><td><span class="pill ok">готово</span></td></tr>
+      <tr><td>ИИ-ведущий Кот Баюн: 5 ходов, 2–3 варианта решения и последствия — в сайте игры</td><td><span class="pill ok">готово</span></td></tr>
+      <tr><td>Стратегия: строить зоны парка, ухаживать за животными, три ресурса, реальная погода</td><td><span class="pill ok">готово</span></td></tr>
+      <tr><td>Видеотрейлер до 1 минуты</td><td><span class="pill wip">делаем на хакатоне</span></td></tr>
+      <tr><td>Данные парка (статусы, очереди) вместо демо</td><td><span class="pill plan">следующий этап</span></td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ======== 5. ДОКАЗАТЕЛЬСТВО ======== -->
+<section id="proof">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="mono">Веха 5 · Доказательство</span>
+      <h2><span class="vexa">5</span>Почему это сработает</h2>
+      <p>Игра связана с настоящим парком: реальная погода меняет события, а настоящие визиты дают бонусы и поводы вернуться.</p>
+    </div>
+    <div class="grid g3 reveal" style="margin-bottom:26px">
+      <div class="card"><div class="dot" style="background:var(--blue);margin-bottom:10px">🌦</div><h3>Реальная погода</h3><p style="color:var(--muted);margin:8px 0 0">Прогноз на 16 дней по часам и климат за 11 лет решают, какие события случатся в игре.</p></div>
+      <div class="card"><div class="dot" style="background:var(--green);margin-bottom:10px">📍</div><h3>Бонус за визит</h3><p style="color:var(--muted);margin:8px 0 0">Отметка у настоящего аттракциона по геолокации даёт монеты. В «тихие» часы — ×3.</p></div>
+      <div class="card"><div class="dot" style="background:var(--orange);margin-bottom:10px">🐈</div><h3>Герои в парке</h3><p style="color:var(--muted);margin:8px 0 0">Идея: Кот Баюн встречает гостей на карточках в парке — QR открывает игру и награду.</p></div>
+    </div>
+
+    <div class="grid g2" style="align-items:center">
+      <div class="reveal">
+        <h3 style="margin-bottom:10px">Игра разгружает пики</h3>
+        <p style="color:var(--muted)">Модель загрузки показывает: пик субботы почти втрое выше среды. Монеты ×3 в тихие часы переводят часть гостей на спокойное время — парку это полезно, гостям выгодно.</p>
+        <p class="src">Модель оценочная: день недели, время, погода, праздники и отметки гостей. Данные турникетов парка сделают её точной.</p>
+      </div>
+      <div class="chart reveal">
+        <svg id="chartSvg" viewBox="0 0 520 300" role="img" aria-label="График загрузки: суббота и среда"></svg>
+        <div class="legend"><span><i style="background:var(--orange)"></i>Суббота, 24 октября</span><span><i style="background:var(--blue)"></i>Среда, 21 октября</span></div>
+      </div>
+    </div>
+
+    <h3 class="reveal" style="margin:40px 0 14px">Честно: настоящее и демо</h3>
+    <div class="grid g2 reveal">
+      <div class="card" style="background:#EAF6DD"><h3 style="color:#4a7a0e">Настоящее</h3><ul style="margin:10px 0 0;padding-left:20px"><li>Прогноз погоды (Open-Meteo)</li><li>Геолокация, спутник, ссылки в 2ГИС</li><li>Фото, названия, цены «от», рост — с сайта парка</li></ul></div>
+      <div class="card" style="background:#FFF4E0"><h3 style="color:#8a5200">Демо</h3><ul style="margin:10px 0 0;padding-left:20px"><li>Ремонты, голоса, стартовый рейтинг</li><li>Оценка очередей — модель</li><li>Награды — механика без условий парка</li></ul></div>
+    </div>
+
+    <h3 class="reveal" style="margin:40px 0 8px">Видеотрейлер игры (до 1 минуты)</h3>
+    <div class="story reveal">
+      <div><b>0:00–0:10</b>Парк «Сказка» ночью. Голос Кота Баюна: «Парк оживает, когда о нём заботятся».</div>
+      <div><b>0:10–0:20</b>Проблема: «очереди, ветер, ремонты — а гость не знает почему».</div>
+      <div><b>0:20–0:35</b>Игра: ходы, ресурсы, решения ведущего на экране сайта.</div>
+      <div><b>0:35–0:50</b>Связь с парком: реальная погода, отметка в парке, бонус ×3.</div>
+      <div><b>0:50–1:00</b>«Наши идеи сегодня делают будущее завтра». WIDE Hakaton team.</div>
+    </div>
+    <p class="src">Трейлер — в работе: сценарий готов, съёмка экрана и озвучка делаются после подключения ИИ-ведущего.</p>
+  </div>
+</section>
+
+<!-- ======== 6. КОМАНДА ======== -->
+<section id="team" style="background:rgba(255,255,255,.55)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="mono">Веха 6 · Команда</span>
+      <h2><span class="vexa">6</span>WIDE Hakaton team</h2>
+      <p>Школа WIDE: «Мир · Интеллект · Открытие · Образование».</p>
+    </div>
+    <div class="team reveal">
+      <div class="member"><div class="dot" style="background:var(--blue)">🕵</div><b>Сергей</b><small>участник группы</small></div>
+      <div class="member"><div class="dot" style="background:var(--red)">🕵</div><b>Николай</b><small>участник группы</small></div>
+      <div class="member"><div class="dot" style="background:var(--orange)">🕵</div><b>Артем</b><small>участник группы</small></div>
+      <div class="member"><div class="dot" style="background:var(--green)">🕵</div><b>Глеб</b><small>участник группы</small></div>
+      <div class="member"><div class="dot" style="background:var(--purple)">🕵</div><b>Кирилл</b><small>участник группы</small></div>
+    </div>
+  </div>
+</section>
+
+<section class="finale">
+  <div class="wrap">
+    <div class="mono" style="color:var(--orange);margin-bottom:12px">Дело закрыто</div>
+    <h2>ДЕЛО РАСКРЫТО</h2>
+    <p style="font-size:21px;max-width:30em;margin:18px auto 26px">Парк «Сказка» получает не просто сайт, а игру, которая объясняет, развлекает и собирает данные.</p>
+    <a class="btn orange" href="../index.html#game">▶ Войти в игру</a>
+    <p class="motto" style="margin-top:28px"><b>Наши идеи сегодня делают будущее завтра</b></p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p style="margin:0">Прототип для Всероссийского ИИ-хакатона МЭШ, кейс 09 «Парк «Сказка». Фото, названия, цены «от» и ограничения по росту — с сайта <a href="https://parkskazka.com/" target="_blank" rel="noopener">parkskazka.com</a>. Погода — Open-Meteo. Статусы ремонтов, рейтинг, голоса и очереди в демо смоделированы. · <a href="../index.html#game">Игра</a> · <a href="../Презентация/WIDE-Hakaton-team_Hranitel-Skazki.pdf">Слайды (PDF)</a></p>
+  </div>
+</footer>
+
+<script src="../data.js"></script>
+<script>
+'use strict';
+/* ---------- вехи в шапке ---------- */
+const links = [...document.querySelectorAll('#steps a')];
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.dataset.s === e.target.id)); }), { rootMargin: '-45% 0px -50% 0px' });
+['problem', 'concept', 'site', 'host', 'proof', 'team'].forEach(id => io.observe(document.getElementById(id)));
+const rv = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); rv.unobserve(e.target); } }), { threshold: .12 });
+document.querySelectorAll('.reveal').forEach(el => rv.observe(el));
+
+/* ---------- числа ---------- */
+document.querySelectorAll('[data-n]').forEach(el => {
+  const to = +el.dataset.n, suf = el.dataset.suf || '', small = el.querySelector('small'); let done = false;
+  const run = () => { if (done) return; done = true; const t0 = performance.now(); const tick = t => { const p = Math.min(1, (t - t0) / 1100), v = Math.round(to * (1 - Math.pow(1 - p, 3))); el.firstChild.nodeValue = v + (p === 1 ? suf : ''); if (p < 1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); };
+  new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { run(); o.disconnect(); } }, { threshold: .5 }).observe(el);
+});
+
+/* ---------- зоны парка (фото с сайта парка) ---------- */
+const ZONES = [
+  ['Дино парк', 'Динозавры', ['+гости', 'от 40 💰']], ['Альпака', 'Альпака парк', ['+настроение', 'от 20 💰']], ['Хаски Лэнд', 'Хаски-Лэнд', ['+настроение', 'от 30 💰']],
+  ['Зоодом «Страна ЕНОТиЯ»', 'Страна ЕНОТиЯ', ['+настроение', 'от 25 💰']], ['Верёвочный парк', 'Верёвочный парк', ['+гости', 'от 35 💰']], ['Страус парк', 'Страус парк', ['+гости', 'от 20 💰']]
+];
+const A = window.ATTRACTIONS || [];
+document.getElementById('zones').innerHTML = ZONES.map(([name, title, chips]) => {
+  const a = A.find(x => x.name === name);
+  return `<div class="zone reveal"><div class="ph" style="${a ? `background-image:url('${a.img}')` : ''}"></div><div class="bd"><h4>${title}</h4><p>Реальная зона парка</p><div class="chips">${chips.map(c => `<span class="chip">${c}</span>`).join('')}</div></div></div>`;
+}).join('') + `<div class="zone reveal"><div class="ph" style="background:linear-gradient(135deg,#76B729,#2e7d32);display:grid;place-items:center;font-size:54px">🌿</div><div class="bd"><h4>Парк «Айва»</h4><p>Зелёные скульптуры — зона из описания кейса</p><div class="chips"><span class="chip">+настроение</span><span class="chip">от 25 💰</span></div></div></div>`;
+document.querySelectorAll('#zones .zone').forEach(z => rv.observe(z));
+
+/* ---------- демо-ходы (сценарий) ---------- */
+const TURNS = [
+  { t: '10:00 · ясно, тихо', s: 'Парк открылся. У касс 40 гостей, в казне 100 монет. Что откроем в первую очередь?', o: [
+    ['Открыть Дино парк', '−40 💰', { c: -40, g: 25, m: 5 }, 'Динозавры — хит у детей: очередь выстроилась до самого входа.'],
+    ['Накормить альпак', '−10 💰', { c: -10, g: 8, m: 15 }, 'Альпаки обожают гостей, а гости — альпак. Настроение растёт.'],
+    ['Объявить «Тихий час: монеты ×3»', '0 💰', { c: 0, g: 15, m: 0 }, 'Любители спокойствия приходят пораньше — очередей почти нет.'] ] },
+  { t: '12:30 · ветер 14 м/с', s: 'Ветер усилился: «Смерч» и колесо обозрения придётся остановить. У касс ропот — что делаем?', o: [
+    ['Остановить и объяснить причину в приложении', '0 💰', { c: 0, g: -5, m: 10 }, 'Гости ценят честность: причина и срок видны в приложении.'],
+    ['Раздать горячий чай в «Базилике»', '−15 💰', { c: -15, g: 0, m: 10 }, 'Тёплый чай смягчил настроение, но про остановку не все поняли.'],
+    ['Ничего не менять', '0 💰', { c: 0, g: 0, m: -25 }, 'Гости стоят у закрытых аттракционов и ничего не понимают — настроение падает.'] ] },
+  { t: '15:00 · школьная экскурсия', s: 'К воротам подъехали три автобуса: 30 школьников. Чем их занять?', o: [
+    ['Открыть верёвочный парк', '−30 💰', { c: -30, g: 30, m: 10 }, 'Школьники в восторге, родители довольны — зал приключений полон.'],
+    ['Лекция «Всё про хаски»', '−5 💰', { c: -5, g: 20, m: 20 }, 'Хаски стали героями дня: фото и новые поклонники.'],
+    ['Пустить без программы', '0 💰', { c: 0, g: 10, m: -10 }, 'Школьники разбрелись по парку — без плана вышла суета и очереди.'] ] }
+];
+const R = { c: 100, g: 40, m: 60, i: 0 };
+const $ = s => document.querySelector(s);
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+function meters() {
+  $('#vCoin').textContent = R.c; $('#vGuest').textContent = R.g; $('#vMood').textContent = R.m;
+  $('#bCoin').style.width = clamp(R.c / 2, 0, 100) + '%'; $('#bGuest').style.width = clamp(R.g / 2, 0, 100) + '%'; $('#bMood').style.width = clamp(R.m, 0, 100) + '%';
+  $('#bMood').style.background = R.m < 40 ? '#E4013A' : R.m < 65 ? '#F39200' : '#76B729';
+}
+function turn() {
+  meters(); const T = TURNS[R.i];
+  $('#turnTitle').textContent = `Ход ${R.i + 1} из ${TURNS.length}`;
+  $('#story').innerHTML = `<b>${T.t}</b><br>${T.s}`;
+  $('#result').hidden = true;
+  $('#opts').innerHTML = T.o.map((o, k) => `<button class="opt" data-k="${k}">${'АБВ'[k]}) ${o[0]}<small>${o[1]}</small></button>`).join('');
+}
+$('#opts').addEventListener('click', e => {
+  const b = e.target.closest('.opt'); if (!b || b.disabled) return;
+  const T = TURNS[R.i], o = T.o[+b.dataset.k], d = o[2];
+  if (R.c + d.c < 0) { $('#result').hidden = false; $('#result').textContent = 'Не хватает монет — выберите другое решение.'; return; }
+  document.querySelectorAll('.opt').forEach(x => x.disabled = true); b.classList.add('pick');
+  R.c += d.c; R.g = Math.max(0, R.g + d.g); R.m = clamp(R.m + d.m, 0, 100); meters();
+  const last = R.i === TURNS.length - 1, win = R.g >= 100 && R.m >= 70;
+  $('#result').hidden = false;
+  $('#result').innerHTML = `<b>Последствия:</b> ${o[3]}<br>💰 ${d.c >= 0 ? '+' : ''}${d.c} · 👥 ${d.g >= 0 ? '+' : ''}${d.g} · 😊 ${d.m >= 0 ? '+' : ''}${d.m}` +
+    (last ? `<br><br><b>Итог демо-дня:</b> ${R.g} гостей, настроение ${R.m}%. ${win ? '🏆 Вы — Хранитель Сказки!' : 'Хороший день! Для титула нужны 100+ гостей и настроение от 70% — сыграйте ещё раз.'}` : `<br><br><button class="btn orange small" id="next">Дальше →</button>`);
+  const n = $('#next'); if (n) n.onclick = () => { R.i++; turn(); };
+});
+$('#restart').onclick = () => { Object.assign(R, { c: 100, g: 40, m: 60, i: 0 }); turn(); };
+turn();
+
+/* ---------- график очередей ---------- */
+(function () {
+  const sat = [29, 49, 69, 87, 99, 100, 92, 74, 67, 58, 44, 29], wed = [6, 9, 16, 23, 29, 33, 35, 30, 25, 14, 8, 5];
+  const W = 520, H = 300, L = 40, Rr = 12, T = 14, B = 34, x = i => L + i * (W - L - Rr) / 11, y = v => T + (100 - v) * (H - T - B) / 100;
+  let s = '';
+  for (let v = 0; v <= 100; v += 25) s += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#e3edf7"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#6B7A90">${v}</text>`;
+  for (let i = 0; i < 12; i += 1) s += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" font-size="12" fill="#6B7A90">${10 + i}</text>`;
+  const path = (arr, c) => `<polyline fill="none" stroke="${c}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points="${arr.map((v, i) => x(i) + ',' + y(v)).join(' ')}"/>` + arr.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${c}"/>`).join('');
+  s += path(wed, '#006EB7') + path(sat, '#F39200') + `<text x="${x(5)}" y="${y(100) - 8}" text-anchor="middle" font-size="13" font-weight="700" fill="#F39200">пик 15:00 — 100%</text>`;
+  document.getElementById('chartSvg').innerHTML = s;
+})();
+</script>
+</body>
+</html>
