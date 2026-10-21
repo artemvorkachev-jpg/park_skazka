@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Погода</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 860px; margin: 24px auto; padding: 0 16px; color: #222; }
+  h1 { color: #006EB7; }
+  form { display: flex; gap: 8px; margin-bottom: 16px; }
+  input { flex: 1; padding: 8px; font-size: 16px; }
+  button { padding: 8px 16px; font-size: 16px; background: #006EB7; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
+  .now { background: #eef6fc; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .now .t { font-size: 40px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; text-align: left; }
+  th { background: #006EB7; color: #fff; }
+</style>
+</head>
+<body>
+<h1>Погода</h1>
+<form id="f">
+  <input id="city" value="Москва" placeholder="Город">
+  <button>Показать</button>
+</form>
+<div id="out"></div>
+
+<script src="weather.js"></script>
+<script>
+const out = document.getElementById("out");
+
+async function show(cityName) {
+  out.textContent = "Загрузка…";
+  try {
+    const { city, current, forecast } = await getWeatherByCity(cityName);
+    const rows = forecast.map(d => `
+      <tr>
+        <td>${new Date(d.date).toLocaleDateString("ru-RU", { weekday: "short", day: "numeric", month: "short" })}</td>
+        <td>${d.description}</td>
+        <td>${d.tempMin}…${d.tempMax} °C</td>
+        <td>${d.precipitation} мм (${d.precipitationProbability ?? "—"}%)</td>
+        <td>${d.windMax} м/с</td>
+      </tr>`).join("");
+    out.innerHTML = `
+      <div class="now">
+        <div>${city.name}, ${city.country}</div>
+        <div class="t">${current.temperature} °C</div>
+        <div>${current.description}. Ощущается как ${current.feelsLike} °C.
+        Ветер ${current.windSpeed} м/с, влажность ${current.humidity}%,
+        давление ${current.pressure} мм рт. ст.</div>
+      </div>
+      <table>
+        <tr><th>Дата</th><th>Погода</th><th>Температура</th><th>Осадки</th><th>Ветер</th></tr>
+        ${rows}
+      </table>`;
+  } catch (e) {
+    out.textContent = "Ошибка: " + e.message;
+  }
+}
+
+document.getElementById("f").addEventListener("submit", e => {
+  e.preventDefault();
+  show(document.getElementById("city").value.trim());
+});
+show("Москва");
+</script>
+</body>
+</html>
