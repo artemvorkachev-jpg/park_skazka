@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Баюн — помощник парка «Сказка»</title>
+<meta name="description" content="Чат с Баюном — ИИ-помощником парка развлечений «Сказка». Демо-интерфейс для сайта игры «Хранитель Сказки».">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=PT+Root+UI:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Дизайн-система — см. DESIGN.md (стиль parkskazka.com) */
+:root{
+  --blue:#34B4E8; --accent:#D32D6B; --red:#FF2400; --green:#00B453;
+  --ink:#222222; --muted:#5A6572; --light:#E6F6FE; --sky:#9CD6EE; --pink:#FFC9E0;
+  --shadow-sm:0 2px 8px rgba(35,40,47,.10); --shadow:0 8px 24px rgba(35,40,47,.15);
+  --disp:'Oswald','Bebas Neue','Arial Narrow',Impact,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:16px/1.5 'PT Root UI','Segoe UI',system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#E6F6FE 0%,#F4FBFF 60%,#fff 100%);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+
+/* ---------- шапка ---------- */
+header{background:var(--blue);color:#fff;box-shadow:var(--shadow-sm);position:relative;z-index:5}
+.hbar{max-width:820px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
+.ava{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#fff;font-size:26px;flex:none;box-shadow:var(--shadow-sm)}
+.hbar .name{font:600 26px/1 var(--disp);text-transform:uppercase;letter-spacing:.02em}
+.hbar .name small{display:block;font:500 11px/1.3 'PT Root UI',sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.9;margin-top:3px}
+.status{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;background:rgba(255,255,255,.18);padding:7px 15px;border-radius:100px}
+.status i{width:8px;height:8px;border-radius:50%;background:#7CFFB2;box-shadow:0 0 0 3px rgba(124,255,178,.3)}
+.status.off i{background:#FFD54D;box-shadow:0 0 0 3px rgba(255,213,77,.3)}
+@media(max-width:560px){.status span{display:none}}
+
+/* ---------- лента сообщений ---------- */
+main{flex:1;width:100%;max-width:820px;margin:0 auto;padding:20px 20px 0;display:flex;flex-direction:column;min-height:0}
+#log{flex:1;overflow-y:auto;padding:8px 4px 16px;scroll-behavior:smooth}
+.row{display:flex;gap:10px;margin:10px 0;align-items:flex-end}
+.row.me{justify-content:flex-end}
+.row .ava{width:36px;height:36px;font-size:20px;background:var(--sky)}
+.bubble{max-width:78%;padding:12px 17px;border-radius:20px;white-space:pre-wrap;overflow-wrap:break-word}
+.row.ai .bubble{background:#fff;border-top-left-radius:6px;box-shadow:var(--shadow-sm)}
+.row.me .bubble{background:var(--blue);color:#fff;border-top-right-radius:6px}
+.row.err .bubble{background:#FFE9E5;border:1px solid #FFC7BD;color:#8E1B00}
+.bubble .t{font:700 12px/1 'PT Root UI',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.row.me .bubble .t{color:rgba(255,255,255,.75)}
+.row.err .bubble .t{color:#C0392B}
+.bubble.streaming::after{content:"▍";color:var(--blue);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.dots{display:inline-flex;gap:5px;padding:6px 2px}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--blue);animation:bnc 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bnc{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+.retry{margin-top:10px;background:var(--accent);color:#fff;border:0;border-radius:100px;padding:9px 22px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.02em;transition:.25s}
+.retry:hover{filter:brightness(.92);transform:translateY(-1px)}
+
+/* ---------- быстрые вопросы ---------- */
+#chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 4px 12px}
+#chips button{background:#fff;border:1.5px solid #C9E4F5;color:#1E6E9E;border-radius:100px;padding:9px 18px;font-size:13.5px;font-weight:500;transition:.2s;box-shadow:var(--shadow-sm)}
+#chips button:hover{background:var(--light);border-color:var(--blue);transform:translateY(-1px)}
+
+/* ---------- ввод ---------- */
+.composer{display:flex;gap:10px;padding:0 0 22px}
+.composer input{flex:1;border:1.5px solid #C9E4F5;border-radius:100px;padding:15px 24px;font:inherit;color:var(--ink);background:#fff;outline:none;box-shadow:var(--shadow-sm);transition:.2s;min-width:0}
+.composer input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(52,180,232,.15)}
+.composer input:disabled{background:#F2F8FC;color:var(--muted)}
+.composer .send{flex:none;width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:21px;display:grid;place-items:center;box-shadow:0 8px 24px rgba(211,45,107,.35);transition:.25s}
+.composer .send:hover:not(:disabled){filter:brightness(.92);transform:translateY(-2px)}
+.composer .send:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+footer{max-width:820px;width:100%;margin:0 auto;padding:0 20px 16px;font-size:12.5px;color:var(--muted);text-align:center}
+footer b{color:var(--accent)}
+#demoBanner{display:none;margin:10px auto 0;max-width:fit-content;background:#FFF6D9;border:1px solid #F2DC8E;color:#7A5A00;border-radius:100px;padding:7px 18px;font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <div class="ava">🐈</div>
+    <div class="name">Баюн<small>помощник парка «Сказка»</small></div>
+    <div class="status" id="status"><i></i><span>онлайн</span></div>
+  </div>
+</header>
+
+<main>
+  <div id="demoBanner">Демо-режим: сервер Баюна не подключён, ответы смоделированы</div>
+  <div id="log" aria-live="polite"></div>
+  <div id="chips"></div>
+  <form class="composer" id="form">
+    <input id="input" type="text" placeholder="Спросите про аттракционы, цены, как добраться…" autocomplete="off" maxlength="2000">
+    <button class="send" id="send" type="submit" aria-label="Отправить">➤</button>
+  </form>
+</main>
+
+<footer>Интерфейс чата для сайта «Хранителя Сказки» · на сервере — <b>runner/chat/server.js</b> + агент Баюн из runner/ · стили по <b>DESIGN.md</b></footer>
+
+<script>
+'use strict';
+/* ---------- элементы ---------- */
+const $ = s => document.querySelector(s);
+const log = $('#log'), chips = $('#chips'), form = $('#form'),
+      input = $('#input'), sendBtn = $('#send'), status = $('#status');
+
+/* ---------- состояние ---------- */
+const history = [];          // {role:'user'|'bayun', text} — уходит в server.js для контекста
+let sending = false;
+let demoMode = false;        // включается, если /api/chat недоступен
+let lastUserText = '';
+
+/* ---------- утилиты ---------- */
+function nearBottom() { return log.scrollHeight - log.scrollTop - log.clientHeight < 90; }
+function scrollDown(force) { if (force || nearBottom()) log.scrollTop = log.scrollHeight; }
+function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function addBubble({ who = 'ai', title, text = '', html = null } = {}) {
+  const row = document.createElement('div');
+  row.className = 'row ' + (who === 'user' ? 'me' : who === 'error' ? 'err ai' : 'ai');
+  const ava = who === 'user' ? '' : '<div class="ava">🐈</div>';
+  row.innerHTML = `${ava}<div class="bubble">${title ? `<span class="t">${title}</span>` : ''}${html ?? esc(text)}</div>`;
+  log.appendChild(row);
+  scrollDown(true);
+  return row.querySelector('.bubble');
+}
+
+function addTyping() {
+  const b = addBubble({ title: 'Баюн' });
+  b.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+  return b;
+}
+
+/* ---------- приветствие и быстрые вопросы ---------- */
+addBubble({ title: 'Баюн', text: 'Мяу! Я Баюн — помощник парка «Сказка». Спрашивайте: аттракционы, цены, как добраться, что подойдёт детям — подскажу!' });
+
+const QUICK = [
+  'Что есть в парке для ребёнка 5 лет?',
+  'Сколько стоит безлимитный билет?',
+  'Как добраться до парка?',
+  'Расскажи про Дино парк',
+];
+QUICK.forEach(q => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = q;
+  b.onclick = () => send(q);
+  chips.appendChild(b);
+});
+
+/* ---------- демо-ответы (когда сервер Баюна не подключён) ---------- */
+const DEMO = [
+  { re: /5\s*(лет|года)|ребен|ребён|малыш/i, text: 'Для пятилетки в «Сказке» раздолье: Дино парк с 30+ динозаврами в натуральную величину, Хаски Лэнд со щенками, Альпака парк и зоодом «Страна ЕНОТиЯ». Из аттракционов есть 10 детских площадок — по росту от 80–100 см. Точный список с ограничениями по росту есть на parkskazka.com.' },
+  { re: /билет|цена|стоит|стоимость|тариф|безлимит/i, text: 'Безлимитный билет — 2 700 ₽ онлайн и 2 900 ₽ в кассе (данные на 20.10.2026). Вход на территорию бесплатный — платны аттракционы и тематические парки. Совет: перед покупкой уточните список включённых аттракционов — это частая тема в отзывах гостей.' },
+  { re: /добраться|метро|автобус|машина|парковк|адрес/i, text: 'Адрес: Москва, ул. Крылатская, 18. Ближайшее метро — «Крылатская», от него ходит бесплатный автобус парка. Также подходят «Молодёжная» и «Народное Ополчение». На машине: парковка под Живописным мостом — 400 ₽/день, у Ледового дворца (Крылатская, 16) — 70 ₽/час; для инвалидов бесплатно.' },
+  { re: /дино|динозавр/i, text: 'Дино парк — самый хвалимый объект в отзывах: 30+ динозавров в натуральную величину (до 20 метров), аудиогид и палеонтологическая песочница. Дети обычно «застревают» там надолго — закладывайте на визит не меньше часа.' },
+  { re: /погод/i, text: 'В демо-режиме погоду не подгрузить 🙂 В сайте игры погода приходит из Open-Meteo (прогноз на 16 дней по часам, без ключа) — Баюн использует её, чтобы советовать, что лучше катать прямо сейчас.' },
+];
+const DEMO_FALLBACK = 'Я на связи! В демо-режиме я знаю немного: цены и билеты, как добраться, Дино парк и детские зоны. А с подключённым сервером (runner/chat/server.js) отвечу на любой вопрос о парке — по материалам исследования.';
+
+function demoReply(text) {
+  const hit = DEMO.find(d => d.re.test(text));
+  return hit ? hit.text : DEMO_FALLBACK;
+}
+
+/* ---------- отправка ---------- */
+form.addEventListener('submit', e => { e.preventDefault(); send(); });
+
+async function send(preset) {
+  const text = (preset ?? input.value).trim();
+  if (!text || sending) return;
+  sending = true; lastUserText = text;
+  input.value = ''; input.disabled = true; sendBtn.disabled = true;
+  chips.style.display = 'none';
+  addBubble({ who: 'user', title: 'Вы', text });
+  history.push({ role: 'user', text });
+
+  const typing = addTyping();
+  scrollDown(true);
+
+  if (demoMode) {
+    await new Promise(r => setTimeout(r, 900));
+    typing.closest('.row').remove();
+    const reply = demoReply(text);
+    await streamLocally(reply);
+    finishTurn(reply);
+    return;
+  }
+
+  let gotAnyEvent = false, answer = null, failed = null;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ message: text, history: history.slice(-7, -1) }),
+    });
+    if (!res.ok || !res.body) throw new Error('http_' + res.status);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf('\n\n')) >= 0) {
+        const block = buf.slice(0, i).trim(); buf = buf.slice(i + 2);
+        if (!block.startsWith('data:')) continue;
+        let ev; try { ev = JSON.parse(block.slice(5).trim()); } catch { continue; }
+        gotAnyEvent = true;
+        if (ev.type === 'assistant_delta' && ev.text) {
+          if (!typing.isConnected) { /* восстановление после ошибки */ }
+          typing.classList.add('streaming');
+          typing.textContent = ev.text;
+          scrollDown();
+        } else if (ev.type === 'assistant_final' && ev.text) {
+          typing.classList.remove('streaming');
+          typing.textContent = ev.text;
+        } else if (ev.type === 'done') {
+          answer = (ev.answer || '').trim();
+        } else if (ev.type === 'error') {
+          failed = ev.message || 'Неизвестная ошибка агента';
+        }
+      }
+    }
+  } catch (err) {
+    failed = err.message;
+  }
+
+  if (answer) {
+    typing.classList.remove('streaming');
+    typing.textContent = answer;
+    scrollDown();
+    finishTurn(answer);
+  } else if (failed && gotAnyEvent) {
+    typing.closest('.row').remove();
+    showError(failed);
+    history.pop();
+    input.disabled = false; sendBtn.disabled = false; input.focus();
+    sending = false;
+  } else {
+    /* ответа нет вовсе — сервер не подключён: переключаемся в демо-режим */
+    typing.closest('.row').remove();
+    demoMode = true;
+    $('#demoBanner').style.display = 'block';
+    status.classList.add('off');
+    status.querySelector('span').textContent = 'демо';
+    const reply = demoReply(text);
+    await streamLocally(reply);
+    finishTurn(reply);
+  }
+}
+
+/* локальный «стриминг» для демо-режима: печатаем ответ частями */
+async function streamLocally(text) {
+  const b = addTyping();
+  const step = Math.max(2, Math.round(text.length / 60));
+  for (let i = 0; i < text.length; i += step) {
+    b.classList.add('streaming');
+    b.textContent = text.slice(0, i + step);
+    scrollDown();
+    await new Promise(r => setTimeout(r, 18));
+  }
+  b.classList.remove('streaming');
+  b.textContent = text;
+}
+
+/* финализация: текст последнего bubble уже выставлен, пишем историю */
+function finishTurn(answerText) {
+  history.push({ role: 'bayun', text: answerText });
+  input.disabled = false; sendBtn.disabled = false; input.focus();
+  sending = false;
+}
+
+/* ошибка агента: плашка + кнопка «Повторить» */
+function showError(message) {
+  const bubble = addBubble({
+    who: 'error',
+    title: 'Ошибка',
+    html: `${esc(message)}<br><button class="retry" type="button">↺ Повторить</button>`,
+  });
+  bubble.querySelector('.retry').onclick = () => {
+    bubble.closest('.row').remove();
+    history.pop(); // убираем «висящее» пользовательское сообщение
+    send(lastUserText);
+  };
+}
+
+input.focus();
+</script>
+</body>
+</html>
