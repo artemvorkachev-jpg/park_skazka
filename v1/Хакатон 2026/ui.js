@@ -12,8 +12,9 @@ function say(text) {
 }
 
 /* ---------- навигация ---------- */
-const SCREENS = ['map', 'game', 'quest', 'rides', 'top', 'build', 'when', 'op'];
+const SCREENS = ['plan', 'map', 'game', 'quest', 'rides', 'top', 'build', 'when', 'op'];
 const onShow = {
+  plan: () => renderPlanner(),
   map: () => { drawMap(); renderStatusStrip(); setTimeout(() => UI.map && UI.map.invalidateSize(), 50); },
   game: () => { renderGame(); },
   quest: () => { renderChapters(); renderRewards(); },

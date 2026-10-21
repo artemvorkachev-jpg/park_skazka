@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Хранитель Сказки</title>
 <meta name="description" content="Игра-квест по парку «Сказка»: статусы аттракционов и причины остановок, рейтинг любимых, голосование за ремонт и конструктор новых аттракционов.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -18,6 +21,18 @@
 </header>
 
 <main id="main">
+
+<!-- ============ ПЛАН ВИЗИТА ============ -->
+<section class="screen" id="s-plan" data-screen="plan" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>План визита</h2>
+      <p>Пять шагов: выберите любимое, скажите, кто идёт, спросите Баюна — получите маршрут с учётом погоды и бонусы по пути.</p>
+    </div>
+    <div class="plan-steps" id="planSteps"></div>
+    <div id="planBody"></div>
+  </div>
+</section>
 
 <!-- ============ КАРТА ============ -->
 <section class="screen" id="s-map" data-screen="map">
@@ -253,6 +268,7 @@
 </footer>
 
 <nav class="tabbar" id="tabbar">
+  <a href="#plan" data-go="plan"><i>🧭</i><span>План</span></a>
   <a href="#map" data-go="map"><i>🗺️</i><span>Карта</span></a>
   <a href="#game" data-go="game"><i>🎮</i><span>Игра</span></a>
   <a href="#quest" data-go="quest"><i>📜</i><span>Квест</span></a>
@@ -276,6 +292,7 @@
 <script src="screens.js"></script>
 <script src="quest.js"></script>
 <script src="build.js"></script>
+<script src="planner.js"></script>
 <script src="host.js"></script>
 <script src="main.js"></script>
 </body>

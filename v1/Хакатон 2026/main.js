@@ -6,6 +6,7 @@ function renderAll() {
   renderTop(); renderHero(); renderStatusStrip(); drawMap();
   renderCatalogControls(); renderRides(true); renderBoard(); renderRepair();
   renderChapters(); renderRewards(); renderBuild(); renderIdeas(); renderCalendar(); renderDetail();
+  renderPlanner();
 }
 
 async function boot() {

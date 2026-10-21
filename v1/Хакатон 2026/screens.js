@@ -3,11 +3,11 @@
 
 /* ================= игровая карта парка (схема) ================= */
 const ZONES = [
-  { name: 'Площадь чудес', types: ['family'], cx: 500, cy: 440, sp: 34, c: '#f5b83d' },
-  { name: 'Страна малышей', types: ['kids'], cx: 185, cy: 540, sp: 34, c: '#ef6f9e' },
-  { name: 'Вихревая гора', types: ['extreme'], cx: 790, cy: 240, sp: 34, c: '#ef6f5e' },
-  { name: 'Терем Бабы Яги', types: ['interactive'], cx: 195, cy: 235, sp: 38, c: '#9b6bff' },
-  { name: 'Звериная поляна и Динолэнд', types: ['zone'], cx: 500, cy: 170, sp: 40, c: '#2fb5a7' }
+  { name: 'Площадь чудес', types: ['family'], cx: 500, cy: 440, sp: 34, c: '#0E86C8' },
+  { name: 'Страна малышей', types: ['kids'], cx: 185, cy: 540, sp: 34, c: '#B882D0' },
+  { name: 'Вихревая гора', types: ['extreme'], cx: 790, cy: 240, sp: 34, c: '#FF2400' },
+  { name: 'Терем Бабы Яги', types: ['interactive'], cx: 195, cy: 235, sp: 38, c: '#D32D6B' },
+  { name: 'Звериная поляна и Динолэнд', types: ['zone'], cx: 500, cy: 170, sp: 40, c: '#00B453' }
 ];
 const GATE = { x: 500, y: 690 };
 const NODE_POS = {};
@@ -17,15 +17,15 @@ ZONES.forEach(z => {
     NODE_POS[a.id] = { x: Math.round(z.cx + r * Math.cos(ang)), y: Math.round(z.cy + r * Math.sin(ang)), z };
   });
 });
-const STC = { ok: '#4be3a0', warn: '#ffc857', bad: '#ff6b6b' };
+const STC = { ok: '#00B453', warn: '#F5A623', bad: '#FF2400' };
 function mapBackdrop() {
   const r = rnd(42); let trees = '';
-  for (let i = 0; i < 90; i++) { const x = r() * 1000, y = r() * 720, s = 6 + r() * 12; trees += `<circle cx="${x | 0}" cy="${y | 0}" r="${s | 0}" fill="rgba(60,120,100,${(.08 + r() * .14).toFixed(2)})"/>`; }
+  for (let i = 0; i < 90; i++) { const x = r() * 1000, y = r() * 720, s = 6 + r() * 12; trees += `<circle cx="${x | 0}" cy="${y | 0}" r="${s | 0}" fill="rgba(0,180,83,${(.05 + r() * .09).toFixed(2)})"/>`; }
   let stars = ''; for (let i = 0; i < 40; i++) stars += `<circle cx="${(r() * 1000) | 0}" cy="${(r() * 720) | 0}" r="${(.6 + r() * 1.3).toFixed(1)}" fill="rgba(255,255,255,${(.2 + r() * .4).toFixed(2)})"/>`;
-  const paths = ZONES.map(z => `<path d="M${GATE.x} ${GATE.y} Q${(GATE.x + z.cx) / 2 + (z.cx < 500 ? -60 : 60)} ${(GATE.y + z.cy) / 2} ${z.cx} ${z.cy}" stroke="rgba(245,184,61,.22)" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="2 18"/>`).join('');
-  const blobs = ZONES.map(z => `<ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.sp * 4.6}" ry="${z.sp * 3.6}" fill="${z.c}" opacity=".1"/><text x="${z.cx}" y="${Math.max(34, z.cy - z.sp * 4.2)}" text-anchor="middle" class="zname" fill="${z.c}">${z.name}</text>`).join('');
-  return `<defs><radialGradient id="mg" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="#2a2760"/><stop offset="1" stop-color="#0f0d2b"/></radialGradient></defs><rect width="1000" height="720" fill="url(#mg)" rx="24"/>${stars}${trees}${paths}${blobs}` +
-    `<g transform="translate(${GATE.x},${GATE.y})"><rect x="-46" y="-18" width="92" height="34" rx="12" fill="#f5b83d"/><text y="6" text-anchor="middle" class="gate">ВХОД</text></g>`;
+  const paths = ZONES.map(z => `<path d="M${GATE.x} ${GATE.y} Q${(GATE.x + z.cx) / 2 + (z.cx < 500 ? -60 : 60)} ${(GATE.y + z.cy) / 2} ${z.cx} ${z.cy}" stroke="rgba(211,45,107,.28)" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="2 18"/>`).join('');
+  const blobs = ZONES.map(z => `<ellipse cx="${z.cx}" cy="${z.cy}" rx="${z.sp * 4.6}" ry="${z.sp * 3.6}" fill="${z.c}" opacity=".12"/><text x="${z.cx}" y="${Math.max(34, z.cy - z.sp * 4.2)}" text-anchor="middle" class="zname" fill="${z.c}">${z.name}</text>`).join('');
+  return `<defs><radialGradient id="mg" cx="50%" cy="45%" r="75%"><stop offset="0" stop-color="#EAF7FF"/><stop offset="1" stop-color="#CDEAFB"/></radialGradient></defs><rect width="1000" height="720" fill="url(#mg)" rx="24"/>${trees}${paths}${blobs}` +
+    `<g transform="translate(${GATE.x},${GATE.y})"><rect x="-46" y="-18" width="92" height="34" rx="17" fill="#D32D6B"/><text y="6" text-anchor="middle" class="gate">ВХОД</text></g>`;
 }
 function drawMap() {
   const svg = $('#fmap'); if (!svg || !UI.days.length) return;
@@ -37,7 +37,7 @@ function drawMap() {
     const st = statusOf(a, day, h), fav = topLoved.has(a.id);
     g += `<g class="node ${st.cls}" data-id="${a.id}" transform="translate(${p.x},${p.y})" tabindex="0" role="button" aria-label="${esc(a.name)}: ${st.label}">
       <title>${esc(a.name)} — ${st.label}${st.reason ? ': ' + esc(st.reason) : ''}</title>
-      ${fav ? '<circle r="20" fill="none" stroke="#f5b83d" stroke-width="2" stroke-dasharray="3 4" class="spin"/>' : ''}
+      ${fav ? '<circle r="20" fill="none" stroke="#D32D6B" stroke-width="2" stroke-dasharray="3 4" class="spin"/>' : ''}
       <circle r="15" fill="${STC[st.cls]}" stroke="#fff" stroke-width="2.5"/>
       <text class="ne" y="5" text-anchor="middle">${TYPE_EMOJI[a.type]}</text>
       ${st.cls === 'bad' ? '<text class="nx" y="-18" text-anchor="middle">🔧</text>' : ''}
