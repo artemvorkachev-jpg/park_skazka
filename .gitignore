@@ -12,3 +12,7 @@ claude_turn.json
 .claude/settings.local.json
 Thumbs.db
 .DS_Store
+Desktop.ini
+
+# служебные материалы анализа сайта (не для репозитория)
+_site_analysis/
