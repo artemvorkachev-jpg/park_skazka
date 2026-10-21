@@ -5,69 +5,92 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Хранитель Сказки — WIDE Hackathon team</title>
 <meta name="description" content="Кейс 09 «Парк «Сказка»»: онлайн-стратегия с ИИ-ведущим. Проблема, концепция игры, сайт, прототип и доказательства — одной страницей.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=PT+Root+UI:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/* Дизайн-система — см. DESIGN.md (стиль parkskazka.com) */
 :root{
-  --blue:#006EB7; --red:#E4013A; --orange:#F39200; --green:#76B729; --purple:#7B4FC4; --teal:#00A3AD;
-  --ink:#1F2A44; --muted:#6B7A90; --light:#EEF5FC; --white:#fff;
-  --night:#07070d; --night2:#12121c; --amber:#F39200;
-  --shadow:0 10px 30px rgba(31,78,121,.16); --r:22px;
+  --blue:#34B4E8;          /* мама Айя — навигация, вторичные акценты */
+  --accent:#D32D6B;        /* фирменная маджента — главный CTA */
+  --red:#FF2400;           /* брат Ика — предупреждения */
+  --green:#00B453;         /* папа Платон — успех */
+  --purple:#B882D0;        /* дочь Марта */
+  --teal:#39C2EA;          /* primary-50 */
+  --ink:#222222; --muted:#5A6572; --light:#E6F6FE; --white:#fff;
+  --sky:#9CD6EE; --beige:#FDEBBF; --pink:#FFC9E0; --lime:#D2F366;
+  --shadow-sm:0 2px 8px rgba(35,40,47,.10); --shadow:0 8px 24px rgba(35,40,47,.15); --shadow-lg:0 16px 40px rgba(35,40,47,.20);
+  --r:28px;
+  --disp:'Oswald','Bebas Neue','Arial Narrow',Impact,sans-serif;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:76px}
-body{margin:0;font:17px/1.55 Calibri,"Segoe UI",system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#dcecfa 0,#eaf4fc 40%,#f4f9fe 100%);-webkit-font-smoothing:antialiased}
-h1,h2,h3,h4{margin:0;line-height:1.12;font-weight:800}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;font:17px/1.55 'PT Root UI','Segoe UI',system-ui,sans-serif;color:var(--ink);background:#fff;-webkit-font-smoothing:antialiased}
+h1,h2{margin:0;line-height:1.08;font-family:var(--disp);font-weight:600}
+h3,h4{margin:0;line-height:1.25;font-weight:700}
 a{color:var(--blue)}
 img{max-width:100%;display:block}
 button{font:inherit;cursor:pointer}
-:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
-.mono{font-family:"Courier New",monospace;letter-spacing:.14em;text-transform:uppercase;font-weight:700;font-size:13px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.mono{font:700 13px/1.4 'PT Root UI','Segoe UI',sans-serif;letter-spacing:.14em;text-transform:uppercase}
 .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 
-/* ---------- верхняя панель с вехами ---------- */
-.nav{position:fixed;inset:0 0 auto 0;z-index:50;background:rgba(7,7,13,.82);backdrop-filter:blur(12px);color:#fff}
-.nav .wrap{display:flex;align-items:center;gap:14px;height:62px}
-.nav .brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-weight:800;white-space:nowrap}
+/* ---------- верхняя панель ---------- */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:var(--shadow-sm);color:var(--ink)}
+.nav .wrap{display:flex;align-items:center;gap:14px;height:64px;max-width:1280px}
+.nav .brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;font-weight:700;white-space:nowrap}
 .nav .brand img{width:38px;height:38px}
 .steps{display:flex;gap:2px;margin-left:auto;overflow:auto;scrollbar-width:none}
 .steps::-webkit-scrollbar{display:none}
-.steps a{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;color:#c9d3e3;text-decoration:none;font-size:14.5px;white-space:nowrap}
-.steps a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.14);font-size:12px}
-.steps a.on{background:#fff;color:var(--ink)}
-.steps a.on b{background:var(--orange);color:#fff}
-.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:14px;padding:13px 22px;font-weight:800;text-decoration:none;color:#fff;background:var(--blue);box-shadow:0 6px 18px rgba(0,110,183,.35)}
-.btn:hover{filter:brightness(1.1)}
-.btn.orange{background:var(--orange);color:#2a1700;box-shadow:0 6px 18px rgba(243,146,0,.35)}
-.btn.ghost{background:transparent;border:2px solid rgba(255,255,255,.55);box-shadow:none}
-.btn.small{padding:8px 14px;font-size:14px;border-radius:12px}
+.steps a{display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:100px;color:#45525C;text-decoration:none;font-size:13.5px;white-space:nowrap;transition:.25s}
+.steps a:hover{background:var(--light)}
+.steps a b{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:rgba(52,180,232,.16);color:var(--blue);font-size:12px}
+.steps a.on{background:var(--blue);color:#fff}
+.steps a.on b{background:#fff;color:var(--blue)}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:100px;padding:15px 38px;font:700 14px/1 'PT Root UI','Segoe UI',sans-serif;letter-spacing:.02em;text-transform:uppercase;text-decoration:none;color:#fff;background:var(--accent);box-shadow:0 8px 24px rgba(211,45,107,.35);transition:.3s}
+.btn:hover{filter:brightness(.94);transform:translateY(-2px)}
+.btn.blue{background:var(--blue);box-shadow:0 8px 24px rgba(52,180,232,.35)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:var(--shadow-sm)}
+.btn.ghost:hover{box-shadow:var(--shadow);filter:none}
+.btn.small{padding:10px 24px;font-size:13px}
 @media(max-width:860px){.nav .brand span{display:none}}
 
-/* ---------- hero (детектив) ---------- */
-.hero{position:relative;min-height:100svh;display:flex;align-items:center;color:#fff;background:#07070d url(img/bg_title.png) center/cover;overflow:hidden;isolation:isolate}
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,7,13,.92) 0,rgba(7,7,13,.55) 55%,rgba(7,7,13,.1) 100%);z-index:-1}
-.hero .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center;padding-top:90px;padding-bottom:50px}
-.hero .tagline{color:var(--orange);margin-bottom:16px}
-.hero h1{font-size:clamp(46px,8vw,108px);letter-spacing:-.01em}
-.hero .lead{font-size:clamp(18px,2.2vw,23px);max-width:34em;margin:20px 0 28px;color:#e6eef7}
-.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
-.motto{margin-top:30px;font-style:italic;font-size:20px;color:#fff}
-.motto b{color:var(--orange);font-style:normal}
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:100svh;display:flex;align-items:center;color:var(--ink);overflow:hidden;isolation:isolate;
+background:
+ radial-gradient(220px 70px at 12% 18%, rgba(255,255,255,.9), transparent 70%),
+ radial-gradient(180px 55px at 82% 12%, rgba(255,255,255,.75), transparent 70%),
+ radial-gradient(140px 45px at 45% 8%, rgba(255,255,255,.65), transparent 70%),
+ linear-gradient(180deg,#39C2EA 0%,#7DD4F2 55%,#BDE9FA 100%)}
+.hero::before{content:"";position:absolute;top:-80px;right:-70px;width:280px;height:280px;border-radius:50%;background:#FFE04D;opacity:.9;box-shadow:0 0 120px 60px rgba(255,224,77,.5);z-index:-1}
+.hero::after{content:"";position:absolute;left:-5%;right:-5%;bottom:-46px;height:110px;background:#fff;border-radius:50% 50% 0 0/100% 100% 0 0}
+.hero .wrap{position:relative;z-index:1;display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:center;padding-top:96px;padding-bottom:80px}
+.hero .tagline{color:#fff;margin-bottom:18px;text-shadow:0 1px 10px rgba(23,67,92,.35)}
+.hero h1{display:inline-block;font-size:clamp(50px,7.6vw,100px);line-height:1;text-transform:uppercase;color:#fff;background:var(--accent);padding:8px 34px 14px;border-radius:6px;transform:rotate(-1.2deg);box-shadow:var(--shadow);text-shadow:0 2px 0 rgba(0,0,0,.08)}
+.hero .lead{font-size:clamp(18px,2.2vw,22px);max-width:34em;margin:22px 0 28px;color:#17435C}
+.hero .cta{display:flex;flex-wrap:wrap;gap:14px}
+.motto{margin-top:30px;font-style:italic;font-size:19px;color:#17435C}
+.motto b{color:var(--accent);font-style:normal}
 .hero .chars{position:relative;height:min(560px,70vh)}
-.hero .chars img{position:absolute;bottom:0;filter:drop-shadow(0 12px 24px rgba(0,0,0,.5))}
+.hero .chars img{position:absolute;bottom:0;filter:drop-shadow(0 12px 24px rgba(23,67,92,.35))}
 .hero .chars .c1{left:0;height:92%}.hero .chars .c2{left:28%;height:80%}.hero .chars .c3{right:0;height:98%}
-.stamp{position:absolute;right:4%;top:6%;border:3px solid #ff4a6b;color:#ff4a6b;padding:8px 16px;transform:rotate(-9deg);font:700 20px "Courier New",monospace;letter-spacing:.1em;background:rgba(7,7,13,.4)}
-@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}.hero .chars{height:300px;order:-1}.hero::after{background:rgba(7,7,13,.75)}}
+.stamp{position:absolute;left:-2%;top:-12px;z-index:2;border:3px solid var(--red);color:var(--red);padding:8px 16px;transform:rotate(-9deg);font:700 20px 'Courier New',monospace;letter-spacing:.1em;background:rgba(255,255,255,.55);border-radius:6px}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}.hero .chars{height:300px;order:-1}}
 .facts{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
-.facts span{padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);font-size:14.5px}
+.facts span{padding:8px 18px;border-radius:100px;background:rgba(255,255,255,.78);font-size:14.5px;font-weight:500;color:#17435C}
 
-/* ---------- секции ---------- */
-section{padding:86px 0}
+/* ---------- секции-панели ---------- */
+section{padding:30px 0}
+#problem .wrap,#site .wrap,#proof .wrap{background:var(--sky);border-radius:48px;padding:64px 56px}
+#concept .wrap,#host .wrap{background:var(--beige);border-radius:48px;padding:64px 56px}
+@media(max-width:860px){#problem .wrap,#site .wrap,#proof .wrap,#concept .wrap,#host .wrap{border-radius:32px;padding:42px 22px}}
 .sec-head{max-width:760px;margin-bottom:34px}
-.sec-head .mono{color:var(--red);display:block;margin-bottom:10px}
-.sec-head h2{font-size:clamp(32px,4.6vw,52px);color:var(--blue)}
+.sec-head .mono{color:var(--accent);display:block;margin-bottom:10px}
+.sec-head h2{font-size:clamp(34px,4.6vw,54px);color:var(--ink)}
 .sec-head p{margin:14px 0 0;font-size:19px;color:var(--muted)}
-.vexa{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--orange);color:#fff;font-weight:800;font-size:22px;margin-right:12px;vertical-align:middle}
+.vexa{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;background:var(--blue);color:#fff;font:600 22px var(--disp);margin-right:12px;vertical-align:middle}
 .card{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);padding:26px}
-.grid{display:grid;gap:18px}
+.grid{display:grid;gap:20px}
 .g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
 @media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.g2,.g3,.g4{grid-template-columns:1fr}}
@@ -78,8 +101,8 @@ section{padding:86px 0}
 /* улики */
 .ev .mono{font-size:12px;margin-bottom:6px;display:block}
 .ev h3{font-size:22px;margin-bottom:8px}.ev p{margin:0;color:var(--muted);font-size:15.5px}
-.bignum{font-size:54px;font-weight:800;line-height:1}
-.bignum small{font-size:18px;color:var(--muted);font-weight:600;display:block;margin-top:8px}
+.bignum{font:600 54px/1 var(--disp)}
+.bignum small{font:500 17px/1.4 'PT Root UI',sans-serif;color:var(--muted);display:block;margin-top:10px}
 
 /* игра: ресурсы и зоны */
 .res{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -87,45 +110,45 @@ section{padding:86px 0}
 .res .card{text-align:center}
 .res .em{font-size:44px}
 .zones{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
-.zone{background:#fff;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
-.zone .ph{aspect-ratio:16/10;background:#cfe3f4 center/cover}
+.zone{background:#fff;border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+.zone .ph{aspect-ratio:16/10;background:#CFE9F7 center/cover}
 .zone .bd{padding:12px 14px 14px}
 .zone h4{font-size:18px}.zone p{margin:4px 0 0;font-size:14px;color:var(--muted)}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.chip{font-size:12.5px;padding:3px 9px;border-radius:999px;background:var(--light);font-weight:700}
-.loop{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;counter-reset:l}
+.chip{font-size:12.5px;padding:4px 12px;border-radius:100px;background:var(--light);color:#1E6E9E;font-weight:700}
+.loop{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:l}
 @media(max-width:820px){.loop{grid-template-columns:1fr 1fr}}
-.loop div{background:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow);position:relative}
-.loop div::before{counter-increment:l;content:counter(l);position:absolute;top:-14px;left:16px;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800}
+.loop div{background:#fff;border-radius:20px;padding:18px;box-shadow:var(--shadow);position:relative}
+.loop div::before{counter-increment:l;content:counter(l);position:absolute;top:-14px;left:16px;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
 .loop b{display:block;margin:6px 0 4px;font-size:18px}
 .loop span{font-size:14.5px;color:var(--muted)}
 
 /* демо-ход */
-.play{background:linear-gradient(160deg,#0c0c18,#1b1740);color:#fff;border-radius:28px;padding:28px;box-shadow:0 20px 50px rgba(7,7,13,.5)}
+.play{background:var(--light);border:1px solid #C9E4F5;color:var(--ink);border-radius:32px;padding:28px;box-shadow:var(--shadow)}
 .play .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
 .meters{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
 @media(max-width:620px){.meters{grid-template-columns:1fr}}
-.meter{background:rgba(255,255,255,.08);border-radius:16px;padding:12px 14px}
+.meter{background:#fff;border-radius:16px;padding:12px 14px;box-shadow:var(--shadow-sm)}
 .meter .lab{display:flex;justify-content:space-between;font-weight:700}
-.meter .bar{height:9px;border-radius:5px;background:rgba(255,255,255,.14);margin-top:8px;overflow:hidden}
+.meter .bar{height:9px;border-radius:5px;background:#E3EEF6;margin-top:8px;overflow:hidden}
 .meter .bar i{display:block;height:100%;width:50%;background:var(--green);transition:width .6s,background .3s}
 .host{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:start}
 .host img{width:90px}
-.bubble{background:#fff;color:var(--ink);border-radius:20px;padding:16px 18px;font-size:17px;min-height:70px}
+.bubble{background:#fff;color:var(--ink);border-radius:20px;padding:16px 18px;font-size:17px;min-height:70px;box-shadow:var(--shadow-sm)}
 .bubble b{color:var(--blue)}
 .opts{display:grid;gap:10px;margin-top:14px}
-.opt{text-align:left;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);color:#fff;border-radius:16px;padding:14px 16px;transition:.2s}
-.opt:hover:not(:disabled){background:rgba(255,255,255,.2);transform:translateY(-2px)}
+.opt{text-align:left;background:#fff;border:1.5px solid #D5E5F0;color:var(--ink);border-radius:100px;padding:13px 22px;transition:.2s}
+.opt:hover:not(:disabled){background:#F2FAFF;border-color:var(--blue);transform:translateY(-2px)}
 .opt:disabled{opacity:.55;cursor:default}
-.opt.pick{background:var(--orange);border-color:var(--orange);color:#2a1700;opacity:1}
+.opt.pick{background:var(--accent);border-color:var(--accent);color:#fff;opacity:1}
 .opt small{display:block;color:inherit;opacity:.8;margin-top:2px}
-.result{margin-top:14px;padding:14px 16px;border-radius:16px;background:rgba(118,183,41,.18);border:1px solid rgba(118,183,41,.5)}
-.demo-note{margin-top:14px;font-size:13.5px;color:#aab6ce}
+.result{margin-top:14px;padding:14px 18px;border-radius:20px;background:rgba(0,180,83,.12);border:1px solid rgba(0,180,83,.4)}
+.demo-note{margin-top:14px;font-size:13.5px;color:var(--muted)}
 
 /* сайт игры */
 .phones{display:flex;gap:18px;overflow:auto;padding:6px 4px 24px;scroll-snap-type:x mandatory}
 .phone{flex:0 0 auto;width:210px;scroll-snap-align:start}
-.phone .fr{background:#10121C;border:2px solid #3A3F52;border-radius:26px;padding:8px;box-shadow:var(--shadow)}
+.phone .fr{background:#fff;border:0;border-radius:26px;padding:8px;box-shadow:var(--shadow)}
 .phone img{border-radius:18px}
 .phone p{margin:10px 0 0;font-weight:700;text-align:center;font-size:15px}
 .rules li{margin:8px 0}
@@ -137,12 +160,12 @@ section{padding:86px 0}
 .msg{padding:12px 14px;border-radius:16px;margin:8px 0;font-size:16px}
 .msg.ai{background:var(--light);border-top-left-radius:4px}
 .msg.me{background:var(--blue);color:#fff;margin-left:48px;border-top-right-radius:4px}
-.status-tbl{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
-.status-tbl td,.status-tbl th{padding:12px 16px;text-align:left;border-bottom:1px solid #e3edf7;font-size:16px}
-.status-tbl th{background:var(--light);font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.pill{padding:3px 11px;border-radius:999px;font-weight:800;font-size:13px;white-space:nowrap}
-.pill.ok{background:#e3f4d0;color:#4a7a0e}.pill.wip{background:#ffe8c2;color:#8a5200}.pill.plan{background:#e7eefb;color:#2c5aa0}
-pre.prompt{background:#0c0c18;color:#cfe3ff;border-radius:18px;padding:18px;font:14px/1.55 "Courier New",monospace;overflow:auto;white-space:pre-wrap}
+.status-tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+.status-tbl td,.status-tbl th{padding:12px 16px;text-align:left;border-bottom:1px solid #E3EDF7;font-size:16px}
+.status-tbl th{background:var(--light);font:700 13px/1 'PT Root UI',sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#1E6E9E}
+.pill{padding:4px 13px;border-radius:100px;font-weight:700;font-size:13px;white-space:nowrap}
+.pill.ok{background:#D9F4E5;color:#015641}.pill.wip{background:#FFE0EF;color:#A3204F}.pill.plan{background:#E6F6FE;color:#1E6E9E}
+pre.prompt{background:#fff;color:#2A3A48;border:1px solid #E3EDF5;border-radius:20px;padding:18px;font:14px/1.55 'Courier New',monospace;overflow:auto;white-space:pre-wrap;box-shadow:var(--shadow-sm)}
 
 /* доказательство */
 .chart{background:#fff;border-radius:22px;padding:18px;box-shadow:var(--shadow)}
@@ -153,21 +176,24 @@ pre.prompt{background:#0c0c18;color:#cfe3ff;border-radius:18px;padding:18px;font
 /* трейлер */
 .story{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
 @media(max-width:900px){.story{grid-template-columns:repeat(2,1fr)}}
-.story div{background:#0c0c18;color:#fff;border-radius:16px;padding:16px;min-height:150px}
-.story b{display:block;color:var(--orange);font-family:"Courier New",monospace;margin-bottom:6px}
+.story div{background:#fff;color:var(--ink);border-radius:20px;padding:16px;min-height:150px;box-shadow:var(--shadow)}
+.story b{display:block;color:var(--accent);font:700 14px 'Courier New',monospace;margin-bottom:6px}
 
 /* команда / финал */
 .team{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
 @media(max-width:900px){.team{grid-template-columns:repeat(2,1fr)}}
-.member{background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:22px 14px;text-align:center}
+.member{background:#fff;border-radius:24px;box-shadow:var(--shadow);padding:22px 14px;text-align:center}
 .member .dot{margin:0 auto 12px;width:64px;height:64px;font-size:30px}
 .member b{font-size:22px;display:block}
 .member small{color:var(--muted)}
-.finale{background:#07070d url(img/bg_title.png) center/cover;color:#fff;text-align:center;position:relative;isolation:isolate}
-.finale::after{content:"";position:absolute;inset:0;background:rgba(7,7,13,.7);z-index:-1}
-.finale h2{font-size:clamp(40px,7vw,86px)}
-footer{background:#07070d;color:#9aa7bd;padding:30px 0;font-size:14px}
-footer a{color:#cfe3ff}
+.finale{background:linear-gradient(180deg,#FFE0EF,#FFC9E0);color:var(--ink);text-align:center;position:relative;isolation:isolate;margin-top:30px}
+.finale h2{font-size:clamp(44px,7vw,92px);color:var(--accent);text-transform:uppercase}
+.finale .mono{color:var(--blue)}
+.finale .btn{background:var(--blue);box-shadow:0 8px 24px rgba(52,180,232,.4)}
+.finale .motto{color:#7A4158}
+.finale .motto b{color:var(--accent)}
+footer{background:#fff;border-top:1px solid #E8EEF2;color:var(--muted);padding:30px 0;font-size:14px}
+footer a{color:var(--blue)}
 .src{font-size:13px;color:var(--muted);margin-top:14px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}.reveal{opacity:1;transform:none}}
 </style>
@@ -176,7 +202,7 @@ footer a{color:#cfe3ff}
 
 <header class="nav">
   <div class="wrap">
-    <a class="brand" href="#top"><img src="img/emblem_w.png" alt="WIDE"><span>Хранитель Сказки</span></a>
+    <a class="brand" href="#top"><img src="img/emblem.png" alt="WIDE"><span>Хранитель Сказки</span></a>
     <nav class="steps" id="steps" aria-label="Вехи проекта">
       <a href="#problem" data-s="problem"><b>1</b>Проблема</a>
       <a href="#concept" data-s="concept"><b>2</b>Концепция</a>
@@ -185,7 +211,7 @@ footer a{color:#cfe3ff}
       <a href="#proof" data-s="proof"><b>5</b>Доказательство</a>
       <a href="#team" data-s="team"><b>6</b>Команда</a>
     </nav>
-    <a class="btn orange small" href="../index.html#game">▶ Играть</a>
+    <a class="btn blue small" href="../index.html#game">▶ Играть</a>
   </div>
 </header>
 
@@ -197,7 +223,7 @@ footer a{color:#cfe3ff}
       <h1>ХРАНИТЕЛЬ<br>СКАЗКИ</h1>
       <p class="lead">Онлайн-стратегия о парке: стройте зоны, ухаживайте за животными, привлекайте гостей. На каждом ходу ИИ-ведущий Кот Баюн расскажет, что случилось в парке, предложит 2–3 решения и покажет последствия.</p>
       <div class="cta">
-        <a class="btn orange" href="../index.html#game">▶ Войти в игру</a>
+        <a class="btn blue" href="../index.html#game">▶ Войти в игру</a>
         <a class="btn ghost" href="#play">Сыграть демо-ход</a>
       </div>
       <div class="facts"><span>3–5 ходов</span><span>3 ресурса</span><span>Реальная погода и отметки в парке</span></div>
@@ -225,12 +251,12 @@ footer a{color:#cfe3ff}
     <div class="grid g4 reveal" style="margin-bottom:22px">
       <div class="card"><div class="bignum" style="color:var(--blue)" data-n="70" data-suf="+">0<small>развлечений на 9 гектарах</small></div></div>
       <div class="card"><div class="bignum" style="color:var(--green)" data-n="2016">0<small>год открытия, круглый год</small></div></div>
-      <div class="card"><div class="bignum" style="color:var(--orange)" data-n="7">0<small>тематических зон: динозавры, хаски, альпаки…</small></div></div>
+      <div class="card"><div class="bignum" style="color:var(--accent)" data-n="7">0<small>тематических зон: динозавры, хаски, альпаки…</small></div></div>
       <div class="card"><div class="bignum" style="color:var(--red)" data-n="1">0<small>день — столько длится контакт с парком</small></div></div>
     </div>
     <div class="grid g2">
       <div class="card ev reveal"><div class="dot" style="background:var(--red);margin-bottom:12px">💸</div><span class="mono" style="color:var(--red)">Улика №1</span><h3>Дорого</h3><p>Билет, еда и платная парковка — главные минусы в отзывах гостей.</p></div>
-      <div class="card ev reveal"><div class="dot" style="background:var(--orange);margin-bottom:12px">🚇</div><span class="mono" style="color:var(--orange)">Улика №2</span><h3>Далеко</h3><p>От метро «Крылатское» около 35 минут пешком; про бесплатный автобус надо знать заранее.</p></div>
+      <div class="card ev reveal"><div class="dot" style="background:var(--accent);margin-bottom:12px">🚇</div><span class="mono" style="color:var(--accent)">Улика №2</span><h3>Далеко</h3><p>От метро «Крылатское» около 35 минут пешком; про бесплатный автобус надо знать заранее.</p></div>
       <div class="card ev reveal"><div class="dot" style="background:var(--purple);margin-bottom:12px">🔁</div><span class="mono" style="color:var(--purple)">Улика №3</span><h3>Нет повода вернуться</h3><p>Гости пишут, что второй раз вряд ли поедут: «разовое удовольствие».</p></div>
       <div class="card ev reveal"><div class="dot" style="background:var(--blue);margin-bottom:12px">❓</div><span class="mono" style="color:var(--blue)">Улика №4</span><h3>Тёмные пятна</h3><p>Не видно, какой аттракцион не работает и почему; неочевидно, кому что подходит по росту.</p></div>
     </div>
@@ -239,7 +265,7 @@ footer a{color:#cfe3ff}
 </section>
 
 <!-- ======== 2. КОНЦЕПЦИЯ ======== -->
-<section id="concept" style="background:rgba(255,255,255,.55)">
+<section id="concept">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="mono">Веха 2 · Концепция игры</span>
@@ -277,7 +303,7 @@ footer a{color:#cfe3ff}
 
     <div id="play" style="margin-top:44px"></div>
     <div class="play reveal" id="game">
-      <div class="top"><div><span class="mono" style="color:var(--orange)">Сыграйте ход · демо по сценарию</span><h3 style="font-size:26px;margin-top:6px" id="turnTitle">Ход 1 из 3</h3></div><button class="btn ghost small" id="restart">↺ Заново</button></div>
+      <div class="top"><div><span class="mono" style="color:var(--accent)">Сыграйте ход · демо по сценарию</span><h3 style="font-size:26px;margin-top:6px" id="turnTitle">Ход 1 из 3</h3></div><button class="btn ghost small" id="restart">↺ Заново</button></div>
       <div class="meters">
         <div class="meter"><div class="lab"><span>💰 Монеты</span><b id="vCoin">100</b></div><div class="bar"><i id="bCoin"></i></div></div>
         <div class="meter"><div class="lab"><span>👥 Гости</span><b id="vGuest">40</b></div><div class="bar"><i id="bGuest"></i></div></div>
@@ -328,7 +354,7 @@ footer a{color:#cfe3ff}
 </section>
 
 <!-- ======== 4. ИИ-ВЕДУЩИЙ ======== -->
-<section id="host" style="background:rgba(255,255,255,.55)">
+<section id="host">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="mono">Веха 4 · Играбельный прототип</span>
@@ -378,7 +404,7 @@ footer a{color:#cfe3ff}
     <div class="grid g3 reveal" style="margin-bottom:26px">
       <div class="card"><div class="dot" style="background:var(--blue);margin-bottom:10px">🌦</div><h3>Реальная погода</h3><p style="color:var(--muted);margin:8px 0 0">Прогноз на 16 дней по часам и климат за 11 лет решают, какие события случатся в игре.</p></div>
       <div class="card"><div class="dot" style="background:var(--green);margin-bottom:10px">📍</div><h3>Бонус за визит</h3><p style="color:var(--muted);margin:8px 0 0">Отметка у настоящего аттракциона по геолокации даёт монеты. В «тихие» часы — ×3.</p></div>
-      <div class="card"><div class="dot" style="background:var(--orange);margin-bottom:10px">🐈</div><h3>Герои в парке</h3><p style="color:var(--muted);margin:8px 0 0">Идея: Кот Баюн встречает гостей на карточках в парке — QR открывает игру и награду.</p></div>
+      <div class="card"><div class="dot" style="background:var(--accent);margin-bottom:10px">🐈</div><h3>Герои в парке</h3><p style="color:var(--muted);margin:8px 0 0">Идея: Кот Баюн встречает гостей на карточках в парке — QR открывает игру и награду.</p></div>
     </div>
 
     <div class="grid g2" style="align-items:center">
@@ -389,14 +415,14 @@ footer a{color:#cfe3ff}
       </div>
       <div class="chart reveal">
         <svg id="chartSvg" viewBox="0 0 520 300" role="img" aria-label="График загрузки: суббота и среда"></svg>
-        <div class="legend"><span><i style="background:var(--orange)"></i>Суббота, 24 октября</span><span><i style="background:var(--blue)"></i>Среда, 21 октября</span></div>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Суббота, 24 октября</span><span><i style="background:var(--blue)"></i>Среда, 21 октября</span></div>
       </div>
     </div>
 
     <h3 class="reveal" style="margin:40px 0 14px">Честно: настоящее и демо</h3>
     <div class="grid g2 reveal">
-      <div class="card" style="background:#EAF6DD"><h3 style="color:#4a7a0e">Настоящее</h3><ul style="margin:10px 0 0;padding-left:20px"><li>Прогноз погоды (Open-Meteo)</li><li>Геолокация, спутник, ссылки в 2ГИС</li><li>Фото, названия, цены «от», рост — с сайта парка</li></ul></div>
-      <div class="card" style="background:#FFF4E0"><h3 style="color:#8a5200">Демо</h3><ul style="margin:10px 0 0;padding-left:20px"><li>Ремонты, голоса, стартовый рейтинг</li><li>Оценка очередей — модель</li><li>Награды — механика без условий парка</li></ul></div>
+      <div class="card" style="background:#D9F4E5"><h3 style="color:#015641">Настоящее</h3><ul style="margin:10px 0 0;padding-left:20px"><li>Прогноз погоды (Open-Meteo)</li><li>Геолокация, спутник, ссылки в 2ГИС</li><li>Фото, названия, цены «от», рост — с сайта парка</li></ul></div>
+      <div class="card" style="background:#FFE0EF"><h3 style="color:#A3204F">Демо</h3><ul style="margin:10px 0 0;padding-left:20px"><li>Ремонты, голоса, стартовый рейтинг</li><li>Оценка очередей — модель</li><li>Награды — механика без условий парка</li></ul></div>
     </div>
 
     <h3 class="reveal" style="margin:40px 0 8px">Видеотрейлер игры (до 1 минуты)</h3>
@@ -412,7 +438,7 @@ footer a{color:#cfe3ff}
 </section>
 
 <!-- ======== 6. КОМАНДА ======== -->
-<section id="team" style="background:rgba(255,255,255,.55)">
+<section id="team">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="mono">Веха 6 · Команда</span>
@@ -422,7 +448,7 @@ footer a{color:#cfe3ff}
     <div class="team reveal">
       <div class="member"><div class="dot" style="background:var(--blue)">🕵</div><b>Сергей</b><small>участник группы</small></div>
       <div class="member"><div class="dot" style="background:var(--red)">🕵</div><b>Николай</b><small>участник группы</small></div>
-      <div class="member"><div class="dot" style="background:var(--orange)">🕵</div><b>Артем</b><small>участник группы</small></div>
+      <div class="member"><div class="dot" style="background:var(--accent)">🕵</div><b>Артем</b><small>участник группы</small></div>
       <div class="member"><div class="dot" style="background:var(--green)">🕵</div><b>Глеб</b><small>участник группы</small></div>
       <div class="member"><div class="dot" style="background:var(--purple)">🕵</div><b>Кирилл</b><small>участник группы</small></div>
     </div>
@@ -431,10 +457,10 @@ footer a{color:#cfe3ff}
 
 <section class="finale">
   <div class="wrap">
-    <div class="mono" style="color:var(--orange);margin-bottom:12px">Дело закрыто</div>
+    <div class="mono" style="color:var(--blue);margin-bottom:12px">Дело закрыто</div>
     <h2>ДЕЛО РАСКРЫТО</h2>
     <p style="font-size:21px;max-width:30em;margin:18px auto 26px">Парк «Сказка» получает не просто сайт, а игру, которая объясняет, развлекает и собирает данные.</p>
-    <a class="btn orange" href="../index.html#game">▶ Войти в игру</a>
+    <a class="btn blue" href="../index.html#game">▶ Войти в игру</a>
     <p class="motto" style="margin-top:28px"><b>Наши идеи сегодня делают будущее завтра</b></p>
   </div>
 </section>
@@ -473,7 +499,7 @@ const A = window.ATTRACTIONS || [];
 document.getElementById('zones').innerHTML = ZONES.map(([name, title, chips]) => {
   const a = A.find(x => x.name === name);
   return `<div class="zone reveal"><div class="ph" style="${a ? `background-image:url('${a.img}')` : ''}"></div><div class="bd"><h4>${title}</h4><p>Реальная зона парка</p><div class="chips">${chips.map(c => `<span class="chip">${c}</span>`).join('')}</div></div></div>`;
-}).join('') + `<div class="zone reveal"><div class="ph" style="background:linear-gradient(135deg,#76B729,#2e7d32);display:grid;place-items:center;font-size:54px">🌿</div><div class="bd"><h4>Парк «Айва»</h4><p>Зелёные скульптуры — зона из описания кейса</p><div class="chips"><span class="chip">+настроение</span><span class="chip">от 25 💰</span></div></div></div>`;
+}).join('') + `<div class="zone reveal"><div class="ph" style="background:linear-gradient(135deg,#00B453,#015641);display:grid;place-items:center;font-size:54px">🌿</div><div class="bd"><h4>Парк «Айва»</h4><p>Зелёные скульптуры — зона из описания кейса</p><div class="chips"><span class="chip">+настроение</span><span class="chip">от 25 💰</span></div></div></div>`;
 document.querySelectorAll('#zones .zone').forEach(z => rv.observe(z));
 
 /* ---------- демо-ходы (сценарий) ---------- */
@@ -497,7 +523,7 @@ const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 function meters() {
   $('#vCoin').textContent = R.c; $('#vGuest').textContent = R.g; $('#vMood').textContent = R.m;
   $('#bCoin').style.width = clamp(R.c / 2, 0, 100) + '%'; $('#bGuest').style.width = clamp(R.g / 2, 0, 100) + '%'; $('#bMood').style.width = clamp(R.m, 0, 100) + '%';
-  $('#bMood').style.background = R.m < 40 ? '#E4013A' : R.m < 65 ? '#F39200' : '#76B729';
+  $('#bMood').style.background = R.m < 40 ? '#FF2400' : R.m < 65 ? '#D32D6B' : '#00B453';
 }
 function turn() {
   meters(); const T = TURNS[R.i];
@@ -515,7 +541,7 @@ $('#opts').addEventListener('click', e => {
   const last = R.i === TURNS.length - 1, win = R.g >= 100 && R.m >= 70;
   $('#result').hidden = false;
   $('#result').innerHTML = `<b>Последствия:</b> ${o[3]}<br>💰 ${d.c >= 0 ? '+' : ''}${d.c} · 👥 ${d.g >= 0 ? '+' : ''}${d.g} · 😊 ${d.m >= 0 ? '+' : ''}${d.m}` +
-    (last ? `<br><br><b>Итог демо-дня:</b> ${R.g} гостей, настроение ${R.m}%. ${win ? '🏆 Вы — Хранитель Сказки!' : 'Хороший день! Для титула нужны 100+ гостей и настроение от 70% — сыграйте ещё раз.'}` : `<br><br><button class="btn orange small" id="next">Дальше →</button>`);
+    (last ? `<br><br><b>Итог демо-дня:</b> ${R.g} гостей, настроение ${R.m}%. ${win ? '🏆 Вы — Хранитель Сказки!' : 'Хороший день! Для титула нужны 100+ гостей и настроение от 70% — сыграйте ещё раз.'}` : `<br><br><button class="btn blue small" id="next">Дальше →</button>`);
   const n = $('#next'); if (n) n.onclick = () => { R.i++; turn(); };
 });
 $('#restart').onclick = () => { Object.assign(R, { c: 100, g: 40, m: 60, i: 0 }); turn(); };
@@ -526,10 +552,10 @@ turn();
   const sat = [29, 49, 69, 87, 99, 100, 92, 74, 67, 58, 44, 29], wed = [6, 9, 16, 23, 29, 33, 35, 30, 25, 14, 8, 5];
   const W = 520, H = 300, L = 40, Rr = 12, T = 14, B = 34, x = i => L + i * (W - L - Rr) / 11, y = v => T + (100 - v) * (H - T - B) / 100;
   let s = '';
-  for (let v = 0; v <= 100; v += 25) s += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#e3edf7"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#6B7A90">${v}</text>`;
-  for (let i = 0; i < 12; i += 1) s += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" font-size="12" fill="#6B7A90">${10 + i}</text>`;
+  for (let v = 0; v <= 100; v += 25) s += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="#E3EDF7"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="12" fill="#5A6572">${v}</text>`;
+  for (let i = 0; i < 12; i += 1) s += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" font-size="12" fill="#5A6572">${10 + i}</text>`;
   const path = (arr, c) => `<polyline fill="none" stroke="${c}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" points="${arr.map((v, i) => x(i) + ',' + y(v)).join(' ')}"/>` + arr.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${c}"/>`).join('');
-  s += path(wed, '#006EB7') + path(sat, '#F39200') + `<text x="${x(5)}" y="${y(100) - 8}" text-anchor="middle" font-size="13" font-weight="700" fill="#F39200">пик 15:00 — 100%</text>`;
+  s += path(wed, '#34B4E8') + path(sat, '#D32D6B') + `<text x="${x(5)}" y="${y(100) - 8}" text-anchor="middle" font-size="13" font-weight="700" fill="#D32D6B">пик 15:00 — 100%</text>`;
   document.getElementById('chartSvg').innerHTML = s;
 })();
 </script>

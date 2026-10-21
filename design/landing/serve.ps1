@@ -19,7 +19,7 @@ $mime = @{
 try {
   while ($listener.IsListening) {
     $ctx = $listener.GetContext()
-    $path = $ctx.Request.Url.AbsolutePath
+    $path = [System.Uri]::UnescapeDataString($ctx.Request.Url.AbsolutePath)
     if ($path -eq '/') { $path = '/design/landing/index.html' }
     $file = Join-Path $root ($path -replace '/', '\')
     $res = $ctx.Response
