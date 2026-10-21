@@ -3,20 +3,26 @@
 Сервер игры «Хранитель Сказки»: отдаёт сайт и связывает его с ИИ-ведущим (Кот Баюн).
 
 Запуск:   python server.py            (сайт откроется на http://localhost:5173)
-Ключ ИИ:  переменная окружения HOST_API_KEY (или OPENAI_API_KEY)
-          либо файл host_key.txt рядом с этой программой (одна строка с ключом).
-Ключ нигде не печатается и не отдаётся браузеру. Без ключа игра работает с резервным ведущим.
+ИИ-ведущий (по порядку):
+  1) ключ API: переменная окружения HOST_API_KEY (или OPENAI_API_KEY) либо файл host_key.txt рядом (одна строка);
+  2) консольный Claude (программа claude, под вашей учётной записью, без отдельного ключа);
+  3) резервный ведущий в браузере (без ИИ).
+Ключ нигде не печатается и не отдаётся браузеру.
 
 Необязательно:
   HOST_MODEL     модель (по умолчанию gpt-4.1-mini, запасная gpt-4o-mini)
   HOST_API_BASE  адрес совместимого API (по умолчанию https://api.openai.com/v1)
+  HOST_CLAUDE_MODEL  модель консольного Claude (по умолчанию haiku — быстрая)
   HOST_MOCK=1    пробный режим: возвращает готовые ответы, без внешнего ИИ (для проверки связки)
   PORT           порт (по умолчанию 5173)
 """
 import json
 import os
 import re
+import shutil
 import socket
+import subprocess
+import tempfile
 import sys
 import threading
 import urllib.error
@@ -28,6 +34,8 @@ PORT = int(os.environ.get('PORT', '5173'))
 API_BASE = os.environ.get('HOST_API_BASE', 'https://api.openai.com/v1').rstrip('/')
 MODELS = [m for m in [os.environ.get('HOST_MODEL'), 'gpt-4.1-mini', 'gpt-4o-mini'] if m]
 MOCK = os.environ.get('HOST_MOCK') == '1'
+CLAUDE_MODEL = os.environ.get('HOST_CLAUDE_MODEL', 'haiku')
+CLAUDE_BIN = shutil.which('claude')
 HIDDEN = {'host_key.txt', 'server.py'}
 
 SYSTEM = """Ты — Кот Баюн, добрый и находчивый ведущий онлайн-стратегии «Хранитель Сказки» о парке развлечений «Сказка» (Москва, Крылатское).
@@ -36,7 +44,7 @@ SYSTEM = """Ты — Кот Баюн, добрый и находчивый ве�
 
 Правила ответа:
 - Отвечай ТОЛЬКО одним JSON-объектом, без пояснений и без markdown.
-- Пиши по-русски, тепло и коротко: рассказ — 2–3 предложения, последствия — 2–3 предложения.
+- Пиши по-русски, тепло и коротко: рассказ — 2 предложения, последствия — 2 предложения, подсказка к варианту — до 12 слов.
 - Используй только факты из переданных данных (погода, названия зон и аттракционов, статусы). Не выдумывай цены, акции и факты о парке.
 - Реальная погода из данных обязательно влияет на события. Если аттракцион остановлен — объясняй причину и срок.
 - Новые зоны предлагай только из списка «available» (поле build = id зоны), цена строго как в списке.
@@ -47,6 +55,7 @@ SYSTEM = """Ты — Кот Баюн, добрый и находчивый ве�
 {"consequence":"<что получилось после прошлого решения; для первого хода пустая строка>",
  "story":"<что происходит в парке сейчас>",
  "options":[{"label":"<до 60 символов>","hint":"<одно предложение о рисках и выгоде>","cost":0,"earn":0,"guests":0,"mood":0,"build":null}]}
+ВАЖНО: в mode = "start" и "turn" ВСЕГДА возвращай story и options — даже на последнем, 5-м ходу. Итог дня (epilogue, title) — только в mode = "final".
 Формат для итога (mode = "final"):
 {"consequence":"<последствия последнего решения>","epilogue":"<итог дня: 2–3 предложения>","title":"<звание игроку, 2–4 слова>"}
 В mode = "turn" и "final" опирайся на поле last.applied: это ФАКТИЧЕСКИЕ изменения ресурсов, не меняй их и не противоречь им."""
@@ -76,10 +85,28 @@ def mock_reply(ctx):
     return {'consequence': '' if mode == 'start' else '[пробный режим] Решение принято, гости заметили перемены.', 'story': '[пробный режим] Ход ' + str(ctx.get('turn')) + ': в парке оживлённо.', 'options': opts}
 
 
+def engine_name():
+    if MOCK:
+        return 'mock'
+    if read_key():
+        return 'api'
+    if CLAUDE_BIN:
+        return 'claude'
+    return None
+
+
 def call_ai(ctx):
     key = read_key()
     last_err = 'нет ключа'
     if not key:
+        if CLAUDE_BIN:
+            for attempt in (1, 2):                                # одна повторная попытка, если ответ вышел кривым
+                try:
+                    return call_claude(ctx)
+                except (RuntimeError, ValueError) as e:
+                    sys.stderr.write('Claude, попытка %d: %s\n' % (attempt, e))
+                    if attempt == 2:
+                        raise RuntimeError(str(e))
         raise RuntimeError('no_key')
     for model in MODELS:
         body = json.dumps({
@@ -105,6 +132,53 @@ def call_ai(ctx):
             last_err = type(e).__name__
             break
     raise RuntimeError(last_err)
+
+
+_sys_file = None
+
+
+def system_file():
+    """Системный промпт кладём во временный файл: так русский текст не портится при запуске программы на Windows."""
+    global _sys_file
+    if _sys_file and os.path.isfile(_sys_file):
+        return _sys_file
+    fd, p = tempfile.mkstemp(prefix='baiun_', suffix='.txt')
+    with os.fdopen(fd, 'w', encoding='utf-8') as f:
+        f.write(SYSTEM)
+    _sys_file = p
+    return p
+
+
+def empty_mcp():
+    p = os.path.join(tempfile.gettempdir(), 'baiun_mcp.json')
+    if not os.path.isfile(p):
+        with open(p, 'w', encoding='utf-8') as f:
+            f.write('{"mcpServers":{}}')
+    return p
+
+
+def call_claude(ctx):
+    """Кот Баюн через консольный Claude: запрос идёт по stdin, tools отключены, сессия не сохраняется."""
+    cmd = [CLAUDE_BIN, '-p', '--output-format', 'json', '--no-session-persistence', '--tools', '', '--model', CLAUDE_MODEL, '--system-prompt-file', system_file(),
+           '--strict-mcp-config', '--mcp-config', empty_mcp(), '--disable-slash-commands']          # без лишних плагинов — быстрее старт
+    env = dict(os.environ, MAX_THINKING_TOKENS='0')                                                # без долгих размышлений: ход за ~10 секунд
+    try:
+        r = subprocess.run(cmd, input=json.dumps(ctx, ensure_ascii=False), capture_output=True, text=True, encoding='utf-8', timeout=90, cwd=tempfile.gettempdir(), env=env)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError('claude: таймаут')
+    except OSError as e:
+        raise RuntimeError('claude: ' + type(e).__name__)
+    if r.returncode != 0:
+        raise RuntimeError('claude: код %s' % r.returncode)
+    try:
+        outer = json.loads(r.stdout)
+        text = outer.get('result', '') if isinstance(outer, dict) else r.stdout
+    except ValueError:
+        text = r.stdout
+    m = re.search(r'\{.*\}', text, re.S)
+    if not m:
+        raise RuntimeError('claude: нет JSON в ответе')
+    return json.loads(m.group(0), strict=False)
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -134,7 +208,8 @@ class Handler(SimpleHTTPRequestHandler):
         if os.path.basename(path) in HIDDEN:
             return self._json(404, {'error': 'not found'})
         if path == '/api/health':
-            return self._json(200, {'ai': bool(read_key()) or MOCK, 'mock': MOCK, 'model': MODELS[0]})
+            e = engine_name()
+            return self._json(200, {'ai': bool(e), 'mock': MOCK, 'engine': e, 'model': CLAUDE_MODEL if e == 'claude' else MODELS[0]})
         return super().do_GET()
 
     def do_POST(self):
@@ -150,6 +225,7 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             return self._json(200, {'ok': True, 'data': call_ai(ctx)})
         except RuntimeError as e:
+            sys.stderr.write('Ведущий недоступен: %s\n' % e)
             return self._json(200, {'ok': False, 'error': str(e)})
 
 
@@ -172,7 +248,7 @@ if __name__ == '__main__':
     b = serve(Server6, '::1')
     if not a and not b:
         sys.exit('Не удалось занять порт %d: он уже занят другой программой.' % PORT)
-    state = 'пробный режим (без ИИ)' if MOCK else ('ключ найден' if read_key() else 'ключа нет — будет резервный ведущий')
+    state = {'mock': 'пробный режим (без ИИ)', 'api': 'ключ API найден', 'claude': 'консольный Claude (модель %s)' % CLAUDE_MODEL, None: 'нет ключа и Claude — будет резервный ведущий'}[engine_name()]
     print('Хранитель Сказки: http://localhost:%d  |  ИИ-ведущий: %s' % (PORT, state), flush=True)
     try:
         threading.Event().wait()

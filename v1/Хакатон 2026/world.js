@@ -139,6 +139,7 @@ function doCheckin(a) {
   if (st.k !== 'ok') return { ok: false, msg: `«${a.name}» сейчас не работает: ${st.reason}. ${st.eta ? st.eta[0].toUpperCase() + st.eta.slice(1) + '.' : ''}`, st };
   if (!S.demo) {
     if (!UI.user) return { ok: false, msg: 'Сначала определите положение (кнопка «Где я?» на карте) или включите демо-режим.' };
+    if (UI.user.src && UI.user.src !== 'gps') return { ok: false, msg: 'Для отметки нужно точное положение: разрешите геолокацию в браузере или включите демо-режим.' };
     if (UI.user.dist > RADIUS_M) return { ok: false, msg: `Вы в ${(UI.user.dist / 1000).toFixed(1)} км от парка. Отметка работает в радиусе ${RADIUS_M} м.` };
   }
   if (S.checkins.some(c => c.id === a.id && c.ds === day.ds)) return { ok: false, msg: 'Сегодня вы здесь уже отмечались.' };

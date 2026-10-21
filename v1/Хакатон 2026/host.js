@@ -13,19 +13,19 @@ const GZ = [
 ];
 const GTURNS = [10, 12, 14, 16, 19];
 const GOAL = { guests: 120, mood: 70 };
-const GQ = { busy: false, ai: null, mock: false };
+const GQ = { busy: false, ai: null, mock: false, engine: null };
 const sgn = n => (n > 0 ? '+' : '') + n;
 const zoneById = id => GZ.find(z => z.id === id);
 const gi = n => Math.max(0, Math.round(+n || 0));
 
 /* ---------- связь с сервером ---------- */
 async function gameHealth() {
-  try { const r = await fetch('/api/health', { cache: 'no-store' }); const j = await r.json(); GQ.ai = !!j.ai; GQ.mock = !!j.mock; } catch { GQ.ai = false; }
+  try { const r = await fetch('/api/health', { cache: 'no-store' }); const j = await r.json(); GQ.ai = !!j.ai; GQ.mock = !!j.mock; GQ.engine = j.engine || null; } catch { GQ.ai = false; }
   if (UI.screen === 'game') renderGame();
 }
 async function askHost(ctx) {
   if (GQ.ai === false) return null;
-  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 45000);
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 70000);
   try {
     const r = await fetch('/api/host', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ctx), signal: ctl.signal });
     const j = await r.json(); return j.ok ? j.data : null;
@@ -46,7 +46,8 @@ function gCtx(mode, g, last) {
   return {
     mode, turn: g.turn, totalTurns: 5, date: longDate(selDay().date), time: pad(h) + ':00', weather: gWeather(h), stoppedRides: gStopped(h),
     state: { coins: g.coins, guests: g.guests, mood: g.mood, built: g.built.map(id => zoneById(id).name), available: GZ.filter(z => !g.built.includes(z.id)).map(z => ({ id: z.id, name: z.name, cost: z.cost, note: z.animals ? 'животные: нужен уход' : 'без животных' })) },
-    goal: GOAL, last: last || null
+    goal: GOAL, last: last || null,
+    instruction: mode === 'final' ? 'Игра окончена. Верни JSON итога: consequence, epilogue, title.' : 'Игра ещё идёт, даже если это последний ход. Верни JSON хода: consequence, story и options (2–3 варианта). Итог дня НЕ подводи.'
   };
 }
 
@@ -64,6 +65,9 @@ function cleanTurn(d, g) {
   if (opts.length < 2) return null;
   return { consequence: String(d.consequence || '').slice(0, 500), story: d.story.slice(0, 600), options: opts };
 }
+
+// если ИИ вернул неподходящий ответ — пробуем ещё раз, и только потом берём резервного ведущего
+async function askTurn(ctx, g) { for (let i = 0; i < 2; i++) { const r = cleanTurn(await askHost(ctx), g); if (r) return r; if (GQ.ai === false) break; } return null; }
 
 /* ---------- резервный ведущий (если нет ключа или связи) ---------- */
 function offlineTurn(g, last) {
@@ -123,7 +127,7 @@ async function gameStart() {
   if (GQ.busy) return;
   const g = { turn: 1, coins: 100, guests: 40, mood: 60, built: [], log: [], cur: null, done: false, final: null, date: selDay().ds, engine: 'offline' };
   S.game = g; save(); GQ.busy = true; renderGame();
-  const ai = cleanTurn(await askHost(gCtx('start', g, null)), g);
+  const ai = await askTurn(gCtx('start', g, null), g);
   g.cur = ai || offlineTurn(g, null); g.engine = ai ? 'ai' : 'offline';
   GQ.busy = false; save(); renderGame(true);
 }
@@ -149,7 +153,7 @@ async function gameChoose(k) {
     return;
   }
   g.turn += 1;
-  const ai = cleanTurn(await askHost(gCtx('turn', g, last)), g);
+  const ai = await askTurn(gCtx('turn', g, last), g);
   const next = ai || offlineTurn(g, last);
   g.engine = ai ? 'ai' : 'offline'; g.log[g.log.length - 1].consequence = next.consequence; g.cur = next;
   GQ.busy = false; save(); renderGame(true);
@@ -165,7 +169,7 @@ function meter(label, e, v, max, goal, cls) {
 }
 function renderGame(animate) {
   const root = $('#gameRoot'); if (!root) return;
-  const g = S.game, eng = GQ.ai === false ? ['off', '🐈 Резервный ведущий (без ИИ)'] : GQ.ai ? ['on', GQ.mock ? '🧪 Пробный режим ведущего' : '✨ ИИ-ведущий онлайн'] : ['off', '…проверяю связь'];
+  const g = S.game, eng = GQ.ai === false ? ['off', '🐈 Резервный ведущий (без ИИ)'] : GQ.ai ? ['on', GQ.mock ? '🧪 Пробный режим ведущего' : GQ.engine === 'claude' ? '✨ ИИ-ведущий: Claude' : '✨ ИИ-ведущий онлайн'] : ['off', '…проверяю связь'];
   const day = selDay();
   if (!g) {
     const w = gWeather(12);
@@ -182,7 +186,7 @@ function renderGame(animate) {
   const dots = [1, 2, 3, 4, 5].map(n => `<i class="${g.done || n < g.turn ? 'done' : n === g.turn ? 'now' : ''}">${n}</i>`).join('');
   const built = g.built.length ? g.built.map(id => `<span class="bz" title="${zoneById(id).name}">${zoneById(id).e}</span>`).join('') : '<span class="fineprint">Пока ничего не построено</span>';
   let body = '';
-  if (GQ.busy) body = `<div class="g-think"><div class="g-cat sm">🐈</div><div class="dots"><i></i><i></i><i></i></div><p>Кот Баюн думает…</p></div>`;
+  if (GQ.busy) body = `<div class="g-think"><div class="g-cat sm">🐈</div><div class="dots"><i></i><i></i><i></i></div><p>Кот Баюн думает…${GQ.ai ? ' ИИ отвечает около 10 секунд' : ''}</p></div>`;
   else if (g.done) {
     const f = g.final;
     body = `<div class="g-end ${f.win ? 'win' : ''}"><div class="g-title">${f.win ? '🏆' : '🌙'} ${esc(f.title)}</div>

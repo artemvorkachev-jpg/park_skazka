@@ -1,0 +1,14 @@
+# секреты — никогда не отправлять в репозиторий
+host_key.txt
+.env
+.wide_images.json
+*.key
+
+# мусор и временные файлы
+__pycache__/
+*.pyc
+node_modules/
+claude_turn.json
+.claude/settings.local.json
+Thumbs.db
+.DS_Store

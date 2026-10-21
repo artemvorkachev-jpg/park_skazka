@@ -204,13 +204,15 @@ function haversine(a, b, c, d) { const R = 6371000, r = x => x * Math.PI / 180, 
 function initMap() {
   if (!window.L) { $('#leaflet').innerHTML = '<p style="padding:20px">Карта не загрузилась.</p>'; return; }
   const map = L.map('leaflet', { scrollWheelZoom: false }).setView([PARK.lat, PARK.lon], 16);
-  const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
+  // у OpenStreetMap и CARTO плитки без ключа не отдаются, поэтому схему берём у Esri (как и спутник)
+  const osm = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri World Street Map' });
   const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri World Imagery' });
   sat.addTo(map);
   L.control.layers({ 'Спутник': sat, 'Схема': osm }, null, { collapsed: false }).addTo(map);
   L.circle([PARK.lat, PARK.lon], { radius: RADIUS_M, color: '#f5b83d', weight: 2, fillOpacity: .08 }).addTo(map);
   const icon = L.divIcon({ html: '<div style="font-size:34px;filter:drop-shadow(0 2px 4px #0008)">🎡</div>', className: '', iconSize: [34, 34], iconAnchor: [17, 30] });
   L.marker([PARK.lat, PARK.lon], { icon }).addTo(map).bindPopup(`<b>${PARK.name}</b><br>${PARK.addr}`);
+  map.on('click', e => { if (!UI.pick) return; UI.pick = false; $('#geoPick').classList.remove('on'); map.getContainer().style.cursor = ''; setUser(e.latlng.lat, e.latlng.lng, 'manual'); });
   UI.map = map;
 }
 function updateGis() {
@@ -218,25 +220,61 @@ function updateGis() {
   $('#gis').href = `https://2gis.ru/moscow?m=${to}%2F16`;
   $('#gisRoute').href = UI.user ? `https://2gis.ru/moscow/directions/points/${UI.user.lon}%2C${UI.user.lat}%7C${to}` : `https://2gis.ru/moscow/directions/points/%7C${to}`;
 }
-function onPosition(p) {
-  const { latitude: lat, longitude: lon, accuracy } = p.coords, dist = haversine(lat, lon, PARK.lat, PARK.lon);
-  UI.user = { lat, lon, dist, accuracy };
+// положение: src = 'gps' (точное, из браузера), 'ip' (примерно, по адресу сети) или 'manual' (указано на карте)
+function setUser(lat, lon, src, accuracy) {
+  const dist = haversine(lat, lon, PARK.lat, PARK.lon);
+  UI.user = { lat, lon, dist, accuracy, src };
   const km = dist / 1000, inPark = dist <= RADIUS_M;
-  $('#geoStatus').innerHTML = inPark ? `✅ Вы в парке (${Math.round(dist)} м от центра). Можно отмечаться!` :
-    `До парка <b>${km < 10 ? km.toFixed(1) : Math.round(km)} км</b>. Пешком ~${Math.round(km / 4.8 * 60)} мин, на авто ~${Math.max(5, Math.round(km / 24 * 60))} мин (без пробок).`;
+  const how = { gps: '', ip: ' <span class="geo-tag">примерно, по сети: точность до города</span>', manual: ' <span class="geo-tag">указано вручную</span>' }[src];
+  $('#geoStatus').innerHTML = (inPark && src === 'gps') ? `✅ Вы в парке (${Math.round(dist)} м от центра). Можно отмечаться!` :
+    (km > 100 ? `До парка <b>${Math.round(km)} км</b> — вы далеко от Москвы.${how}` : `До парка <b>${km < 10 ? km.toFixed(1) : Math.round(km)} км</b>. Пешком ~${Math.round(km / 4.8 * 60)} мин, на авто ~${Math.max(5, Math.round(km / 24 * 60))} мин (без пробок).${how}`);
   if (UI.map) {
     if (UI.userMarker) UI.userMarker.setLatLng([lat, lon]); else UI.userMarker = L.circleMarker([lat, lon], { radius: 9, color: '#fff', weight: 3, fillColor: '#1f6feb', fillOpacity: 1 }).addTo(UI.map).bindPopup('Вы здесь');
     if (!inPark) UI.map.fitBounds([[lat, lon], [PARK.lat, PARK.lon]], { padding: [40, 40], maxZoom: 16 });
   }
   updateGis(); say(autoLine());
 }
-$('#geoBtn').addEventListener('click', () => {
-  if (!navigator.geolocation) { $('#geoStatus').textContent = 'Браузер не поддерживает геолокацию.'; return; }
-  $('#geoStatus').textContent = 'Определяю положение…';
-  if (UI.watch) navigator.geolocation.clearWatch(UI.watch);
-  UI.watch = navigator.geolocation.watchPosition(onPosition, err => {
-    $('#geoStatus').textContent = err.code === 1 ? 'Доступ к геолокации запрещён. Разрешите его в браузере или включите демо-режим.' : 'Не удалось определить положение. Попробуйте ещё раз или включите демо-режим.';
-  }, { enableHighAccuracy: true, maximumAge: 15000, timeout: 20000 });
+function onPosition(p) { setUser(p.coords.latitude, p.coords.longitude, 'gps', p.coords.accuracy); }
+
+// запасной способ: примерное место по сети (если браузер не дал точное положение)
+async function ipLocate() {
+  for (const u of ['https://ipwho.is/', 'https://ipapi.co/json/']) {
+    try {
+      const j = await (await fetch(u, { cache: 'no-store' })).json();
+      const lat = +(j.latitude ?? j.lat), lon = +(j.longitude ?? j.lon ?? j.lng);
+      if (isFinite(lat) && isFinite(lon) && (lat || lon)) return { lat, lon, city: j.city || '' };
+    } catch { /* пробуем следующий */ }
+  }
+  return null;
+}
+async function geoFallback(reason) {
+  $('#geoStatus').innerHTML = reason + '<br>Пробую определить примерно по сети…';
+  const r = await ipLocate();
+  if (r) { setUser(r.lat, r.lon, 'ip'); $('#geoStatus').innerHTML = reason + '<br>' + $('#geoStatus').innerHTML + `<br><small>Если место неверно или нужны отметки в парке: разрешите геолокацию, нажмите «Указать на карте» или включите демо-режим.</small>`; }
+  else $('#geoStatus').innerHTML = reason + '<br>Сеть тоже не помогла. Нажмите «Указать на карте» или включите демо-режим.';
+}
+function startGeo() {
+  if (!window.isSecureContext && location.hostname !== 'localhost') return geoFallback('Браузер разрешает геолокацию только на защищённых страницах (https).');
+  if (!navigator.geolocation) return geoFallback('Этот браузер не поддерживает геолокацию.');
+  $('#geoStatus').textContent = 'Определяю положение… (если браузер спросит — нажмите «Разрешить»)';
+  if (UI.watch) { navigator.geolocation.clearWatch(UI.watch); UI.watch = null; }
+  // сначала мягкий запрос: на компьютере без GPS точный режим часто не успевает ответить
+  navigator.geolocation.getCurrentPosition(p => {
+    onPosition(p);
+    UI.watch = navigator.geolocation.watchPosition(onPosition, () => { }, { enableHighAccuracy: false, maximumAge: 20000, timeout: 30000 });
+  }, err => {
+    if (err.code === 1) geoFallback('🔒 Доступ к геолокации запрещён. Нажмите на замок рядом с адресом страницы → «Разрешить определение местоположения», затем повторите. На Windows ещё проверьте: Параметры → Конфиденциальность → Расположение.');
+    else if (err.code === 2) geoFallback('Компьютер не смог определить положение (включите службу расположения и Wi-Fi).');
+    else geoFallback('Положение не определилось за отведённое время.');
+  }, { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 });
+}
+$('#geoBtn').addEventListener('click', startGeo);
+
+// ручной выбор: нажмите на карту — это ваше положение
+$('#geoPick').addEventListener('click', () => {
+  UI.pick = !UI.pick; $('#geoPick').classList.toggle('on', UI.pick);
+  $('#geoStatus').textContent = UI.pick ? '📌 Нажмите на карте место, где вы находитесь.' : 'Выбор на карте отменён.';
+  if (UI.map) UI.map.getContainer().style.cursor = UI.pick ? 'crosshair' : '';
 });
 $('#radiusLbl').textContent = RADIUS_M;
 $('#demoMode').addEventListener('change', e => { S.demo = e.target.checked; save(); toast(S.demo ? 'Демо-режим включён: время берётся с ползунка' : 'Демо-режим выключен: нужна геолокация'); });
