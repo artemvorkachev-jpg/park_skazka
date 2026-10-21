@@ -152,7 +152,7 @@ function renderSheet() {
       <div class="sheet-actions">
         <button class="btn ${S.likes[a.id] ? 'on' : 'ghost'}" data-act="like">${S.likes[a.id] ? '❤ В любимых' : '🤍 Мне нравится'}</button>
         <button class="btn ghost" data-act="play">🎮 Сыграть</button>
-        <button class="btn big" data-act="checkin" ${bad ? 'disabled' : ''}>✔ Я здесь!</button>
+        ${bad ? `<div class="locked">🔒 Отметиться пока нельзя: ${esc(st.label.toLowerCase())}${st.eta ? ' · ' + esc(st.eta) : ''}. Нажмите «Сообщить, когда заработает» или «Починить!».</div>` : '<button class="btn big" data-act="checkin">✔ Я здесь!</button>'}
         ${bad ? `<button class="btn gold" data-act="vote">🛠 Починить! (${rv}/${REPAIR_GOAL})</button>` : ''}
       </div>
     </div>`;

@@ -133,7 +133,8 @@ async function gameStart() {
 }
 async function gameChoose(k) {
   const g = S.game; if (!g || GQ.busy || g.done) return;
-  const o = g.cur.options[k]; if (!o || o.cost > g.coins) return;
+  const o = g.cur.options[k]; if (!o) return;
+  if (o.cost > g.coins) { toast(`Не хватает монет: нужно ещё ${o.cost - g.coins} 💰. Выберите другое решение.`); return; }
   GQ.busy = true;
   const story = g.cur.story, consequenceBefore = g.cur.consequence;
   const applied = applyChoice(g, o);
@@ -175,7 +176,8 @@ function renderGame(animate) {
     const w = gWeather(12);
     root.innerHTML = `<div class="g-intro"><div class="g-cat">🐈</div><div>
       <h3>Вы — Хранитель Сказки</h3>
-      <p>Один день парка, 5 ходов. Стройте зоны, ухаживайте за животными и привлекайте гостей. На каждом ходу Кот Баюн расскажет, что происходит, предложит 2–3 решения и объяснит последствия.</p>
+      <p><b>Сюжет.</b> Вы — новый хранитель парка «Сказка». У вас один день, 100 монет и 40 гостей. Кот Баюн — ваш помощник: он видит парк и подсказывает.</p>
+      <ol class="how-q"><li>Читаете, что случилось в парке</li><li>Выбираете <b>одно</b> из 2–3 решений</li><li>Видите последствия — и идёте к следующему ходу</li></ol>
       <ul><li>3 ресурса: 💰 монеты, 👥 гости, 😊 настроение</li><li>Цель: к вечеру <b>${GOAL.guests}+ гостей</b> и настроение <b>${GOAL.mood}+</b></li><li>Дата игры: <b>${longDate(day.date)}</b>, в полдень ${w.desc}, ${w.temp}° — погода настоящая</li></ul>
       <div class="g-engine ${eng[0]}">${eng[1]}</div>
       <button class="btn big" id="gStart">▶ Начать день</button>
@@ -197,7 +199,8 @@ function renderGame(animate) {
     const cur = g.cur;
     body = `${cur.consequence ? `<div class="g-cons">⬅ ${esc(cur.consequence)}</div>` : ''}
       <div class="g-host"><div class="g-cat sm">🐈</div><div class="bubble g-bubble" id="gStory">${animate ? '' : esc(cur.story)}</div></div>
-      <div class="g-opts" id="gOpts">${cur.options.map((o, k) => `<button class="g-opt" data-k="${k}" ${o.cost > g.coins ? 'disabled' : ''}><b>${esc(o.label)}</b><span>${esc(o.hint)}</span>
+      <p class="g-hint">👆 Выберите одно решение. Если монет не хватает, кнопка подскажет, сколько.</p>
+      <div class="g-opts" id="gOpts">${cur.options.map((o, k) => `<button class="g-opt" data-k="${k}" ${o.cost > g.coins ? 'data-poor="1"' : ''}><b>${esc(o.label)}</b><span>${esc(o.hint)}</span>
         <em>${o.cost ? `−${o.cost} 💰` : 'бесплатно'}${o.build ? ` · стройка ${zoneById(o.build).e}` : ''}${o.cost > g.coins ? ' · не хватает монет' : ''}</em></button>`).join('')}</div>`;
   }
   const prev = g.log.length ? `<details class="g-log"><summary>Ход игры (${g.log.length})</summary>${g.log.map(l => `<p><b>Ход ${l.turn}.</b> ${esc(l.choice)} — 💰${sgn(l.applied.coins)} 👥${sgn(l.applied.guests)} 😊${sgn(l.applied.mood)}</p>`).join('')}</details>` : '';

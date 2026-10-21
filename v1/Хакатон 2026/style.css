@@ -343,3 +343,16 @@ select option{color:#111}
 .geo-tag{display:inline-block;margin-left:4px;padding:2px 8px;border-radius:999px;background:rgba(255,200,87,.18);color:var(--warn);font-size:12.5px}
 #geoPick.on{background:var(--gold);color:#3a2800;border-color:var(--gold)}
 .geo .geo-status small{color:var(--ink2)}
+
+/* по замечаниям тестировщиков: недоступное — с объяснением, сюжет — с подсказкой */
+.locked{padding:12px 14px;border-radius:14px;background:rgba(255,200,87,.12);border:1px dashed rgba(255,200,87,.6);color:#ffe29a;font-size:14.5px;grid-column:1/-1}
+.need{font-size:14px;color:var(--warn);font-weight:700;white-space:nowrap}
+.now-card{grid-column:1/-1;display:grid;grid-template-columns:1.2fr 1fr;gap:16px;padding:16px 18px;border-radius:var(--r);background:linear-gradient(120deg,rgba(245,184,61,.22),rgba(139,107,255,.18));border:1.5px solid var(--gold)}
+@media(max-width:700px){.now-card{grid-template-columns:1fr}}
+.now-card p{margin:6px 0 0;font-size:17px}
+.how-q{margin:0;padding-left:22px;font-size:14.5px;color:var(--ink2);display:grid;gap:4px;align-content:center}
+.g-intro .how-q{margin:0 0 12px}
+.g-hint{margin:0;font-size:14.5px;color:var(--gold);font-weight:700}
+.ac.no{opacity:.8}
+.ac.no .ac-fit{font-weight:800}
+.g-opt[data-poor]{opacity:.75;border-style:dashed}

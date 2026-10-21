@@ -89,9 +89,11 @@ function renderChapters() {
   questProgress();
   renderLevel();
   const day = selDay(), h = UI.hour;
-  $('#chapters').innerHTML = CHAPTERS.map(ch => {
+  const nxt = nextQuestStep();
+  const guide = `<div class="now-card"><div><b>📍 Что делать сейчас</b><p>${nxt ? `${esc(nxt.text)} <small>(глава «${esc(nxt.chapter)}»)</small>` : 'Все главы пройдены — вы Хранитель Сказки!'}</p></div><ol class="how-q"><li>Берёте задание из главы</li><li>Выполняете: ответ, отметка или игра</li><li>Получаете монеты и значок</li></ol></div>`;
+  $('#chapters').innerHTML = guide + CHAPTERS.map((ch, ci) => {
     const done = ch.steps.filter(s => S.quest[s.id]).length, fin = !!S.chapters[ch.id];
-    return `<article class="chap ${fin ? 'fin' : ''}"><header><span class="ce">${fin ? '✅' : ch.e}</span><div><h3>${ch.title}</h3><small>${ch.sub}</small></div><span class="cp">${done}/${ch.steps.length}<br><small>+${ch.reward} 💰</small></span></header>
+    return `<article class="chap ${fin ? 'fin' : ''}"><header><span class="ce">${fin ? '✅' : ch.e}</span><div><h3>Глава ${ci + 1}. ${ch.title}</h3><small>${ch.sub}</small></div><span class="cp">${done}/${ch.steps.length}<br><small>+${ch.reward} 💰</small></span></header>
       <ul>${ch.steps.map(s => {
         const ok = !!S.quest[s.id]; let extra = '', btn = '';
         if (s.type === 'checkin') {
@@ -173,7 +175,7 @@ const REWARDS = [
 function renderRewards() {
   $('#rewards').innerHTML = REWARDS.map(r => S.rewards[r.id]
     ? `<div class="rw owned"><span>${r.e} ${r.name}</span><code>${r.code}</code></div>`
-    : `<div class="rw"><span>${r.e} ${r.name}</span><button class="btn small" data-r="${r.id}" ${S.coins < r.cost ? 'disabled' : ''}>${r.cost} 💰</button></div>`).join('');
+    : `<div class="rw"><span>${r.e} ${r.name}</span>${S.coins < r.cost ? `<span class="need">ещё ${r.cost - S.coins} 💰</span>` : `<button class="btn small" data-r="${r.id}">Получить за ${r.cost} 💰</button>`}</div>`).join('');
 }
 $('#rewards').addEventListener('click', e => {
   const r = REWARDS.find(x => x.id === e.target.dataset?.r); if (!r || S.coins < r.cost) return;
