@@ -72,10 +72,11 @@ async function main() {
   const modelRegistry = ModelRegistry.create(authStorage, modelsResolvedPath);
   const settingsManager = SettingsManager.create(process.cwd(), AGENT_DIR);
 
-  // Find the first available model
-  const model = modelRegistry.list().find((m) => m.provider);
+  // Find the first available model (getAvailable = models with configured auth)
+  const model = modelRegistry.getAvailable().find((m) => m.provider);
   if (!model) {
-    process.stdout.write(JSON.stringify({ type: "error", message: "No models configured. Set up agent/models.json and provide an API key." }) + "\n");
+    const loadErr = modelRegistry.getError();
+    process.stdout.write(JSON.stringify({ type: "error", message: `No models configured. Set up agent/models.json and provide an API key.${loadErr ? " models.json: " + loadErr : ""}` }) + "\n");
     process.exit(1);
   }
 

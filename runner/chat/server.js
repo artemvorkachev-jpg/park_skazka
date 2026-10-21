@@ -81,18 +81,22 @@ function handleChat(req, res) {
       "connection": "keep-alive",
       "x-accel-buffering": "no",
     });
-    const send = (obj) => { res.write(`data: ${JSON.stringify(obj)}\n\n`); };
+    const send = (obj) => { if (!closed) res.write(`data: ${JSON.stringify(obj)}\n\n`); };
+
+    // Отключение клиента ловим на res ("close" у req в современных Node срабатывает
+    // сразу после чтения тела запроса — им нельзя детектить обрыв соединения)
+    let closed = false;
+    let child = null;
 
     // Страховочный таймаут: runner сам ограничен TURN_TIMEOUT_MS, даём запас
-    const hardKill = setTimeout(() => child.kill(), TURN_TIMEOUT_MS + 15000);
+    const hardKill = setTimeout(() => child && child.kill(), TURN_TIMEOUT_MS + 15000);
     // Heartbeat, чтобы прокси не рвали соединение, пока Баюн думает
-    const heartbeat = setInterval(() => res.write(": ka\n\n"), 15000);
+    const heartbeat = setInterval(() => { if (!closed) res.write(": ka\n\n"); }, 15000);
 
-    let closed = false;
-    req.on("close", () => { closed = true; child.kill(); });
+    res.on("close", () => { closed = true; if (child) child.kill(); });
 
     const prompt = buildPrompt(message, history);
-    const child = spawn(process.execPath, [RUNNER_JS, prompt], {
+    child = spawn(process.execPath, [RUNNER_JS, prompt], {
       cwd: RUNNER_ROOT,
       env: process.env,
       windowsHide: true,
@@ -166,7 +170,7 @@ createServer((req, res) => {
   } else {
     res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
     res.end("404");
-  })
+  }})
     .on("error", (err) => {
       console.error("Ошибка сервера:", err.message);
       process.exit(1);

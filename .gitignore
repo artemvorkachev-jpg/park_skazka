@@ -1,6 +1,7 @@
 # секреты — никогда не отправлять в репозиторий
 host_key.txt
 .env
+runner/agent/auth.json
 runner/agent/models.resolved.json
 .wide_images.json
 *.key
