@@ -4,10 +4,9 @@
 #   cp runner/.env .env        # ключ QWEN_API_KEY (если .env ещё нет)
 #   docker compose up -d --build
 #
-# Контейнер подключается к внешней сети ai-net: nginx (если он тоже контейнер
-# в этой сети) ходит на чат по имени — proxy_pass http://bayun:8130/.
-# Если nginx хостовой (не в docker), раскомментируйте ports ниже и
-# используйте proxy_pass http://127.0.0.1:8130/ (см. deploy/nginx-bayun.conf.example).
+# Контейнер подключается к внешней сети ai-net (nginx-контейнер ходит на чат
+# по имени — proxy_pass http://bayun:8130/) и одновременно публикует порт
+# на хосте: 127.0.0.1:8130 (для хостового nginx — proxy_pass http://127.0.0.1:8130/).
 
 services:
   bayun:
@@ -18,8 +17,8 @@ services:
       # compose читает .env рядом с этим файлом; без ключа контейнер не стартует
       QWEN_API_KEY: "${QWEN_API_KEY:?Создайте .env рядом с docker-compose.yml (cp runner/.env .env)}"
       CHAT_PORT: 8130
-    # ports:
-    #   - "127.0.0.1:8130:8130"   # только для хостового nginx
+    ports:
+      - "127.0.0.1:8130:8130"   # для хостового nginx; наружу порт не открыт
     networks:
       - ai-net
     volumes:
