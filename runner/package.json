@@ -1,0 +1,13 @@
+{
+  "name": "park-skazka-runner",
+  "private": true,
+  "type": "module",
+  "description": "Pi durable runner for Park Skazka chat agent (Баюн)",
+  "scripts": {
+    "run": "node runner.js",
+    "start": "node runner.js \"Расскажи о парке Сказка\""
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.78.1"
+  }
+}

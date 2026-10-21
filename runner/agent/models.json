@@ -1,0 +1,17 @@
+{
+  "providers": {
+    "qwen-vllm": {
+      "baseUrl": "https://qwen.koljanos.ru/v1",
+      "api": "openai-completions",
+      "apiKey": "${QWEN_API_KEY}",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "qwen3.5-27b",
+          "name": "qwen3.5-27b",
+          "input": ["text", "image"]
+        }
+      ]
+    }
+  }
+}
