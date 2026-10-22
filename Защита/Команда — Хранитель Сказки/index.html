@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Хранитель Сказки — защита проекта · кейс 09 · парк «Сказка»</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=PT+Root+UI:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* токены parkskazka.com — см. DESIGN.md */
+  --color-primary-50:#39C2EA;
+  --color-primary-20:#34B4E8;
+  --color-primary-10:#9CD6EE;
+  --color-dark-10:#222222;
+  --color-bg-light:#E6F4FD;
+  --color-bg-blue-light:#9CD6EE;
+  --color-bg-green-light:#D2F366;
+  --color-bg-beige:#FDEBBF;
+  --color-bg-pink-light:#FFC9E0;
+  --color-aiya-dark:#D32D6B;      /* фирменная маджента — главный CTA */
+  --shadow-sm:0 2px 8px rgba(35,40,47,.10);
+  --shadow-md:0 8px 24px rgba(35,40,47,.15);
+  --shadow-lg:0 16px 40px rgba(35,40,47,.20);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font:400 19px/1.5 'PT Root UI','Segoe UI',Arial,sans-serif;color:var(--color-dark-10);background:#fff}
+img{max-width:100%;display:block}
+.bebas{font-family:'Oswald','Bebas Neue','Arial Narrow',Impact,sans-serif;text-transform:uppercase;letter-spacing:.01em;font-weight:600}
+.container{max-width:1280px;margin:0 auto;padding:0 24px}
+
+/* кнопки-пилюли */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:0;cursor:pointer;text-decoration:none;
+  border-radius:100px;font:700 16px/16px 'PT Root UI',sans-serif;letter-spacing:.02em;text-transform:uppercase;
+  padding:18px 48px;color:#fff;transition:all .3s ease}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);filter:brightness(.94)}
+.btn-primary{background:var(--color-aiya-dark)}
+.btn-blue{background:var(--color-primary-20)}
+.btn-outline{background:transparent;color:var(--color-dark-10);border:1.5px solid var(--color-dark-10);
+  font-weight:400;text-transform:none;letter-spacing:0;padding:13px 34px;font-size:16px}
+.btn-outline:hover{background:var(--color-dark-10);color:#fff;box-shadow:none}
+
+/* ===== шапка ===== */
+.topbar{position:sticky;top:0;z-index:100;background:#fff;box-shadow:var(--shadow-sm)}
+.topbar-in{display:flex;align-items:center;justify-content:space-between;gap:20px;height:64px}
+.topbar .who{font:700 14px/1.2 'PT Root UI',sans-serif;letter-spacing:.05em;text-transform:uppercase}
+.topbar .who small{display:block;font:500 11.5px/1.3 'PT Root UI',sans-serif;letter-spacing:.14em;color:#5a6b76;text-transform:uppercase}
+.topbar .logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--color-dark-10)}
+.topbar .logo img{height:36px;width:auto;border-radius:8px}
+.topbar .logo .word{font:600 24px/1 'Oswald','Bebas Neue',Impact,sans-serif;text-transform:uppercase;color:var(--color-primary-20)}
+.topbar .logo .word span{color:var(--color-aiya-dark)}
+.topbar .btn{padding:11px 26px;font-size:13px}
+
+/* ===== блок = один экран, одна мысль ===== */
+section.blk{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:56px 0;scroll-margin-top:64px}
+div.hero{scroll-margin-top:64px}
+.panel{border-radius:48px;padding:56px 56px}
+.panel-blue{background:var(--color-bg-blue-light)}
+.panel-beige{background:var(--color-bg-beige)}
+.panel-pink{background:var(--color-bg-pink-light)}
+.num{display:inline-flex;align-items:center;gap:12px;font:700 14px/1 'PT Root UI',sans-serif;
+  letter-spacing:.16em;text-transform:uppercase;color:#51626e;margin-bottom:18px}
+.num i{font-style:normal;display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;
+  background:var(--color-dark-10);color:#fff;font-size:16px}
+h2{font-size:clamp(38px,4.6vw,60px);line-height:1.32;max-width:18em;margin-bottom:16px}
+/* у Oswald высокая метрика строки (≈1.48em): при плотном интерлиньяже плашка mark
+   закрашивает низ предыдущей строки — 1.32 даёт запас на капители и крату плашки */
+h2 mark{background:var(--color-aiya-dark);color:#fff;padding:.04em .18em;border-radius:.14em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+h2 mark.b{background:var(--color-primary-20)}
+h2 mark.g{background:#5aa821}
+.sec-sub{font-size:19px;color:#4c5a66;max-width:34em;margin-bottom:36px}
+.cap{font-size:13.5px;color:#5a6b76;margin-top:14px}
+
+/* ===== 1. приветствие / hero ===== */
+.hero{position:relative;overflow:hidden;min-height:calc(100vh - 64px);display:flex;align-items:center;
+  background:linear-gradient(180deg,#39C2EA 0%,#7DD4F2 55%,#BDE9FA 100%);padding:72px 0 96px}
+.hero .sun{position:absolute;top:-70px;right:-60px;width:260px;height:260px;background:#FFE04D;border-radius:50%;
+  opacity:.9;box-shadow:0 0 120px 60px rgba(255,224,77,.55)}
+.hero .cloud{position:absolute;background:rgba(255,255,255,.85);border-radius:100px;filter:blur(1px)}
+.hero .cloud.c1{width:220px;height:60px;top:56px;left:4%}
+.hero .cloud.c2{width:160px;height:46px;top:130px;right:30%;opacity:.7}
+.hero .cloud.c3{width:120px;height:38px;top:36px;left:38%;opacity:.6}
+.hero-in{position:relative;display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center}
+.ribbons{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.ribbon{display:inline-block;padding:10px 40px 8px;font-family:'Oswald','Bebas Neue',Impact,sans-serif;font-weight:600;
+  text-transform:uppercase;color:#fff;line-height:1;text-shadow:0 2px 0 rgba(0,0,0,.08);box-shadow:var(--shadow-md)}
+.ribbon.r1{font-size:clamp(52px,6.4vw,92px);background:var(--color-aiya-dark);transform:rotate(-2deg)}
+.ribbon.r2{font-size:clamp(24px,2.6vw,38px);background:var(--color-primary-20);transform:rotate(1.2deg)}
+.ribbon.r3{font-size:clamp(17px,1.7vw,24px);background:var(--color-father-platon,#00B453);transform:rotate(-1deg);padding:12px 30px 9px}
+.hero .lead{max-width:26em;margin:28px 0 24px;font-size:21px;color:#17435c}
+.hero .lead b{color:var(--color-aiya-dark)}
+.tags{display:flex;gap:12px;flex-wrap:wrap}
+.tag{display:inline-block;border:2px solid #17435c;color:#17435c;background:rgba(255,255,255,.55);
+  padding:8px 20px;border-radius:100px;font:700 14px/1 'PT Root UI',sans-serif;letter-spacing:.04em;text-transform:uppercase}
+.hero-park{margin-top:30px;display:flex;align-items:center;gap:14px;background:#fff;border-radius:100px;
+  padding:10px 22px 10px 12px;box-shadow:var(--shadow-sm);width:fit-content;font-size:15px}
+.hero-park img{height:44px;width:auto}
+.heroes{display:flex;align-items:flex-end;justify-content:center}
+.heroes img{height:min(48vh,420px);width:auto;filter:drop-shadow(0 16px 24px rgba(23,67,92,.25))}
+.hero .hill{position:absolute;left:-5%;right:-5%;bottom:-46px;height:110px;background:#fff;border-radius:50% 50% 0 0/100% 100% 0 0}
+
+/* ===== карточки ===== */
+.grid{display:grid;gap:22px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:#fff;border-radius:28px;padding:24px 26px;box-shadow:var(--shadow-sm);transition:transform .3s ease,box-shadow .3s ease}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
+.card .t{font:700 14px/1.2 'PT Root UI',sans-serif;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;color:var(--color-aiya-dark)}
+.card p{font-size:17px}
+.card p b{color:var(--color-dark-10)}
+
+/* ===== шаги ===== */
+ol.steps{margin:0;padding:0;list-style:none;display:grid;gap:18px;counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding-left:68px;min-height:52px;font-size:19px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:0;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;
+  background:var(--color-aiya-dark);color:#fff;font:700 22px/1 'PT Root UI',sans-serif}
+ol.steps.blue li::before{background:var(--color-primary-20)}
+ol.steps li b{display:block;margin-bottom:2px}
+
+/* ===== скриншоты ===== */
+.shot{background:#fff;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-md)}
+.shot img{width:100%;height:auto}
+.shot .cap{padding:10px 18px 12px;margin:0;font-size:13.5px}
+.shot-row{display:grid;grid-template-columns:1.5fr 1fr;gap:22px;align-items:start}
+.shot-col{display:grid;gap:22px}
+
+/* ===== кнопка + QR ===== */
+.try{display:flex;gap:28px;align-items:center;flex-wrap:wrap;background:#fff;border-radius:32px;
+  padding:26px 32px;box-shadow:var(--shadow-lg);width:fit-content}
+.try .qr{width:170px;height:170px;border-radius:18px;padding:8px;background:#fff;border:2px solid #e3edf3}
+.try .txt small{display:block;font-size:14px;color:#5a6b76;margin-top:6px;max-width:22em}
+
+/* ===== медиа: трейлер ===== */
+.story{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.story div{background:#fff;border-radius:20px;padding:16px 18px;font-size:15px;box-shadow:var(--shadow-sm)}
+.story b{display:block;color:var(--color-aiya-dark);margin-bottom:6px;font-size:14px;letter-spacing:.04em}
+.strip{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:26px}
+.strip img{border-radius:24px;aspect-ratio:16/10;object-fit:cover;width:100%;box-shadow:var(--shadow-md);
+  transition:transform .3s ease}
+.strip img:hover{transform:scale(1.02)}
+video{width:100%;border-radius:24px;background:var(--color-dark-10);box-shadow:var(--shadow-md)}
+
+/* ===== таблица проверки ===== */
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-sm);font-size:16.5px}
+th,td{padding:16px 20px;text-align:left;vertical-align:top;border-bottom:1px solid #eef4f8}
+th{background:var(--color-dark-10);color:#fff;font:700 13px/1.3 'PT Root UI',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+tr:last-child td{border-bottom:0}
+.members{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:26px}
+.member{border-radius:24px;padding:22px 16px;text-align:center;color:#fff;box-shadow:var(--shadow-sm)}
+.member .ava{width:56px;height:56px;margin:0 auto 10px;border-radius:50%;background:rgba(255,255,255,.25);
+  border:2px solid rgba(255,255,255,.6);display:grid;place-items:center;font-size:24px}
+.member b{display:block;font-size:19px}
+.member span{display:block;font:500 13px/1.35 'PT Root UI',sans-serif;text-transform:uppercase;letter-spacing:.05em;opacity:.9;margin-top:4px}
+.member.m1{background:#FF2400}.member.m2{background:#00B453}.member.m3{background:#B882D0}.member.m4{background:#34B4E8}.member.m5{background:#D32D6B}
+
+/* ===== финал ===== */
+.final{background:var(--color-bg-blue-light)}
+.final-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:44px;align-items:center}
+.final-q{font-size:clamp(56px,7vw,104px);line-height:.98}
+.contact{margin-top:22px;font-size:19px}
+.contact b{font-size:22px}
+.qr-big{width:230px;height:230px;border-radius:22px;background:#fff;padding:12px;box-shadow:var(--shadow-lg);margin:0 auto}
+.qr-cap{text-align:center;font-size:14px;color:#51626e;margin-top:10px}
+
+/* поля, которые команде нужно заполнить (пропадают, когда заполнены в CFG) */
+.fill{background:#FFE14D;color:#000;border:2px dashed #000;border-radius:8px;padding:0 .3em;font-weight:700}
+#todo{position:fixed;right:14px;bottom:96px;z-index:96;background:#FFE14D;color:#000;border:2px solid #000;
+  border-radius:12px;padding:8px 14px;font-size:15px;font-weight:700;max-width:340px}
+@media print{#todo{display:none}}
+
+/* ===== Баюн: живой чат для вопросов жюри (бэкенд — docker compose, см. docker-compose.yml) ===== */
+#bayunFab{position:fixed;right:24px;bottom:24px;z-index:95;width:60px;height:60px;border:0;border-radius:50%;
+  background:var(--color-aiya-dark);color:#fff;font-size:28px;box-shadow:var(--shadow-md);cursor:pointer;transition:.25s}
+#bayunFab:hover{transform:translateY(-2px) scale(1.05)}
+#bayunPanel{position:fixed;right:24px;bottom:96px;z-index:95;width:min(420px,calc(100vw - 48px));height:min(560px,calc(100vh - 140px));
+  display:none;flex-direction:column;background:#fff;border-radius:22px;overflow:hidden;box-shadow:var(--shadow-lg)}
+#bayunPanel.on{display:flex}
+#bayunPanel .bhead{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--color-primary-20);color:#fff}
+#bayunPanel .bhead .bt{font:700 16px/1 'PT Root UI',sans-serif}
+#bayunPanel .bhead small{display:block;font:400 10.5px/1.3 'PT Root UI',sans-serif;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin-top:3px}
+#bayunPanel .bhead button{margin-left:auto;border:0;background:rgba(255,255,255,.22);color:#fff;width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer}
+#bayunPanel iframe{flex:1;border:0;width:100%}
+@media(max-width:640px){#bayunPanel{right:12px;bottom:92px;width:calc(100vw - 24px);height:min(520px,calc(100vh - 110px))}}
+
+/* ===== адаптив ===== */
+@media(max-width:1024px){
+  .hero-in{grid-template-columns:1fr}
+  .heroes{justify-content:flex-start}
+  .heroes img{height:min(30vh,240px)}
+  .g2,.g3,.g4{grid-template-columns:1fr 1fr}
+  .members{grid-template-columns:repeat(2,1fr)}
+  .story{grid-template-columns:1fr 1fr}
+  .shot-row{grid-template-columns:1fr}
+  .panel{padding:40px 30px;border-radius:32px}
+  .final-grid{grid-template-columns:1fr}
+  .topbar .who{display:none}
+}
+@media(max-width:640px){
+  body{font-size:17px}
+  .g2,.g3,.g4,.members,.story{grid-template-columns:1fr}
+  .strip{grid-template-columns:1fr}
+  .panel{padding:32px 20px;border-radius:28px}
+  .topbar .logo .word{font-size:18px}
+  ol.steps li{font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== шапка ===== -->
+<header class="topbar">
+  <div class="container topbar-in">
+    <div class="who">WIDE Hackathon team<small>команда № 8 · отряд № <span class="fill" data-id="squadNo">—</span></small></div>
+    <a class="logo" href="#b1"><span class="word">Хранитель <span>Сказки</span></span></a>
+    <a class="btn btn-primary" href="https://skazka.koljanos.ru" target="_blank" rel="noopener">▶ Попробовать</a>
+  </div>
+</header>
+
+<!-- ===== 1. ПРИВЕТСТВИЕ ===== -->
+<div class="hero" id="b1">
+  <div class="sun"></div>
+  <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+  <div class="container hero-in">
+    <div>
+      <div class="ribbons">
+        <div><span class="ribbon r1">Хранитель Сказки</span></div>
+        <div><span class="ribbon r2">Онлайн-игра с ИИ-ведущим</span></div>
+        <div><span class="ribbon r3">Кейс 09 · Парк развлечений «Сказка»</span></div>
+      </div>
+      <p class="lead">Мы сделали <b>планировщик визита, чат с котом Баюном и игру-симулятор</b> — семья узнаёт парк ещё до входа.</p>
+      <div class="tags">
+        <span class="tag">WIDE Hackathon team</span>
+        <span class="tag">Команда № 8</span>
+        <span class="tag">Отряд № <span class="fill" data-id="squadNo">—</span></span>
+      </div>
+      <div class="hero-park">
+        <img src="media/park-logo.png" alt="Логотип парка «Сказка»">
+        <span>Компания кейса: парк «Сказка»<br>Москва, Крылатская, 18</span>
+      </div>
+    </div>
+    <div class="heroes" aria-hidden="true">
+      <img src="media/hero-teacher2.png" alt="" style="height:min(44vh,380px)">
+      <img src="media/hero-boy6.png" alt="" style="height:min(38vh,330px)">
+      <img src="media/hero-girl6.png" alt="" style="height:min(50vh,430px)">
+    </div>
+  </div>
+  <div class="hill"></div>
+</div>
+
+<!-- ===== 2. КОНТЕКСТ ===== -->
+<section class="blk" id="b2">
+  <div class="container">
+    <div class="panel panel-blue">
+      <span class="num"><i>2</i> Контекст</span>
+      <h2 class="bebas">Семья узнаёт о закрытых аттракционах и очередях <mark>уже на месте</mark></h2>
+      <div class="grid g2">
+        <div class="card"><div class="t">Ситуация</div>
+          <p>Парк «Сказка» — <b>70+ развлечений</b>, работает с 2016 года. Хочет общаться с гостями не только в день визита, но и онлайн.</p></div>
+        <div class="card"><div class="t">Целевая аудитория</div>
+          <p><b>Ольга, 36 лет</b>, мама Миши (6) и Кати (11). Планирует субботу и считает бюджет: семейный чек в отзывах — 5–9 тыс. ₽. Не «все пользователи», а конкретная семья.</p></div>
+        <div class="card"><div class="t">Проблема и актуальность</div>
+          <p>Яндекс.Карты — <b>5,0</b>, Отзовик — <b>3,7</b>. Недовольные пишут про цены, очереди и непрозрачные условия — и узнают о них, когда уже приехали.</p></div>
+        <div class="card"><div class="t">Задача</div>
+          <p>Дать Ольге повод познакомиться с парком <b>до визита</b> и понять, чего там ждать.</p></div>
+      </div>
+      <p class="cap">Источник цифр: разбор 84 отзывов за 2016–2026 (репозиторий park_skazka, 20.10.2026).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 3. РЕШЕНИЕ ===== -->
+<section class="blk" id="b3">
+  <div class="container">
+    <div class="panel panel-beige">
+      <span class="num"><i>3</i> Решение</span>
+      <h2 class="bebas">Игра вместо справочника: семья <mark>сама пробует</mark> решения парка</h2>
+      <p class="sec-sub">«Мы сделали <b>«Хранителя Сказки»</b> — планировщик, чат с Баюном и игру, <b>чтобы</b> семья знакомилась с парком до визита, <b>потому что</b> так проще решить, когда идти и чего ждать».</p>
+      <div class="grid g2">
+        <div class="card"><div class="t">Почему именно так</div>
+          <p>Сайт с расписанием — быстро, но скучно. Чат-справочник — отвечает, но не вовлекает. Игра — вовлекает, но не отвечает. Поэтому мы <b>соединили всё три</b>: планировщик строит маршрут, Баюн отвечает на вопросы, игра показывает последствия.</p></div>
+        <div class="card"><div class="t">Референсы</div>
+          <p><b>«Светофор» парка</b> — взяли статусы, добавили причины. <b>Парк-тайкуны</b> — экономика визита, упростили до кликов. <b>Pokémon GO</b> — бонус за визит по геолокации.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. ПРОТОТИП ===== -->
+<section class="blk" id="b4" style="min-height:0">
+  <div class="container">
+    <span class="num"><i>4</i> Прототип</span>
+    <h2 class="bebas">Одна заявка — и Баюн ведёт семью <mark>от плана до игры</mark></h2>
+    <div class="grid g2" style="grid-template-columns:1.05fr .95fr;align-items:start;margin-bottom:26px">
+      <div>
+        <ol class="steps">
+          <li><b>Планировщик: маршрут дня за минуту.</b> Дата, рост гостей и точки — Баюн расставляет их по часам: детские до обеда, экстремальные после.</li>
+          <li><b>Чат: отвечает по вашему маршруту.</b> Рост и цены, дождь и очереди, где поесть. Погода в ответах — настоящая.</li>
+          <li><b>Игра «Прогулка по парку».</b> Проигрывает визит: квесты из плана, гости из реальных заявок, погода с прогноза. Дашборд показывает парку, что планируют гости.</li>
+        </ol>
+        <div class="try" style="margin-top:26px">
+          <a class="btn btn-primary" href="https://skazka.koljanos.ru" target="_blank" rel="noopener">▶ Попробовать</a>
+          <img class="qr" src="media/qr-game.svg" alt="QR-код на игру">
+          <div class="txt"><b>Откройте со своего телефона</b>
+            <small>Полная версия уже онлайн: планировщик, чат с Баюном, игра и дашборд.</small></div>
+        </div>
+      </div>
+      <div class="shot-col">
+        <div class="shot"><img src="media/shot-route.png" alt="Планировщик: маршрут дня по часам">
+          <p class="cap">Планировщик: точки по часам, переходы и финиш считаются сами</p></div>
+        <div class="shot-row" style="grid-template-columns:1fr 1fr">
+          <div class="shot"><img src="media/shot-interests.png" alt="Интересы: карточки аттракционов с ростом и ценой">
+            <p class="cap">70+ точек: рост и цена на карточке</p></div>
+          <div class="shot"><img src="media/shot-chat.png" alt="Чат с Баюном">
+            <p class="cap">Баюн отвечает по вашему плану</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="shot-row" style="margin-bottom:26px">
+      <div class="shot"><img src="media/shot-game.png" alt="Игра «Прогулка по парку»: топ-down карта">
+        <p class="cap">Игра: квесты приехали из планировщика («Бумеранг — по плану до 10:00»), на карте — гости из заявок</p></div>
+      <div class="shot"><img src="media/shot-dashboard.png" alt="Маркетинговый дашборд">
+        <p class="cap">Дашборд для парка: кто идёт, что выбирают, когда</p></div>
+    </div>
+    <div class="grid g3">
+      <div class="card"><div class="t">Роль и тон</div>
+        <p>Кот Баюн — помощник парка: говорит тепло, по-русски, двумя предложениями.</p></div>
+      <div class="card"><div class="t">Что умеет</div>
+        <p>Маршрут по росту и интересам, погода и очереди из статистики, симуляция визита.</p></div>
+      <div class="card"><div class="t">Чего не делает</div>
+        <p>Не выдумывает цены и акции: данные — из карты парка и заявок. Числа считает код, а не ИИ.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. МЕДИА ===== -->
+<section class="blk" id="b5">
+  <div class="container">
+    <div class="panel panel-pink">
+      <span class="num"><i>5</i> Медиа</span>
+      <h2 class="bebas">Трейлер на 60 секунд: визит можно <mark>спланировать заранее</mark></h2>
+      <video id="trailer" controls preload="metadata" poster="media/site-hero.png">
+        <source id="trsrc" src="media/trailer.mp4" type="video/mp4">
+      </video>
+      <div class="story" id="story" hidden style="margin-top:22px">
+        <div><b>0:00–0:10</b>Парк «Сказка» вечером: «Парк оживает, когда о нём заботятся».</div>
+        <div><b>0:10–0:20</b>Проблема: очереди и закрытые аттракционы — а гость узнаёт на месте.</div>
+        <div><b>0:20–0:35</b>Планировщик и Баюн: маршрут за минуту, ответы на вопросы.</div>
+        <div><b>0:35–0:50</b>Игра: погода настоящая, гости из заявок, дашборд для парка.</div>
+        <div><b>0:50–1:00</b>«Наши идеи сегодня делают будущее завтра».</div>
+      </div>
+      <div class="strip">
+        <img src="media/park-dino-park.jpg" alt="Дино парк">
+        <img src="media/park-husky.jpg" alt="Хаски Лэнд">
+        <img src="media/park-wheel.jpg" alt="Колесо обозрения">
+      </div>
+      <p class="cap">Где будет работать: на сайте парка, на экране у входа и в соцсетях. Фото — с parkskazka.com.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 6. ПРОВЕРКА И КОМАНДА ===== -->
+<section class="blk" id="b6">
+  <div class="container">
+    <span class="num"><i>6</i> Проверка и команда</span>
+    <h2 class="bebas">Игру попробовали <mark class="b">15 человек</mark> — вот что мы изменили</h2>
+    <table>
+      <tr><th style="width:26%">Кому дали попробовать</th><th>Что заметили</th><th>Что поменяли</th></tr>
+      <tr><td><b>Трекер и вожатая</b></td>
+          <td>Кнопки и карточки выглядели неактивными: непонятно, можно ли нажать.</td>
+          <td>Серых кнопок больше нет: на месте каждой — причина и что делать («нужно ещё 110 монет», «аттракцион на ремонте»).</td></tr>
+      <tr><td><b>Члены семей</b></td>
+          <td>Непонятные сюжетные линии: что делать дальше и зачем.</td>
+          <td>Добавили карточку «Что делать сейчас», нумерацию глав и сюжет в три шага.</td></tr>
+    </table>
+    <div class="members">
+      <div class="member m1"><div class="ava">🛠️</div><b>Сергей</b><span>Прототип</span></div>
+      <div class="member m2"><div class="ava">✍️</div><b>Николай</b><span>Тексты для ИИ</span></div>
+      <div class="member m3"><div class="ava">🎨</div><b>Артём</b><span>Визуал</span></div>
+      <div class="member m4"><div class="ava">🎤</div><b>Глеб</b><span>Выступление</span></div>
+      <div class="member m5"><div class="ava">🧭</div><b>Кирилл</b><span>Дизайн-стратег</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 7. ФИНАЛ ===== -->
+<section class="blk" id="b7">
+  <div class="container">
+    <div class="panel final">
+      <div class="final-grid">
+        <div>
+          <span class="num"><i>7</i> Финал</span>
+          <h2 class="bebas">Дальше: <mark>Баюн на сайте парка</mark> и бонусы за визит</h2>
+          <ol class="steps blue" style="margin-top:10px">
+            <li><b>Баюн — на parkskazka.com.</b> Конфиг nginx и docker-compose уже написаны — остался деплой.</li>
+            <li><b>Живые статусы парка</b> в планировщике: что работает и где очередь — видно сразу.</li>
+            <li><b>Бонусы за визит:</b> QR у аттракциона открывает игру и награду ×3.</li>
+          </ol>
+          <div class="contact">
+            <span class="num" style="margin-bottom:6px">Контакт</span><br>
+            <b>WIDE School</b> · +7 915 077-68-27 · Telegram @WIDE_SCHOOL
+          </div>
+          <p class="final-q bebas" style="margin-top:30px">Ваши вопросы?</p>
+        </div>
+        <div>
+          <img class="qr-big" src="media/qr-game.svg" alt="QR-код на игру">
+          <p class="qr-cap">Игра «Хранитель Сказки»<br>отскройте камерой телефона</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="todo" hidden></div>
+
+<script>
+/* Заполните значения — жёлтые поля исчезнут. Пустая строка = «ещё не заполнено». */
+const CFG = {
+  squadNo: '',
+};
+document.querySelectorAll('.fill').forEach(el => { const v = CFG[el.dataset.id]; if (v) { el.textContent = v; el.className = ''; } });
+const left = document.querySelectorAll('.fill');
+if (left.length) { const t = document.getElementById('todo'); t.hidden = false; t.textContent = 'Осталось заполнить полей: ' + left.length + ' (файл index.html → CFG)'; }
+// если файла trailer.mp4 ещё нет в media/, показываем план трейлера вместо пустого плеера
+document.getElementById('trsrc').addEventListener('error', () => { document.getElementById('trailer').hidden = true; document.getElementById('story').hidden = false; });
+</script>
+
+<!-- ========== Баюн: живой чат для вопросов жюри (бэкенд — docker compose, см. docker-compose.yml) ========== -->
+<button id="bayunFab" type="button" aria-label="Открыть чат с Баюном" title="Живой Баюн: вопросы жюри — сюда">🐈</button>
+<div id="bayunPanel" role="dialog" aria-label="Чат с Баюном — помощником парка «Сказка»">
+  <div class="bhead">
+    <span aria-hidden="true" style="font-size:24px">🐈</span>
+    <span><span class="bt">Баюн — живьём</span><small>спросите кота прямо сейчас</small></span>
+    <button type="button" id="bayunClose" aria-label="Закрыть чат">✕</button>
+  </div>
+  <iframe id="bayunFrame" title="Чат с Баюном" loading="lazy" referrerpolicy="no-referrer" src="about:blank"></iframe>
+</div>
+<script>
+(function () {
+  /* адрес чат-бэкенда; под nginx с location /bayun/ работает значение по умолчанию.
+     Если защита идёт без бэкенда — задайте window.BAYUN_URL = '' , и кнопка скроется сама. */
+  const BAYUN_URL = window.BAYUN_URL !== undefined ? window.BAYUN_URL : '/bayun/';
+  const fab = document.getElementById('bayunFab');
+  if (!BAYUN_URL) { fab.style.display = 'none'; return; }
+  const panel = document.getElementById('bayunPanel');
+  const frame = document.getElementById('bayunFrame');
+  function setOpen(on) {
+    panel.classList.toggle('on', on);
+    if (on && frame.src === 'about:blank') frame.src = BAYUN_URL + (BAYUN_URL.includes('?') ? '&' : '?') + 'embed=1';
+  }
+  fab.addEventListener('click', () => setOpen(!panel.classList.contains('on')));
+  document.getElementById('bayunClose').addEventListener('click', () => setOpen(false));
+})();
+</script>
+</body>
+</html>
