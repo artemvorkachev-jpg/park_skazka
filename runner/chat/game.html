@@ -466,8 +466,10 @@ function groupUpdate(g, dt, input){
   if (g.npc && g.waitT > 0 && g.phase === 'idle'){ g.waitT -= dt; return; }
   let tx = null, ty = null;
   if (!g.npc){
-    if (input.dir){ tx = g.x + input.dir.x * 100; ty = g.y + input.dir.y * 100; }
-    else if (input.target){ tx = input.target.x; ty = input.target.y; }
+    /* цель тапа/кнопок лежит в g.target (у игрока g === player): игрок идёт
+       к точке, пока не дойдёт, не тапнет в другое место или не нажмёт клавиши */
+    if (input.dir){ tx = g.x + input.dir.x * 100; ty = g.y + input.dir.y * 100; g.target = null; }
+    else if (g.target){ tx = g.target.x; ty = g.target.y; }
   } else {
     if (g.phase === 'idle' && g.waitT <= 0){
       const id = g.pi < g.plan.length ? g.plan[g.pi] : pickOf(CATALOG.filter(a => POS[a.id])).id;
@@ -507,7 +509,7 @@ function groupUpdate(g, dt, input){
         g.avoid = { dx:Math.cos(a), dy:Math.sin(a) }; g.avoidT = rnd(0.5, 1.0); g.stuck = 0;
       }
       g.bob += dt * 10;
-    } else if (!g.npc && input.target){ input.target = null; }
+    } else if (!g.npc && g.target){ g.target = null; }
   }
   g.moving = moving;
   g.hist.unshift({ x:g.x, y:g.y }); if (g.hist.length > 240) g.hist.pop();
@@ -739,7 +741,10 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 /* мышь/тач: клик — идти к точке, драг — панорама */
 let ptr = null;
-cv.addEventListener('pointerdown', e => { ptr = { x:e.clientX, y:e.clientY, moved:false }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointerdown', e => {
+  ptr = { x:e.clientX, y:e.clientY, moved:false };
+  try { cv.setPointerCapture(e.pointerId); } catch {} // быстрый тап может успеть отпустить указатель
+});
 cv.addEventListener('pointermove', e => {
   hoverCheck(e);
   if (!ptr) return;
