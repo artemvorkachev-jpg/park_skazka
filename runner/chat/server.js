@@ -64,7 +64,7 @@ const wmoRu = (c) => {
   if (c < 95) return "ливень";
   return "гроза";
 };
-const fmtT = (t) => (t > 0 ? "+" : "") + Math.round(t) + "°";
+const fmtT = (t) => (t > 0 ? "+" : "") + Math.round(t) + " °C";
 
 function parseContext(raw) {
   if (!raw || typeof raw !== "object") return null;

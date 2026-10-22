@@ -354,7 +354,7 @@ function renderSteps(cur){
 /* ---------- погода по дате визита (Open-Meteo, как в игре — core.js) ---------- */
 const PARK = { lat: 55.771505, lon: 37.434665 };
 const wxEmoji = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c < 50 ? '🌫️' : c < 60 ? '🌦️' : c < 70 ? '🌧️' : c < 80 ? '❄️' : c < 95 ? '🌧️' : '⛈️';
-const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + '°';
+const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + ' °C';
 // прогноз считается свежим, только если совпадают и дата, и час прихода
 const freshWeather = () => (state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12)) ? state.weather : null;
 const WX_MAX_AHEAD = 16;    // горизонт прогноза Open-Meteo, дней
