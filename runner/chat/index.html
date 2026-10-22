@@ -357,15 +357,22 @@ const wxEmoji = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️
 const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + '°';
 // прогноз считается свежим, только если совпадают и дата, и час прихода
 const freshWeather = () => (state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12)) ? state.weather : null;
+const WX_MAX_AHEAD = 16;    // горизонт прогноза Open-Meteo, дней
+const WX_APPROX_AHEAD = 10; // даты дальше горизонта: ориентируемся на прогноз «сегодня + 10 дней»
 async function fetchWeather(){
   if (!state.date) return;
   const hour = parseInt(state.time, 10) || 12;
   if (state.weather && state.weather.date === state.date && state.weather.hour === hour) return;
   const wantDate = state.date, wantHour = hour;   // защита от гонки: ответ старого запроса не перезапишет новый
+  // дата дальше горизонта прогноза — берём «сегодня + 10 дней» как ориентир
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const daysAhead = Math.round((new Date(state.date + 'T00:00:00') - today) / 864e5);
+  const approx = daysAhead > WX_MAX_AHEAD;
+  const fetchDate = approx ? isoOf(new Date(today.getTime() + WX_APPROX_AHEAD * 864e5)) : state.date;
   try{
     const u = `https://api.open-meteo.com/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
       `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
-      `&start_date=${state.date}&end_date=${state.date}&timezone=Europe%2FMoscow`;
+      `&start_date=${fetchDate}&end_date=${fetchDate}&timezone=Europe%2FMoscow`;
     const r = await fetch(u);
     if (!r.ok) return;
     const j = await r.json(), h = j.hourly;
@@ -377,6 +384,7 @@ async function fetchWeather(){
     state.weather = {
       date: state.date,
       hour,
+      approx,
       t: h.temperature_2m[i],
       code: h.weathercode[i],
       precip: (h.precipitation_probability || [])[i] ?? 0,
@@ -390,7 +398,7 @@ function dateHintHtml(){
   if (!state.date) return 'Выберите дату — она нужна для маршрута и подсказок Баюна.';
   let s = `Визит: <b>${esc(fmtDate(state.date))}</b>, приход в <b>${esc(state.time || '10:00')}</b>`;
   const w = freshWeather();
-  s += w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}, дождь ${w.precip}%` : ' · погоду подгружаем…';
+  s += w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}, дождь ${w.precip}%${w.approx ? ' (ориентир)' : ''}` : ' · погоду подгружаем…';
   return s;
 }
 function renderVisit(){

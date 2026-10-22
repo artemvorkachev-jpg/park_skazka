@@ -111,6 +111,7 @@ function parseContext(raw) {
         code: Number.isFinite(Number(raw.weather.code)) ? Number(raw.weather.code) : -1,
         precip: Number.isFinite(Number(raw.weather.precip)) ? Number(raw.weather.precip) : -1,
         wind: Number.isFinite(Number(raw.weather.wind)) ? Number(raw.weather.wind) : -1,
+        approx: raw.weather.approx === true,
       };
     }
   }
@@ -145,7 +146,10 @@ function formatContext(ctx) {
   }
   if (ctx.weather) {
     lines.push(
-      `Погода на время прихода: ${wmoRu(ctx.weather.code)}, ${fmtT(ctx.weather.t)}` +
+      (ctx.weather.approx
+        ? "Погода ориентировочная (дата дальше горизонта прогноза, взят прогноз на 10 дней от сегодняшнего дня): "
+        : "Погода на время прихода: ") +
+      `${wmoRu(ctx.weather.code)}, ${fmtT(ctx.weather.t)}` +
       `${ctx.weather.precip >= 0 ? `, вероятность осадков ${ctx.weather.precip}%` : ""}` +
       `${ctx.weather.wind >= 0 ? `, ветер до ${ctx.weather.wind} м/с` : ""}`
     );
