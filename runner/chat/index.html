@@ -355,10 +355,13 @@ function renderSteps(cur){
 const PARK = { lat: 55.771505, lon: 37.434665 };
 const wxEmoji = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c < 50 ? '🌫️' : c < 60 ? '🌦️' : c < 70 ? '🌧️' : c < 80 ? '❄️' : c < 95 ? '🌧️' : '⛈️';
 const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + '°';
+// прогноз считается свежим, только если совпадают и дата, и час прихода
+const freshWeather = () => (state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12)) ? state.weather : null;
 async function fetchWeather(){
   if (!state.date) return;
   const hour = parseInt(state.time, 10) || 12;
   if (state.weather && state.weather.date === state.date && state.weather.hour === hour) return;
+  const wantDate = state.date, wantHour = hour;   // защита от гонки: ответ старого запроса не перезапишет новый
   try{
     const u = `https://api.open-meteo.com/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
       `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
@@ -367,6 +370,7 @@ async function fetchWeather(){
     if (!r.ok) return;
     const j = await r.json(), h = j.hourly;
     if (!h || !Array.isArray(h.time)) return;
+    if (state.date !== wantDate || (parseInt(state.time, 10) || 12) !== wantHour) return;
     let i = h.time.findIndex(t => t.endsWith('T' + String(hour).padStart(2, '0') + ':00'));
     if (i < 0) i = h.time.findIndex(t => t.endsWith('T12:00'));
     if (i < 0) return;
@@ -385,7 +389,7 @@ async function fetchWeather(){
 function dateHintHtml(){
   if (!state.date) return 'Выберите дату — она нужна для маршрута и подсказок Баюна.';
   let s = `Визит: <b>${esc(fmtDate(state.date))}</b>, приход в <b>${esc(state.time || '10:00')}</b>`;
-  const w = state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12) ? state.weather : null;
+  const w = freshWeather();
   s += w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}, дождь ${w.precip}%` : ' · погоду подгружаем…';
   return s;
 }
@@ -421,7 +425,7 @@ function renderVisit(){
     return;
   }
   $('#dateLine').innerHTML = state.date
-    ? `📅 Дата визита: <b>${esc(fmtDate(state.date))}</b>${state.weather && state.weather.date === state.date ? ` · ${wxEmoji(state.weather.code)} ${fmtTemp(state.weather.t)}` : ''} · <button class="linkish" type="button" data-stage="date">изменить</button>`
+    ? `📅 Дата визита: <b>${esc(fmtDate(state.date))}</b>${freshWeather() ? ` · ${wxEmoji(freshWeather().code)} ${fmtTemp(freshWeather().t)}` : ''} · <button class="linkish" type="button" data-stage="date">изменить</button>`
     : 'Дата не выбрана · <button class="linkish" type="button" data-stage="date">выбрать</button>';
   const list = $('#groupList');
   list.innerHTML = '';
@@ -645,7 +649,7 @@ function renderChips(){
 function renderStrip(){
   const parts = [];
   if (state.date){
-    const w = state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12) ? state.weather : null;
+    const w = freshWeather();
     parts.push(`📅 <b>${esc(fmtDate(state.date))}</b>${w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}` : ''}`);
     parts.push(`⏰ <b>${esc(state.time || '10:00')}</b>`);
   }
@@ -662,7 +666,8 @@ function contextPayload(){
   const ctx = { visitId: state.id };
   if (state.date) ctx.date = state.date;
   if (state.time) ctx.time = state.time;
-  if (state.weather && state.weather.date === state.date) ctx.weather = { t: state.weather.t, code: state.weather.code, precip: state.weather.precip, wind: state.weather.wind };
+  const w = freshWeather();
+  if (w) ctx.weather = { t: w.t, code: w.code, precip: w.precip, wind: w.wind };
   if (state.group.length) ctx.group = state.group.map(g => ({ name: g.name, height: g.h }));
   const picks = pickedObjs();
   if (picks.length) ctx.picks = picks.map(p => ({ name: p.n, type: p.t, hmin: p.lo, hmax: p.hi, priceFrom: p.p }));
