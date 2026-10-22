@@ -359,46 +359,73 @@ const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + ' °C';
 const freshWeather = () => (state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12)) ? state.weather : null;
 const WX_MAX_AHEAD = 16;    // горизонт прогноза Open-Meteo, дней
 const WX_APPROX_AHEAD = 10; // даты дальше горизонта: ориентируемся на прогноз «сегодня + 10 дней»
+let weatherFailed = false;  // не загрузилась ни через бэкенд, ни напрямую — показываем «Повторить»
+function applyWeather(w, wantDate, wantHour){
+  if (wantDate !== state.date || wantHour !== (parseInt(state.time, 10) || 12)) return false; // дата/время уже другие
+  state.weather = w; weatherFailed = false; save();
+  if (currentView() === 'visit') renderVisit();
+  return true;
+}
+/* запасной путь — напрямую в Open-Meteo из браузера (мимо нашего бэкенда) */
+async function fetchDirect(wantDate, wantHour){
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const daysAhead = Math.round((new Date(wantDate + 'T00:00:00') - today) / 864e5);
+  const approx = daysAhead > WX_MAX_AHEAD;
+  const fetchDate = approx ? isoOf(new Date(today.getTime() + WX_APPROX_AHEAD * 864e5)) : wantDate;
+  const u = `https://api.open-meteo.com/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
+    `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
+    `&start_date=${fetchDate}&end_date=${fetchDate}&timezone=Europe%2FMoscow`;
+  const ctrl = new AbortController();          // без этого зависший запрос держал «подгружаем…»
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  let r;
+  try{
+    r = await fetch(u, { signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!r.ok) throw new Error('http_' + r.status);
+  const j = await r.json(), h = j.hourly;
+  if (!h || !Array.isArray(h.time)) throw new Error('bad_payload');
+  let i = h.time.findIndex(t => t.endsWith('T' + String(wantHour).padStart(2, '0') + ':00'));
+  if (i < 0) i = h.time.findIndex(t => t.endsWith('T12:00'));
+  if (i < 0) throw new Error('no_hour');
+  applyWeather({
+    date: wantDate, hour: wantHour, approx,
+    t: h.temperature_2m[i], code: h.weathercode[i],
+    precip: (h.precipitation_probability || [])[i] ?? 0,
+    wind: Math.round(h.wind_speed_10m[i] || 0),
+  }, wantDate, wantHour);
+}
+/* погода: сначала через наш бэкенд (кэш и таймаут на его стороне), при неудаче — напрямую */
 async function fetchWeather(){
   if (!state.date) return;
   const hour = parseInt(state.time, 10) || 12;
   if (state.weather && state.weather.date === state.date && state.weather.hour === hour) return;
-  const wantDate = state.date, wantHour = hour;   // защита от гонки: ответ старого запроса не перезапишет новый
-  // дата дальше горизонта прогноза — берём «сегодня + 10 дней» как ориентир
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const daysAhead = Math.round((new Date(state.date + 'T00:00:00') - today) / 864e5);
-  const approx = daysAhead > WX_MAX_AHEAD;
-  const fetchDate = approx ? isoOf(new Date(today.getTime() + WX_APPROX_AHEAD * 864e5)) : state.date;
+  weatherFailed = false;
+  const wantDate = state.date, wantHour = hour;
   try{
-    const u = `https://api.open-meteo.com/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
-      `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
-      `&start_date=${fetchDate}&end_date=${fetchDate}&timezone=Europe%2FMoscow`;
-    const r = await fetch(u);
-    if (!r.ok) return;
-    const j = await r.json(), h = j.hourly;
-    if (!h || !Array.isArray(h.time)) return;
-    if (state.date !== wantDate || (parseInt(state.time, 10) || 12) !== wantHour) return;
-    let i = h.time.findIndex(t => t.endsWith('T' + String(hour).padStart(2, '0') + ':00'));
-    if (i < 0) i = h.time.findIndex(t => t.endsWith('T12:00'));
-    if (i < 0) return;
-    state.weather = {
-      date: state.date,
-      hour,
-      approx,
-      t: h.temperature_2m[i],
-      code: h.weathercode[i],
-      precip: (h.precipitation_probability || [])[i] ?? 0,
-      wind: Math.round(h.wind_speed_10m[i] || 0),
-    };
-    save();
-    if (currentView() === 'visit') renderVisit();
+    const r = await fetch(`api/weather?date=${wantDate}&hour=${hour}`);
+    if (r.ok){
+      const w = await r.json();
+      if (w && w.date === wantDate && w.hour === wantHour && applyWeather(w, wantDate, wantHour)) return;
+    }
   }catch{}
+  try{
+    await fetchDirect(wantDate, wantHour);
+  }catch{
+    if (wantDate === state.date && wantHour === (parseInt(state.time, 10) || 12)){
+      weatherFailed = true;
+      if (currentView() === 'visit') renderVisit();
+    }
+  }
 }
 function dateHintHtml(){
   if (!state.date) return 'Выберите дату — она нужна для маршрута и подсказок Баюна.';
   let s = `Визит: <b>${esc(fmtDate(state.date))}</b>, приход в <b>${esc(state.time || '10:00')}</b>`;
   const w = freshWeather();
-  s += w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}, дождь ${w.precip}%${w.approx ? ' (ориентир)' : ''}` : ' · погоду подгружаем…';
+  if (w) s += ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}, дождь ${w.precip}%${w.approx ? ' (ориентир)' : ''}`;
+  else if (weatherFailed) s += ' · погода недоступна <button class="linkish" type="button" data-wx-retry>↻ Повторить</button>';
+  else s += ' · погоду подгружаем…';
   return s;
 }
 function renderVisit(){
@@ -462,6 +489,9 @@ $('#dateInput').addEventListener('change', e => { state.date = e.target.value ||
 $('#timeInput').addEventListener('change', e => {
   state.time = /^\d{1,2}:\d{2}$/.test(e.target.value || '') ? e.target.value : '10:00';
   save(); fetchWeather(); renderVisit();
+});
+$('#dateHint').addEventListener('click', e => {
+  if (e.target.closest('[data-wx-retry]')){ weatherFailed = false; fetchWeather(); }
 });
 /* состояние группы обновляем прямо при вводе (input), а рост докручиваем на change (размытие поля) */
 $('#groupList').addEventListener('input', e => {

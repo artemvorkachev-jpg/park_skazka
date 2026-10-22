@@ -10,7 +10,8 @@
 //                       ответ — text/event-stream, события runner.js построчно:
 //                       session_start / turn_start / assistant_delta / assistant_final /
 //                       tool_start / tool_end / error / done {answer}
-//   POST /api/visits  — заявка визита {id, date?, group?, picks?, route?} — в store.js
+//   POST /api/visits  — заявка визита {id, date?, time?, group?, picks?, route?} — в store.js
+//   GET  /api/weather — погода на дату/час (кэш 30 мин, таймаут 6 с; источник — Open-Meteo)
 //   GET  /api/stats   — агрегаты для дашборда; если задан DASHBOARD_TOKEN, требует ?token=...
 //
 // runner.js — одноразовый процесс на один запрос: на каждое сообщение чата
@@ -324,6 +325,53 @@ async function handleVisits(req, res) {
   json(res, 200, { ok: true, parsed: visit.parsed });
 }
 
+// --- погода: прокси к Open-Meteo с кэшем и таймаутом.
+// Гости ходят на наш бэкенд (GET /api/weather), а не напрямую — их браузеры не зависят
+// от доступности open-meteo.com; кэш 30 минут бережёт лимиты API.
+const PARK = { lat: 55.771505, lon: 37.434665 };
+const WX_CACHE = new Map();               // "date|hour" -> { data, ts }
+const WX_TTL_MS = 30 * 60 * 1000;
+const WX_TIMEOUT_MS = 6000;
+const WX_MAX_AHEAD = 16;                  // горизонт прогноза Open-Meteo, дней
+const WX_BASE = process.env.WX_URL_BASE || "https://api.open-meteo.com"; // смена источника для тестов/зеркал
+
+async function weatherFor(date, hour) {
+  const key = date + "|" + hour;
+  const hit = WX_CACHE.get(key);
+  if (hit && Date.now() - hit.ts < WX_TTL_MS) return hit.data;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const daysAhead = Math.round((new Date(date + "T00:00:00") - today) / 864e5);
+  const approx = daysAhead > WX_MAX_AHEAD;
+  const fetchDate = approx ? new Date(today.getTime() + 10 * 864e5).toISOString().slice(0, 10) : date;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), WX_TIMEOUT_MS);
+  let j;
+  try {
+    const u = `${WX_BASE}/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
+      `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
+      `&start_date=${fetchDate}&end_date=${fetchDate}&timezone=Europe%2FMoscow`;
+    const r = await fetch(u, { signal: ctrl.signal });
+    if (!r.ok) throw new Error("http_" + r.status);
+    j = await r.json();
+  } finally {
+    clearTimeout(timer);
+  }
+  const h = j.hourly;
+  if (!h || !Array.isArray(h.time)) throw new Error("bad_payload");
+  let i = h.time.findIndex((x) => x.endsWith("T" + String(hour).padStart(2, "0") + ":00"));
+  if (i < 0) i = h.time.findIndex((x) => x.endsWith("T12:00"));
+  if (i < 0) throw new Error("no_hour");
+  const data = {
+    date, hour, approx,
+    t: h.temperature_2m[i],
+    code: h.weathercode[i],
+    precip: (h.precipitation_probability || [])[i] ?? 0,
+    wind: Math.round(h.wind_speed_10m[i] || 0),
+  };
+  WX_CACHE.set(key, { data, ts: Date.now() });
+  return data;
+}
+
 // --- доступ к дашборду: если задан DASHBOARD_TOKEN, данные отдаём только с ним ---
 
 function dashboardAllowed(url) {
@@ -344,6 +392,16 @@ createServer((req, res) => {
     json(res, 200, { ok: true });
   } else if (req.method === "POST" && url.pathname === "/api/chat") {
     handleChat(req, res);
+  } else if (req.method === "GET" && url.pathname === "/api/weather") {
+    const date = url.searchParams.get("date") || "";
+    const hour = parseInt(url.searchParams.get("hour"), 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(hour) || hour < 0 || hour > 23) {
+      json(res, 400, { error: "Нужны date=YYYY-MM-DD и hour=0..23" });
+      return;
+    }
+    weatherFor(date, hour)
+      .then((w) => json(res, 200, w))
+      .catch((e) => json(res, 502, { error: "Прогноз недоступен: " + e.message }));
   } else if (req.method === "POST" && url.pathname === "/api/visits") {
     handleVisits(req, res);
   } else if (req.method === "GET" && url.pathname === "/api/stats") {
