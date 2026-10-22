@@ -10,19 +10,20 @@
 //                       ответ — text/event-stream, события runner.js построчно:
 //                       session_start / turn_start / assistant_delta / assistant_final /
 //                       tool_start / tool_end / error / done {answer}
-//   POST /api/visits  — заявка визита {id, date?, group:[{name,height}], picks?:[...]} — в store.js
+//   POST /api/visits  — заявка визита {id, date?, group?, picks?, route?} — в store.js
 //   GET  /api/stats   — агрегаты для дашборда; если задан DASHBOARD_TOKEN, требует ?token=...
 //
 // runner.js — одноразовый процесс на один запрос: на каждое сообщение чата
-// запускается новый runner, история диалога и конфигурация гостей передаются в промпте
-// (см. buildPrompt). Каждое сообщение посетителя логируется в questions.jsonl (store.js).
+// запускается новый runner, история диалога, конфигурация гостей и маршрут дня
+// передаются в промпте (см. buildPrompt). Реплики диалога (вопрос + ответ Баюна)
+// логируются в dialogue.jsonl (store.js).
 
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getStats, logQuestion, normalizeVisit, saveVisit } from "./store.js";
+import { getStats, logDialogue, normalizeVisit, saveVisit } from "./store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RUNNER_ROOT = resolve(__dirname, "..");
@@ -77,7 +78,17 @@ function parseContext(raw) {
       }))
       .filter((p) => p.name);
   }
-  return ctx.group?.length || ctx.picks?.length || ctx.date || ctx.visitId ? ctx : null;
+  if (Array.isArray(raw.route)) {
+    ctx.route = raw.route
+      .slice(0, 20)
+      .map((r) => ({
+        time: typeof r?.time === "string" && /^\d{1,2}:\d{2}$/.test(r.time.trim()) ? r.time.trim() : "",
+        name: typeof r?.name === "string" ? r.name.trim().slice(0, 100) : "",
+        dur: Number(r?.dur) || 0,
+      }))
+      .filter((r) => r.name && r.time);
+  }
+  return ctx.group?.length || ctx.picks?.length || ctx.date || ctx.visitId || ctx.route?.length ? ctx : null;
 }
 
 function formatContext(ctx) {
@@ -100,6 +111,9 @@ function formatContext(ctx) {
         })
         .join(", ")}`
     );
+  }
+  if (ctx.route?.length) {
+    lines.push(`Маршрут дня: ${ctx.route.map((r) => `${r.time} «${r.name}»${r.dur ? ` (${r.dur} мин)` : ""}`).join(" → ")}`);
   }
   return lines.join("\n").slice(0, 1500);
 }
@@ -172,8 +186,8 @@ async function handleChat(req, res) {
   if (message.length > MAX_MESSAGE_LEN) message = message.slice(0, MAX_MESSAGE_LEN);
 
   const context = parseContext(parsed.context);
-  // вопрос посетителя — в копилку маркетинга (связь с визитом по visitId)
-  logQuestion(context?.visitId ?? null, message);
+  // вопрос посетителя — в диалог для маркетинга (связь с визитом по visitId)
+  logDialogue(context?.visitId ?? null, "user", message);
 
   res.writeHead(200, {
     "content-type": "text/event-stream; charset=utf-8",
@@ -196,6 +210,7 @@ async function handleChat(req, res) {
   res.on("close", () => { closed = true; if (child) child.kill(); });
 
   const prompt = buildPrompt(message, history, context);
+  const visitId = context?.visitId ?? null;
   child = spawn(process.execPath, [RUNNER_JS, prompt], {
     cwd: RUNNER_ROOT,
     env: process.env,
@@ -214,7 +229,10 @@ async function handleChat(req, res) {
       if (!line) continue;
       let event;
       try { event = JSON.parse(line); } catch { continue; }
-      if (event.type === "done") gotDone = true;
+      if (event.type === "done") {
+        gotDone = true;
+        logDialogue(visitId, "bayun", event.answer || "");
+      }
       if (!closed) send(event);
       if (event.type === "done" || event.type === "error") {
         clearInterval(heartbeat);

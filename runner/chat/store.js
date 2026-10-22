@@ -1,12 +1,13 @@
-// store.js — хранилище заявок «спланированных визитов» и вопросов Баюну (append-only JSONL)
+// store.js — хранилище заявок «спланированных визитов» и диалога с Баюном (append-only JSONL)
 // плюс агрегация для маркетингового дашборда. Без внешних зависимостей.
 //
 // Файлы (в chat/data/, в контейнере — том bayun_data):
-//   visits.jsonl     — по строке на отправку конфигурации гостей (дубликаты по id: побеждает последняя)
-//   questions.jsonl  — по строке на сообщение посетителя (связано с визитом через visitId)
+//   visits.jsonl    — по строке на отправку конфигурации гостей (дубликаты по id: побеждает последняя)
+//   dialogue.jsonl  — по строке на реплику диалога (visitId, role 'user'|'bayun', text)
 //
 // Парсинг для маркетинга делается при записи: поля parsed.* в самой строке —
-// сегмент каждого гостя по росту и категория группы (семья / взрослые / дети).
+// сегмент каждого гостя по росту, категория группы (семья / взрослые / дети)
+// и построенный маршрут дня.
 
 import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -15,7 +16,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.BAYUN_DATA_DIR || join(__dirname, "data");
 const VISITS_FILE = join(DATA_DIR, "visits.jsonl");
-const QUESTIONS_FILE = join(DATA_DIR, "questions.jsonl");
+const DIALOGUE_FILE = join(DATA_DIR, "dialogue.jsonl");
 
 // --- сегменты гостей и категории групп (словарь маркетинга) ---
 
@@ -73,6 +74,15 @@ export function normalizeVisit(raw) {
     }))
     .filter((p) => p.name);
 
+  const route = (Array.isArray(raw.route) ? raw.route : [])
+    .slice(0, 20)
+    .map((r) => ({
+      time: typeof r?.time === "string" && /^\d{1,2}:\d{2}$/.test(r.time.trim()) ? r.time.trim() : "",
+      name: typeof r?.name === "string" ? r.name.trim().slice(0, 100) : "",
+      dur: clampNum(r?.dur, 5, 480, 30),
+    }))
+    .filter((r) => r.name && r.time);
+
   const heights = group.map((m) => m.height);
   const segments = { kid: 0, child: 0, adult: 0 };
   for (const h of heights) segments[segmentOf(h)]++;
@@ -82,11 +92,13 @@ export function normalizeVisit(raw) {
     date: typeof raw.date === "string" ? raw.date.slice(0, 10) : "",
     group,
     picks,
+    route,
     ts: new Date().toISOString(),
     parsed: {
       size: group.length,
       segments,
       category: categoryOf(heights),
+      stops: route.length,
     },
   };
 }
@@ -103,12 +115,13 @@ export function saveVisit(visit) {
   return visit;
 }
 
-export function logQuestion(visitId, text) {
+export function logDialogue(visitId, role, text) {
   if (typeof text !== "string" || !text.trim()) return;
-  appendLine(QUESTIONS_FILE, {
+  appendLine(DIALOGUE_FILE, {
     ts: new Date().toISOString(),
     visitId: typeof visitId === "string" ? visitId.slice(0, 64) : null,
-    text: text.trim().slice(0, 200),
+    role: role === "bayun" ? "bayun" : "user",
+    text: text.trim().slice(0, 2000),
   });
 }
 
@@ -149,7 +162,7 @@ export function getStats() {
     if (v && typeof v.id === "string") byId.set(v.id, v);
   }
   const visits = [...byId.values()].sort((a, b) => (a.ts < b.ts ? -1 : 1));
-  const questions = readJsonl(QUESTIONS_FILE).filter((q) => q && typeof q.text === "string");
+  const dialogue = readJsonl(DIALOGUE_FILE).filter((d) => d && typeof d.text === "string");
 
   const categories = { family: 0, adults: 0, kids: 0 };
   const segments = { kid: 0, child: 0, adult: 0 };
@@ -178,18 +191,28 @@ export function getStats() {
     }
   }
 
-  const questionsByVisit = new Map();
-  for (const q of questions) {
-    if (q.visitId) questionsByVisit.set(q.visitId, (questionsByVisit.get(q.visitId) || 0) + 1);
+  const dialogueByVisit = new Map();
+  for (const d of dialogue) {
+    if (d.visitId) dialogueByVisit.set(d.visitId, (dialogueByVisit.get(d.visitId) || 0) + 1);
   }
 
   const visitsCount = visits.length;
+  let routesBuilt = 0;
+  let stopsTotal = 0;
+  for (const v of visits) {
+    if (Array.isArray(v.route) && v.route.length) {
+      routesBuilt++;
+      stopsTotal += v.route.length;
+    }
+  }
   return {
     generatedAt: new Date().toISOString(),
     visitsCount,
     guestsTotal,
     avgGroupSize: visitsCount ? Math.round((guestsTotal / visitsCount) * 10) / 10 : 0,
     familyShare: visitsCount ? Math.round((categories.family / visitsCount) * 100) : 0,
+    routesBuilt,
+    avgStops: routesBuilt ? Math.round((stopsTotal / routesBuilt) * 10) / 10 : 0,
     categories,
     segments,
     sizes,
@@ -199,7 +222,8 @@ export function getStats() {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10),
-    questionsCount: questions.length,
+    questionsCount: dialogue.filter((d) => d.role !== "bayun").length,
+    answersCount: dialogue.filter((d) => d.role === "bayun").length,
     recentVisits: visits
       .slice(-10)
       .reverse()
@@ -210,8 +234,9 @@ export function getStats() {
         category: v.parsed?.category || "",
         group: (v.group || []).map((m) => ({ name: m.name, height: m.height })),
         picks: (v.picks || []).map((p) => p.name),
-        questions: questionsByVisit.get(v.id) || 0,
+        route: (Array.isArray(v.route) ? v.route : []).map((r) => ({ time: r.time, name: r.name, dur: r.dur })),
+        questions: dialogueByVisit.get(v.id) || 0,
       })),
-    recentQuestions: questions.slice(-15).reverse(),
+    recentDialogue: dialogue.slice(-15).reverse(),
   };
 }

@@ -104,6 +104,18 @@ input[type=date]:focus{box-shadow:0 0 0 4px rgba(52,180,232,.2)}
 .search-row input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(52,180,232,.15)}
 .plan-count{text-align:center;font-size:14.5px;color:var(--muted);margin:0 0 16px}
 .plan-count b{color:var(--accent)}
+
+/* ---------- шаг 3: маршрут ---------- */
+.route-list{list-style:none;margin:0 auto;padding:0;display:flex;flex-direction:column;gap:9px;max-width:660px}
+.route-item{display:flex;gap:14px;align-items:flex-start;background:#fff;border-radius:20px;padding:12px 18px;box-shadow:var(--shadow-sm)}
+.route-item .rt-time{flex:none;font-weight:700;font-size:13.5px;color:#1E6E9E;background:var(--light);border-radius:100px;padding:5px 14px;white-space:nowrap}
+.route-item .rt-main b{display:block;font-size:15px}
+.route-item .rt-main small{color:var(--muted);font-size:12.5px}
+.route-item.lunch{background:var(--beige)}
+.route-item.lunch .rt-time{background:#fff;color:#8A6100}
+.route-sum{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin:18px 0 0;font-size:14px;color:var(--muted)}
+.route-sum b{color:var(--ink)}
+.route-warn{max-width:660px;margin:14px auto 0;background:#FFE9E5;border:1px solid #FFC7BD;color:#8E1B00;border-radius:18px;padding:10px 18px;font-size:13.5px;text-align:center}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:14px}
 .card{position:relative;display:flex;flex-direction:column;background:#fff;border:3px solid transparent;border-radius:24px;box-shadow:var(--shadow-sm);padding:10px;cursor:pointer;text-align:left;transition:.2s;gap:8px}
 .card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
@@ -218,11 +230,24 @@ footer b{color:var(--accent)}
     </div>
     <div class="nav">
       <button class="btn ghost" data-go="visit">← Кто идёт</button>
+      <button class="btn primary" id="toRoute">Далее: маршрут →</button>
+    </div>
+  </section>
+
+  <!-- ---------- шаг 3: маршрут ---------- -->
+  <section class="view" id="view-route">
+    <div class="container">
+      <h2>Маршрут дня</h2>
+      <p class="sub">Баюн расставил ваши точки по часам: детские и спокойные — до обеда, экстрим — после.</p>
+      <div id="routeBody"></div>
+    </div>
+    <div class="nav">
+      <button class="btn ghost" data-go="interests">← Интересы</button>
       <button class="btn primary" id="toChat">Спросить Баюна →</button>
     </div>
   </section>
 
-  <!-- ---------- шаг 3: чат ---------- -->
+  <!-- ---------- шаг 4: чат ---------- -->
   <section class="view" id="view-chat">
     <div class="strip" id="strip"></div>
     <div id="demoBanner">Демо-режим: сервер Баюна не подключён, ответы смоделированы</div>
@@ -297,7 +322,7 @@ function fitTo(a, heights){
 }
 
 /* ================= маршрутизация ================= */
-const VIEWS = ['visit', 'interests', 'chat'];
+const VIEWS = ['visit', 'interests', 'route', 'chat'];
 function currentView(){
   const v = (location.hash || '').replace(/^#\/?/, '');
   return VIEWS.includes(v) ? v : 'visit';
@@ -309,7 +334,7 @@ function go(v){
 window.addEventListener('hashchange', render);
 
 /* ================= шаги-пилюли ================= */
-const STEP_META = [ {v:'visit', e:'📅', t:'Визит'}, {v:'interests', e:'🎡', t:'Интересы'}, {v:'chat', e:'🐈', t:'Баюн'} ];
+const STEP_META = [ {v:'visit', e:'📅', t:'Визит'}, {v:'interests', e:'🎡', t:'Интересы'}, {v:'route', e:'🗺️', t:'Маршрут'}, {v:'chat', e:'🐈', t:'Баюн'} ];
 function renderSteps(cur){
   const idx = VIEWS.indexOf(cur);
   $('#steps').innerHTML = STEP_META.map((s, i) => {
@@ -430,9 +455,67 @@ $('#cards').addEventListener('click', e => {
   }
   save(); renderCards();
 });
+$('#toRoute').addEventListener('click', () => go('route'));
+
+/* ================= шаг 3: маршрут ================= */
+/* длительности и порядок — из планировщика игры (planner.js/core.js):
+   детские и спокойные точки — первой половиной дня, экстрим — после */
+const ROUTE_DUR = { zone: 90, extreme: 40, family: 35, kids: 25, interactive: 45 };
+const ROUTE_PEAK = { kids: 12.5, zone: 13.5, interactive: 14, family: 14.5, extreme: 16 };
+const OPEN_MIN = 10 * 60, CLOSE_MIN = 21 * 60, LUNCH_MIN = 13 * 60, GAP = 15;
+const fmtMin = m => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+
+function buildRoute(){
+  const picks = pickedObjs();
+  if (!picks.length) return { items: [], overflow: 0 };
+  const order = [...picks].sort((a, b) => (ROUTE_PEAK[a.t] || 14) - (ROUTE_PEAK[b.t] || 14) || a.id - b.id);
+  const items = [];
+  let cursor = OPEN_MIN, lunch = false, overflow = 0;
+  for (const a of order){
+    const dur = ROUTE_DUR[a.t] || 40;
+    // обед вставляем перед точкой, которая перелезает через 13:00
+    if (!lunch && cursor < LUNCH_MIN && cursor + dur > LUNCH_MIN){
+      items.push({ h: LUNCH_MIN, name: 'Обед', dur: 60, lunch: true });
+      cursor = LUNCH_MIN + 60 + GAP;
+      lunch = true;
+    }
+    if (cursor + dur > CLOSE_MIN){ overflow++; continue; }
+    items.push({ h: cursor, name: a.n, dur, type: a.t, id: a.id });
+    cursor += dur + GAP;
+  }
+  return { items, overflow };
+}
+function routePayload(){
+  return buildRoute().items.map(it => ({ time: fmtMin(it.h), name: it.name, dur: it.dur }));
+}
+function renderRoute(){
+  const R = buildRoute();
+  if (!R.items.length){
+    $('#routeBody').innerHTML = '<p class="fineprint">Топ пуст — выберите точки на шаге «Интересы», и Баюн соберёт маршрут дня.</p>';
+    return;
+  }
+  const heights = state.group.map(g => g.h);
+  const rows = R.items.map(it => {
+    if (it.lunch) return `<li class="route-item lunch"><span class="rt-time">${fmtMin(it.h)}–${fmtMin(it.h + it.dur)}</span><div class="rt-main"><b>🍝 Обед</b><small>перерыв между точками</small></div></li>`;
+    const a = byId(it.id);
+    const f = a ? fitTo(a, heights) : null;
+    return `<li class="route-item"><span class="rt-time">${fmtMin(it.h)}–${fmtMin(it.h + it.dur)}</span><div class="rt-main"><b>${TYPE_EMOJI[it.type] || '🎡'} ${esc(it.name)}</b><small>${it.dur} мин${f && f.kind !== 'ok' ? ' · ' + f.why : ''}</small></div></li>`;
+  }).join('');
+  const last = R.items[R.items.length - 1];
+  const stops = R.items.filter(it => !it.lunch).length;
+  const totalMin = R.items.reduce((s, it) => s + it.dur, 0) + GAP * Math.max(0, R.items.length - 1);
+  $('#routeBody').innerHTML = `
+    <ol class="route-list">${rows}</ol>
+    ${R.overflow ? `<div class="route-warn">⏳ Ещё ${R.overflow} ${R.overflow === 1 ? 'точка не вмещается' : 'точки не вмещаются'} — приходите к открытию или уберите что-то из топа.</div>` : ''}
+    <div class="route-sum">
+      <span>📍 точек: <b>${stops}</b></span>
+      <span>⏱ с переходами: <b>~${Math.round(totalMin / 60 * 10) / 10} ч</b></span>
+      <span>🏁 финиш: <b>~${fmtMin(last.h + last.dur)}</b></span>
+    </div>`;
+}
 $('#toChat').addEventListener('click', () => go('chat'));
 
-/* ================= шаг 3: чат ================= */
+/* ================= шаг 4: чат ================= */
 const log = $('#log'), chips = $('#chips'), form = $('#form'), input = $('#input'), sendBtn = $('#send'), status = $('#status');
 const history = [];                 // {role:'user'|'bayun', text} — уходит в server.js для контекста
 let sending = false, demoMode = false, lastUserText = '';
@@ -487,6 +570,11 @@ function renderStrip(){
   if (state.date) parts.push(`📅 <b>${esc(fmtDate(state.date))}</b>`);
   parts.push(`👥 <b>${state.group.length}</b> ${state.group.length === 1 ? 'гость' : state.group.length < 5 ? 'гостя' : 'гостей'}`);
   if (state.picks.length) parts.push(`🎡 <b>${state.picks.length}</b> точек`);
+  const R = buildRoute();
+  if (R.items.length){
+    const totalMin = R.items.reduce((s, it) => s + it.dur, 0) + GAP * Math.max(0, R.items.length - 1);
+    parts.push(`⏱ <b>~${Math.round(totalMin / 60 * 10) / 10} ч</b>`);
+  }
   $('#strip').innerHTML = parts.join(' <span class="dot">·</span> ') + ' <button class="edit" type="button" data-go="visit">✏️ изменить</button>';
 }
 function contextPayload(){
@@ -495,6 +583,8 @@ function contextPayload(){
   if (state.group.length) ctx.group = state.group.map(g => ({ name: g.name, height: g.h }));
   const picks = pickedObjs();
   if (picks.length) ctx.picks = picks.map(p => ({ name: p.n, type: p.t, hmin: p.lo, hmax: p.hi, priceFrom: p.p }));
+  const route = routePayload();
+  if (route.length) ctx.route = route;
   return ctx;
 }
 /* заявка визита — в хранилище маркетинга (один раз на конфигурацию) */
@@ -505,7 +595,7 @@ function reportVisit(){
   fetch('api/visits', {
     method:'POST',
     headers:{ 'content-type':'application/json' },
-    body: JSON.stringify({ id: state.id, date: state.date || undefined, group: state.group.map(g => ({ name: g.name, height: g.h })), picks: pickedObjs().map(p => ({ name:p.n, type:p.t, hmin:p.lo, hmax:p.hi, priceFrom:p.p })) }),
+    body: JSON.stringify({ id: state.id, date: state.date || undefined, group: state.group.map(g => ({ name: g.name, height: g.h })), picks: pickedObjs().map(p => ({ name:p.n, type:p.t, hmin:p.lo, hmax:p.hi, priceFrom:p.p })), route: routePayload() }),
   }).then(r => { if (r.ok){ state.reportedSig = sig; save(); } }).catch(() => {});
 }
 
@@ -645,6 +735,7 @@ function render(){
   VIEWS.forEach(v => $('#view-' + v).classList.toggle('on', v === cur));
   if (cur === 'visit') renderVisit();
   if (cur === 'interests') renderInterests();
+  if (cur === 'route') renderRoute();
   if (cur === 'chat'){
     renderStrip(); renderChips(); reportVisit();
     if (!history.length){
