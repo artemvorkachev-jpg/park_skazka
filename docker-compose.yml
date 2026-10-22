@@ -24,6 +24,8 @@ services:
     volumes:
       # состояние агента (auth.json, models.resolved.json) — переживает пересборку
       - bayun_agent:/app/agent
+      # заявки визитов и вопросы гостей (данные маркетингового дашборда)
+      - bayun_data:/app/chat/data
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8130/health"]
       interval: 30s
@@ -33,6 +35,7 @@ services:
 
 volumes:
   bayun_agent:
+  bayun_data:
 
 networks:
   ai-net:

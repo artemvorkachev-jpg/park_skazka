@@ -592,7 +592,7 @@ turn();
   const frame = document.getElementById('bayunFrame');
   function setOpen(on) {
     panel.classList.toggle('on', on);
-    if (on && frame.src === 'about:blank') frame.src = BAYUN_URL; // чат грузим лениво, при первом открытии
+    if (on && frame.src === 'about:blank') frame.src = BAYUN_URL + (BAYUN_URL.includes('?') ? '&' : '?') + 'embed=1'; // чат грузим лениво, при первом открытии (?embed=1 — сразу чат, без визарда)
   }
   fab.addEventListener('click', () => setOpen(!panel.classList.contains('on')));
   document.getElementById('bayunClose').addEventListener('click', () => setOpen(false));

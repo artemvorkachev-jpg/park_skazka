@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Баюн — помощник парка «Сказка»</title>
-<meta name="description" content="Чат с Баюном — ИИ-помощником парка развлечений «Сказка». Демо-интерфейс для сайта игры «Хранитель Сказки».">
+<title>Баюн — спланируйте визит в парк «Сказка»</title>
+<meta name="description" content="Спланируйте визит в парк развлечений «Сказка»: дата, состав группы, интересные точки — и спросите Баюна, ИИ-помощника парка.">
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,19 +12,21 @@
 <style>
 /* Дизайн-система — см. DESIGN.md (стиль parkskazka.com) */
 :root{
-  --blue:#34B4E8; --accent:#D32D6B; --red:#FF2400; --green:#00B453;
-  --ink:#222222; --muted:#5A6572; --light:#E6F6FE; --sky:#9CD6EE; --pink:#FFC9E0;
+  --blue:#34B4E8; --accent:#D32D6B; --red:#FF2400; --green:#00B453; --lime:#D2F366; --lilac:#CCB5FB;
+  --ink:#222222; --muted:#5A6572; --light:#E6F6FE; --sky:#9CD6EE; --beige:#FDEBBF;
   --shadow-sm:0 2px 8px rgba(35,40,47,.10); --shadow:0 8px 24px rgba(35,40,47,.15);
   --disp:'Oswald','Bebas Neue','Arial Narrow',Impact,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;font:16px/1.5 'PT Root UI','Segoe UI',system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#E6F6FE 0%,#F4FBFF 60%,#fff 100%);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+body{margin:0;font:16px/1.5 'PT Root UI','Segoe UI',system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#E6F6FE 0%,#F4FBFF 60%,#fff 100%);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
 button{font:inherit;cursor:pointer}
+input,select{font:inherit}
+h1,h2{font-family:var(--disp);text-transform:uppercase;letter-spacing:.02em;line-height:1.05;margin:0}
 
 /* ---------- шапка ---------- */
 header{background:var(--blue);color:#fff;box-shadow:var(--shadow-sm);position:relative;z-index:5}
-.hbar{max-width:820px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
+.hbar{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
 .ava{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#fff;font-size:26px;flex:none;box-shadow:var(--shadow-sm)}
 .hbar .name{font:600 26px/1 var(--disp);text-transform:uppercase;letter-spacing:.02em}
 .hbar .name small{display:block;font:500 11px/1.3 'PT Root UI',sans-serif;letter-spacing:.14em;text-transform:uppercase;opacity:.9;margin-top:3px}
@@ -33,8 +35,97 @@ header{background:var(--blue);color:#fff;box-shadow:var(--shadow-sm);position:re
 .status.off i{background:#FFD54D;box-shadow:0 0 0 3px rgba(255,213,77,.3)}
 @media(max-width:560px){.status span{display:none}}
 
-/* ---------- лента сообщений ---------- */
-main{flex:1;width:100%;max-width:820px;margin:0 auto;padding:20px 20px 0;display:flex;flex-direction:column;min-height:0}
+/* ---------- шаги ---------- */
+.steps{display:flex;justify-content:center;gap:10px;padding:20px 16px 4px;flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:9px;border:0;background:#fff;color:var(--ink);border-radius:100px;padding:9px 20px 9px 10px;font:700 13px/1 'PT Root UI',sans-serif;letter-spacing:.04em;text-transform:uppercase;box-shadow:var(--shadow-sm);transition:.25s}
+.step i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--light);font:500 14px/1 'PT Root UI',sans-serif;font-style:normal}
+.step:hover{transform:translateY(-1px)}
+.step.on{background:var(--ink);color:#fff}
+.step.on i{background:rgba(255,255,255,.2);color:#fff}
+.step.done i{background:var(--lime)}
+.step.locked{opacity:.55}
+.step.locked i{background:#EEF2F5}
+body.embed .steps{display:none}
+
+/* ---------- общий каркас ---------- */
+main{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:18px 20px 0;min-height:0}
+.view{display:none}
+.view.on{display:block;animation:appear .25s ease}
+@keyframes appear{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.container{background:var(--light);border-radius:48px;padding:34px 36px;margin:0 0 26px}
+.container.beige{background:var(--beige)}
+.container h2{font-size:32px;text-align:center;margin-bottom:6px}
+.container .sub{text-align:center;color:var(--muted);font-size:14.5px;margin:0 auto 22px;max-width:560px}
+@media(max-width:640px){.container{padding:24px 18px;border-radius:32px}.container h2{font-size:26px}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:100px;padding:14px 34px;font:700 15px/1 'PT Root UI',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#fff;transition:.25s;text-decoration:none}
+.btn:hover:not(:disabled){filter:brightness(.92);transform:translateY(-2px)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--accent);box-shadow:0 8px 24px rgba(211,45,107,.3)}
+.btn.blue{background:var(--blue);box-shadow:0 8px 24px rgba(52,180,232,.3)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid #C9D4DC;box-shadow:none}
+.btn.ghost:hover:not(:disabled){background:#fff}
+.btn.small{padding:9px 18px;font-size:12.5px}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:24px}
+@media(max-width:560px){.nav{flex-direction:column-reverse}.nav .btn{width:100%}}
+
+/* ---------- шаг 1: визит ---------- */
+.two{display:grid;grid-template-columns:1fr 1.35fr;gap:26px;align-items:start}
+@media(max-width:860px){.two{grid-template-columns:1fr}}
+.field-label{display:block;font:700 13px/1 'PT Root UI',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.date-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input[type=date]{border:0;border-radius:100px;padding:13px 22px;background:#fff;color:var(--ink);box-shadow:var(--shadow-sm);outline:none;transition:.2s}
+input[type=date]:focus{box-shadow:0 0 0 4px rgba(52,180,232,.2)}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.quick button{background:rgba(255,255,255,.6);border:1.5px solid rgba(52,180,232,.35);color:#1E6E9E;border-radius:100px;padding:8px 16px;font-size:13px;font-weight:500;transition:.2s}
+.quick button:hover{background:#fff;border-color:var(--blue);transform:translateY(-1px)}
+.date-hint{margin:16px 0 0;font-size:13px;color:var(--muted)}
+.date-hint b{color:var(--ink)}
+
+.group-list{display:flex;flex-direction:column;gap:9px}
+.group-row{display:flex;align-items:center;gap:9px;background:#fff;border-radius:100px;padding:7px 8px 7px 20px;box-shadow:var(--shadow-sm)}
+.group-row input{border:0;outline:none;background:transparent;min-width:0}
+.group-row .g-name{flex:1;font-weight:500}
+.group-row .g-h{width:72px;text-align:right;font-weight:700;color:#1E6E9E}
+.group-row .g-sm{font-size:13px;color:var(--muted);margin-right:4px}
+.group-row .g-del{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:var(--light);color:var(--muted);display:grid;place-items:center;transition:.2s}
+.group-row .g-del:hover:not(:disabled){background:#FFE9E5;color:var(--red)}
+.group-row .g-del:disabled{opacity:.35;cursor:default}
+.group-add{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+.seg-note{margin:16px 0 0;font-size:13px;color:var(--muted)}
+
+/* ---------- шаг 2: интересы ---------- */
+.filters{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.filters button{background:rgba(255,255,255,.55);border:1.5px solid rgba(52,180,232,.3);color:#1E6E9E;border-radius:100px;padding:9px 19px;font-size:13.5px;font-weight:500;transition:.2s}
+.filters button:hover{border-color:var(--blue)}
+.filters button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.search-row{display:flex;justify-content:center;margin-bottom:18px}
+.search-row input{width:min(420px,100%);border:1.5px solid #C9E4F5;border-radius:100px;padding:11px 22px;background:#fff;outline:none;box-shadow:var(--shadow-sm);transition:.2s}
+.search-row input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(52,180,232,.15)}
+.plan-count{text-align:center;font-size:14.5px;color:var(--muted);margin:0 0 16px}
+.plan-count b{color:var(--accent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:14px}
+.card{position:relative;display:flex;flex-direction:column;background:#fff;border:3px solid transparent;border-radius:24px;box-shadow:var(--shadow-sm);padding:10px;cursor:pointer;text-align:left;transition:.2s;gap:8px}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.card img{width:100%;height:104px;object-fit:cover;border-radius:16px;background:var(--light)}
+.card .c-name{font-weight:700;font-size:14.5px;line-height:1.25}
+.card .c-meta{font-size:12px;color:var(--muted)}
+.card .c-mark{position:absolute;top:16px;right:16px;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.92);font-size:13px;font-weight:700;color:var(--muted);box-shadow:var(--shadow-sm)}
+.card.sel{border-color:var(--blue)}
+.card.sel .c-mark{background:var(--lime);color:var(--ink)}
+.fit-note{font-size:12px;font-weight:700;border-radius:100px;padding:4px 11px;align-self:flex-start}
+.fit-note.ok{background:#E2F7EC;color:#007A41}
+.fit-note.partial{background:#FFF3D6;color:#8A6100}
+.fit-note.no{background:#FFE9E5;color:#C0392B}
+.fineprint{text-align:center;color:var(--muted);font-size:13px;margin:18px 0 0}
+
+/* ---------- шаг 3: чат ---------- */
+.strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:center;background:#fff;border-radius:100px;box-shadow:var(--shadow-sm);padding:9px 12px 9px 20px;margin:0 auto 14px;max-width:fit-content;font-size:13.5px}
+.strip b{font-weight:700}
+.strip .dot{color:#C9D4DC}
+.strip .edit{border:0;background:var(--light);color:#1E6E9E;border-radius:100px;padding:6px 14px;font-size:12.5px;font-weight:700;transition:.2s}
+.strip .edit:hover{background:var(--sky)}
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 320px);min-height:380px}
 #log{flex:1;overflow-y:auto;padding:8px 4px 16px;scroll-behavior:smooth}
 .row{display:flex;gap:10px;margin:10px 0;align-items:flex-end}
 .row.me{justify-content:flex-end}
@@ -54,23 +145,24 @@ main{flex:1;width:100%;max-width:820px;margin:0 auto;padding:20px 20px 0;display
 @keyframes bnc{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
 .retry{margin-top:10px;background:var(--accent);color:#fff;border:0;border-radius:100px;padding:9px 22px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.02em;transition:.25s}
 .retry:hover{filter:brightness(.92);transform:translateY(-1px)}
-
-/* ---------- быстрые вопросы ---------- */
 #chips{display:flex;flex-wrap:wrap;gap:8px;padding:4px 4px 12px}
 #chips button{background:#fff;border:1.5px solid #C9E4F5;color:#1E6E9E;border-radius:100px;padding:9px 18px;font-size:13.5px;font-weight:500;transition:.2s;box-shadow:var(--shadow-sm)}
 #chips button:hover{background:var(--light);border-color:var(--blue);transform:translateY(-1px)}
-
-/* ---------- ввод ---------- */
-.composer{display:flex;gap:10px;padding:0 0 22px}
-.composer input{flex:1;border:1.5px solid #C9E4F5;border-radius:100px;padding:15px 24px;font:inherit;color:var(--ink);background:#fff;outline:none;box-shadow:var(--shadow-sm);transition:.2s;min-width:0}
+.composer{display:flex;gap:10px;padding:0 0 18px}
+.composer input{flex:1;border:1.5px solid #C9E4F5;border-radius:100px;padding:15px 24px;color:var(--ink);background:#fff;outline:none;box-shadow:var(--shadow-sm);transition:.2s;min-width:0}
 .composer input:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(52,180,232,.15)}
 .composer input:disabled{background:#F2F8FC;color:var(--muted)}
 .composer .send{flex:none;width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:21px;display:grid;place-items:center;box-shadow:0 8px 24px rgba(211,45,107,.35);transition:.25s}
 .composer .send:hover:not(:disabled){filter:brightness(.92);transform:translateY(-2px)}
 .composer .send:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
-footer{max-width:820px;width:100%;margin:0 auto;padding:0 20px 16px;font-size:12.5px;color:var(--muted);text-align:center}
+#demoBanner{display:none;margin:0 auto 10px;max-width:fit-content;background:#FFF6D9;border:1px solid #F2DC8E;color:#7A5A00;border-radius:100px;padding:7px 18px;font-size:13px}
+
+footer{max-width:1080px;width:100%;margin:0 auto;padding:8px 20px 18px;font-size:12.5px;color:var(--muted);text-align:center}
 footer b{color:var(--accent)}
-#demoBanner{display:none;margin:10px auto 0;max-width:fit-content;background:#FFF6D9;border:1px solid #F2DC8E;color:#7A5A00;border-radius:100px;padding:7px 18px;font-size:13px}
+
+/* ---------- тост ---------- */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:100px;padding:11px 24px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:50;box-shadow:var(--shadow)}
+#toast.on{opacity:1;transform:translateX(-50%)}
 </style>
 </head>
 <body>
@@ -83,37 +175,272 @@ footer b{color:var(--accent)}
   </div>
 </header>
 
+<div class="steps" id="steps"></div>
+
 <main>
-  <div id="demoBanner">Демо-режим: сервер Баюна не подключён, ответы смоделированы</div>
-  <div id="log" aria-live="polite"></div>
-  <div id="chips"></div>
-  <form class="composer" id="form">
-    <input id="input" type="text" placeholder="Спросите про аттракционы, цены, как добраться…" autocomplete="off" maxlength="2000">
-    <button class="send" id="send" type="submit" aria-label="Отправить">➤</button>
-  </form>
+  <!-- ---------- шаг 1: визит ---------- -->
+  <section class="view" id="view-visit">
+    <div class="two">
+      <div class="container beige">
+        <h2>Когда идёте</h2>
+        <p class="sub">Баюн учтёт дату: подскажет про погоду, очереди и что надеть.</p>
+        <label class="field-label" for="dateInput">Дата визита</label>
+        <div class="date-row"><input type="date" id="dateInput"></div>
+        <div class="quick" id="dateQuick"></div>
+        <p class="date-hint" id="dateHint"></p>
+      </div>
+      <div class="container">
+        <h2>Кто идёт</h2>
+        <p class="sub">Рост определяет, какие аттракционы доступны. Имена — чтобы Баюн обращался лично.</p>
+        <div class="group-list" id="groupList"></div>
+        <div class="group-add">
+          <button class="btn blue small" data-gadd="kid">+ Малыш (110 см)</button>
+          <button class="btn ghost small" data-gadd="adult">+ Взрослый (175 см)</button>
+        </div>
+        <p class="seg-note" id="segNote"></p>
+      </div>
+    </div>
+    <div class="nav">
+      <span></span>
+      <button class="btn primary" id="toInterests">Далее: интересные точки →</button>
+    </div>
+  </section>
+
+  <!-- ---------- шаг 2: интересы ---------- -->
+  <section class="view" id="view-interests">
+    <div class="container">
+      <h2>Что вам интересно</h2>
+      <p class="sub">Отметьте до 7 точек — Баюн проверит их по росту вашей группы и ответит на вопросы по ним.</p>
+      <div class="filters" id="typeFilters"></div>
+      <div class="search-row"><input id="q" type="search" placeholder="Поиск: Бумеранг, дино…" autocomplete="off"></div>
+      <p class="plan-count" id="pickCount"></p>
+      <div class="cards" id="cards"></div>
+    </div>
+    <div class="nav">
+      <button class="btn ghost" data-go="visit">← Кто идёт</button>
+      <button class="btn primary" id="toChat">Спросить Баюна →</button>
+    </div>
+  </section>
+
+  <!-- ---------- шаг 3: чат ---------- -->
+  <section class="view" id="view-chat">
+    <div class="strip" id="strip"></div>
+    <div id="demoBanner">Демо-режим: сервер Баюна не подключён, ответы смоделированы</div>
+    <div class="chat-wrap">
+      <div id="log" aria-live="polite"></div>
+      <div id="chips"></div>
+      <form class="composer" id="form">
+        <input id="input" type="text" placeholder="Спросите про аттракционы, цены, как добраться…" autocomplete="off" maxlength="2000">
+        <button class="send" id="send" type="submit" aria-label="Отправить">➤</button>
+      </form>
+    </div>
+  </section>
 </main>
 
-<footer>Интерфейс чата для сайта «Хранителя Сказки» · на сервере — <b>runner/chat/server.js</b> + агент Баюн из runner/ · стили по <b>DESIGN.md</b></footer>
+<footer>«Хранитель Сказки» · хакатон 2026 · конфигурация гостей передаётся Баюну с каждым вопросом · стили по <b>DESIGN.md</b></footer>
+
+<div id="toast"></div>
 
 <script>
 'use strict';
-/* ---------- элементы ---------- */
+/* ================= каталог аттракционов (компактная выжимка из v1/Хакатон 2026/data.js) ================= */
+const CATALOG = [{"id":1,"n":"Бумеранг","t":"extreme","lo":130,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/075/1130_680_1/q7wx9kdf7uua7abwte23evhtcnpylly9.jpg"},{"id":2,"n":"Американские горки «Молния»","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/912/1130_680_1/4mvwscy2bmby69zg2xa4mry7aii2eard.jpg"},{"id":3,"n":"Дискавери","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/abb/1130_680_1/wnyja8rwmspefnwiltqwo5rkgb7qb0th.jpg"},{"id":4,"n":"Смерч","t":"extreme","lo":140,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/bf5/1130_680_1/umthvr0h1u6af4cs4egd12nfickcxhb3.jpg"},{"id":5,"n":"Вихрь","t":"extreme","lo":140,"hi":190,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/83f/1130_680_1/bolvlmxe7rmcaapdqlqeml341u5hfaf8.jpg"},{"id":6,"n":"Небесная карусель","t":"extreme","lo":130,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/610/1130_680_1/k2y92vk1kgrz3qmjplqjg76e29yf98kq.jpg"},{"id":7,"n":"Звездопад","t":"extreme","lo":105,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/17e/1130_680_1/kpyutv1iyr0ig4rulcycgssb2xyk4xt9.jpg"},{"id":8,"n":"Галактика","t":"extreme","lo":140,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/228/1130_680_1/b61u3pw90fa97999x5jkv6fnx02udt1c.jpg"},{"id":9,"n":"Ладья «360»","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/21a/1130_680_1/ztekp2hg987b3jwunyug4v4fwn1v273f.jpg"},{"id":10,"n":"Высший пилотаж","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/09c/1130_680_1/gp98c95x3vyykojsqux057102v2jbb3w.jpg"},{"id":11,"n":"Формула","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/432/1130_680_1/z9xzxcl37gs1ge8wwn3u13wc900mrh51.jpg"},{"id":12,"n":"Аттракцион «Петля времени»","t":"extreme","lo":105,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/2cd/1130_680_1/64n6w38e74kmzgthr14kku747o3dl5sv.jpg"},{"id":13,"n":"Кракен","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/1b3/1130_680_1/n29stdd8l55vepfht8he1q9sr4kexit3.jpg"},{"id":14,"n":"Шейкер","t":"extreme","lo":130,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/a92/1130_680_1/0fwkenr8le672bdtrdk221udgo22aqpc.jpg"},{"id":15,"n":"Карусель «Колобок»","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/80a/1130_680_1/ak2we1chl76s3udv31q5lh09yc48flpp.jpg"},{"id":16,"n":"Экстремальные качели «Микс»","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/c6a/1130_680_1/26a7ya0gsikd7qyofyjc8c3ou7f67v70.jpg"},{"id":17,"n":"Башня падения «Ракета»","t":"extreme","lo":105,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/898/1130_680_1/daarn139228ub8kj38jbvu8dkh582ibi.jpg"},{"id":18,"n":"Паук","t":"extreme","lo":120,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/fc0/1130_680_1/77ewkndpjp2to25q7r1nlz8hehixzaf1.jpg"},{"id":19,"n":"Путь дракона","t":"extreme","lo":130,"hi":190,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/eda/1130_680_1/8nibzjbwnhhx9llmd10cudoh0o1y2ycw.jpg"},{"id":20,"n":"Сладкоежка","t":"kids","lo":0,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/b6c/1130_680_1/h9ax5bsuzdagoslzx9fd5d8wve7o9vr7.jpg"},{"id":21,"n":"Дорожный патруль","t":"kids","lo":80,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/c68/1130_680_1/opw54lc2ajlsrngqsawu9b9muvggdo7z.jpg"},{"id":22,"n":"Вертолеты","t":"kids","lo":50,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/9be/1130_680_1/fp0wj1phf2uvwgra57at6i39xicfgkh8.jpg"},{"id":23,"n":"Качели «Самолет»","t":"kids","lo":90,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/498/1130_680_1/1l5dmfvdmlkoq7a05tquqi0a9uq75wy0.jpg"},{"id":24,"n":"Паровозик","t":"kids","lo":50,"hi":250,"p":133,"img":"https://parkskazka.com/upload/iblock/be7/y9ob9q35qogrblvu1w6qy56j1rr0qp9j.jpg"},{"id":25,"n":"Карусель «Рекс»","t":"kids","lo":90,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/a63/1130_680_1/ock9eaarop51bynt0xqmfvkhduksjgpy.jpeg"},{"id":26,"n":"Солнышко","t":"kids","lo":90,"hi":140,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/753/1130_680_1/kxs78nq4l5onm0dxsvnwrtyahqzn1c7n.jpeg"},{"id":27,"n":"Ветерок","t":"kids","lo":90,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/f7a/1130_680_1/ulagm1zxotdf5p6qmcsa6czdpfu61rly.jpeg"},{"id":28,"n":"Город машин","t":"kids","lo":100,"hi":110,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/fab/1130_680_1/f1zas471fl8fqoxtb5x2o6yuiu3yuu0n.jpg"},{"id":29,"n":"Долина индейской реки","t":"kids","lo":90,"hi":250,"p":400,"img":"https://parkskazka.com/upload/resize_cache/iblock/5ba/1130_680_1/mrkb532tiixvetpmnzlw9zlo2zcerocs.jpg"},{"id":30,"n":"Колесо Обозрения","t":"family","lo":0,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/434/1130_680_1/9t4zykalhkv0p510uywvzkdnx5vm4rt4.jpeg"},{"id":31,"n":"Кругосветное путешествие","t":"family","lo":105,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/cc2/1130_680_1/5ivdksgdfw37n8qwj2cypdszrap3wod2.jpg"},{"id":32,"n":"Нитро","t":"family","lo":100,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/9e1/1130_680_1/59zlwcynlyb0su1okfa6khs321naq93m.jpeg"},{"id":33,"n":"Автодром","t":"family","lo":105,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/922/1130_680_1/e5qttpudmhnhpebvggh6k2eg2g5yhatx.jpg"},{"id":34,"n":"Карусель «Вальс»","t":"family","lo":110,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/16a/1130_680_1/dp38fymidxwsxv01ulpld6qs5py38xy9.jpg"},{"id":35,"n":"Бамперные лодки «Нептун»","t":"family","lo":80,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/9b5/1130_680_1/ks9yfgxx6uif1k3evxnyw56r06qbn5kk.jpg"},{"id":36,"n":"Юла","t":"family","lo":110,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/797/1130_680_1/ikogmzimspnve2c345j0uvlppsgrdu2o.jpeg"},{"id":37,"n":"Сказочная карусель «Лошадки»","t":"family","lo":50,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/800/1130_680_1/go0enma8xp5appq03hinzkgqkdli4bwq.jpeg"},{"id":38,"n":"Космодром","t":"family","lo":70,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/6a1/1130_680_1/h9rjowj6yjfb6aczal84djec45dvox45.jpg"},{"id":39,"n":"Летающие велосипеды","t":"family","lo":90,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/262/1130_680_1/5tefmw1rbmsvsfg9a35684ex22sfkaje.jpg"},{"id":40,"n":"Летучий плавник","t":"family","lo":90,"hi":105,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/ccd/1130_680_1/mox4yy0o4sglfpfdparuclbkhg62tm4e.jpg"},{"id":41,"n":"Гусеница","t":"family","lo":50,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/5b3/1130_680_1/8hj9gxxz37vcqc0cdxs415xu3qv75ljn.jpg"},{"id":42,"n":"Пружинка","t":"family","lo":105,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/1d9/1130_680_1/btl2o2vz8uot0us6sn7o773rz79dqy1h.jpg"},{"id":43,"n":"Чаепитие","t":"family","lo":75,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/2a0/1130_680_1/qrwsnu8tpts4vc2jyb3iraa0mvtd5oo1.jpg"},{"id":44,"n":"Верёвочный парк","t":"family","lo":100,"hi":210,"p":0,"img":"https://parkskazka.com/upload/resize_cache/iblock/955/1130_680_1/kq22af2ezfuvcq3nh590k74rfwedliud.jpg"},{"id":45,"n":"ТИР","t":"family","lo":90,"hi":250,"p":500,"img":"https://parkskazka.com/upload/resize_cache/iblock/253/1130_680_1/d8r9ny9q5y4zy98ga0d6z098lja86i06.jpeg"},{"id":46,"n":"Аркады","t":"family","lo":90,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/134/1130_680_1/rtttgge4a69lof9f801iifxhobbec1mk.jpeg"},{"id":47,"n":"Бабл Стар","t":"family","lo":95,"hi":175,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/b22/1130_680_1/gwg445f8ixfr9o1dj72c61ganq2mxuxg.jpeg"},{"id":48,"n":"Ленточный лабиринт","t":"interactive","lo":0,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/be8/1130_680_1/j5hrfxopi6u45gvwfzxsjhyu3736eped.jpg"},{"id":49,"n":"Дом вверх дном","t":"interactive","lo":0,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/3b3/1130_680_1/wnbd20ha6iw2tmyop7572nvijkumvema.jpeg"},{"id":50,"n":"Зеркальный лабиринт","t":"interactive","lo":100,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/c5f/1130_680_1/ma7flqsa4wmkm24ko972eugno32h7lqd.jpg"},{"id":51,"n":"Дом Страха","t":"interactive","lo":100,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/c52/1130_680_1/3m5z3kasgeqzxpqr2w8n08petht94vp4.jpg"},{"id":52,"n":"Лабиринт Страха","t":"interactive","lo":100,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/9c6/1130_680_1/fcfk19vxknpmrq2l4qjhoe8m3fmk531e.jpg"},{"id":53,"n":"Дом Бабы Яги","t":"interactive","lo":0,"hi":250,"p":133,"img":"https://parkskazka.com/upload/resize_cache/iblock/d6b/1130_680_1/beclwcqyqltv2i9zuwuvkp72crccix29.jpeg"},{"id":54,"n":"Парк птиц Авиариум","t":"zone","lo":0,"hi":250,"p":219,"img":"https://parkskazka.com/upload/resize_cache/iblock/81a/1130_680_1/hng5lobpohmop879kuda1lbk3iw3qj96.jpg"},{"id":55,"n":"Страус парк","t":"zone","lo":0,"hi":250,"p":219,"img":"https://parkskazka.com/upload/resize_cache/iblock/bc9/1130_680_1/myrj38c9cwqs5klo73yqbnv9bhnq8svl.jpg"},{"id":56,"n":"Альпака","t":"zone","lo":0,"hi":250,"p":219,"img":"https://parkskazka.com/upload/resize_cache/iblock/ed9/1130_680_1/sms67l0gzg8mrltm9w2xlevqpuryk4kx.jpg"},{"id":57,"n":"Хаски Лэнд","t":"zone","lo":0,"hi":250,"p":219,"img":"https://parkskazka.com/upload/resize_cache/iblock/e93/1130_680_1/q35rt3be9veaww9jfu6qbfbaswsibvq9.jpg"},{"id":58,"n":"Дино парк","t":"zone","lo":0,"hi":250,"p":219,"img":"https://parkskazka.com/upload/resize_cache/iblock/de2/1130_680_1/cggp2oxt66htou57rmv5rn2lrindi38b.jpg"},{"id":59,"n":"Дино сафари","t":"zone","lo":90,"hi":250,"p":219,"img":"https://parkskazka.com/upload/resize_cache/iblock/f27/1130_680_1/t1yowpg854yjjhtu66yl1xapkq1thzg6.jpg"},{"id":60,"n":"Зоодом «Страна ЕНОТиЯ»","t":"zone","lo":0,"hi":250,"p":219,"img":"https://parkskazka.com/upload/resize_cache/iblock/6db/1130_680_1/z2balvkkkyansak4d2ggm63j014r3ttj.jpg"}];
+const TYPE_RU = { extreme:'Экстрим', family:'Семейные', kids:'Детские', interactive:'Интерактив', zone:'Зоны' };
+const TYPE_EMOJI = { extreme:'⚡', family:'👨‍👩‍👧', kids:'🎠', interactive:'🧩', zone:'🌳' };
+const byId = id => CATALOG.find(a => a.id === id);
+
+/* ================= состояние ================= */
+const STORE_KEY = 'bayun.page.v1';
+function uuid(){ return (crypto.randomUUID ? crypto.randomUUID() : 'v-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10)); }
+function loadState(){
+  try{
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (s && typeof s === 'object'){
+      s.id = typeof s.id === 'string' && s.id ? s.id : uuid();
+      if (!Array.isArray(s.group)) s.group = [];
+      if (!Array.isArray(s.picks)) s.picks = [];
+      return s;
+    }
+  }catch{}
+  return { id: uuid(), date: '', group: [], picks: [], reportedSig: '' };
+}
+const state = loadState();
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch{} }
+
+const EMBED = new URLSearchParams(location.search).has('embed');
+if (EMBED) document.body.classList.add('embed');
+
+/* ================= утилиты ================= */
 const $ = s => document.querySelector(s);
-const log = $('#log'), chips = $('#chips'), form = $('#form'),
-      input = $('#input'), sendBtn = $('#send'), status = $('#status');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let toastTimer = null;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
+}
+const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WEEKDAYS_RU = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+function isoOf(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function fmtDate(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return '';
+  const d = new Date(+m[1], +m[2]-1, +m[3]);
+  return `${+m[3]} ${MONTHS_RU[d.getMonth()]}, ${WEEKDAYS_RU[d.getDay()]}`;
+}
+function fitTo(a, heights){
+  const res = heights.map(h => h >= a.lo && h <= a.hi);
+  const okAll = res.every(Boolean), okAny = res.some(Boolean);
+  const range = [a.lo ? 'от ' + a.lo + ' см' : 'рост любой', a.hi < 250 ? 'до ' + a.hi + ' см' : ''].filter(Boolean).join(' ');
+  if (okAll) return { kind:'ok', why:'✅ по росту всей группе' };
+  if (okAny) return { kind:'partial', why:'👀 только части группы' };
+  return { kind:'no', why:'⛔ ' + (a.lo ? 'рост от ' + a.lo + ' см' : 'не подходит по росту') };
+}
 
-/* ---------- состояние ---------- */
-const history = [];          // {role:'user'|'bayun', text} — уходит в server.js для контекста
-let sending = false;
-let demoMode = false;        // включается, если /api/chat недоступен
-let lastUserText = '';
+/* ================= маршрутизация ================= */
+const VIEWS = ['visit', 'interests', 'chat'];
+function currentView(){
+  const v = (location.hash || '').replace(/^#\/?/, '');
+  return VIEWS.includes(v) ? v : 'visit';
+}
+function go(v){
+  if (v === 'chat' && !state.group.length && !EMBED){ toast('Сначала добавьте, кто идёт — шаг 1'); location.hash = '#/visit'; return; }
+  location.hash = '#/' + v;
+}
+window.addEventListener('hashchange', render);
 
-/* ---------- утилиты ---------- */
-function nearBottom() { return log.scrollHeight - log.scrollTop - log.clientHeight < 90; }
-function scrollDown(force) { if (force || nearBottom()) log.scrollTop = log.scrollHeight; }
-function esc(s) { return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+/* ================= шаги-пилюли ================= */
+const STEP_META = [ {v:'visit', e:'📅', t:'Визит'}, {v:'interests', e:'🎡', t:'Интересы'}, {v:'chat', e:'🐈', t:'Баюн'} ];
+function renderSteps(cur){
+  const idx = VIEWS.indexOf(cur);
+  $('#steps').innerHTML = STEP_META.map((s, i) => {
+    const locked = s.v === 'chat' && !state.group.length && !EMBED;
+    const cls = ['step', i === idx ? 'on' : i < idx ? 'done' : '', locked ? 'locked' : ''].join(' ');
+    return `<button type="button" class="${cls}" data-go="${s.v}"><i>${i < idx ? '✓' : s.e}</i>${s.t}</button>`;
+  }).join('');
+}
 
-function addBubble({ who = 'ai', title, text = '', html = null } = {}) {
+/* ================= шаг 1: визит ================= */
+function renderVisit(){
+  $('#dateInput').value = state.date || '';
+  const quick = [
+    ['Сегодня', isoOf(new Date())],
+    ['Завтра', isoOf(new Date(Date.now() + 864e5))],
+    ['В выходные', isoOf((() => { const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return d; })())],
+  ];
+  $('#dateQuick').innerHTML = '';
+  quick.forEach(([label, iso]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = label;
+    b.onclick = () => { state.date = iso; save(); renderVisit(); };
+    $('#dateQuick').appendChild(b);
+  });
+  $('#dateHint').innerHTML = state.date ? `Визит: <b>${esc(fmtDate(state.date))}</b>` : 'Дату можно выбрать позже — Баюн спросит сам.';
+
+  const list = $('#groupList');
+  list.innerHTML = '';
+  state.group.forEach((m, i) => {
+    const row = document.createElement('div');
+    row.className = 'group-row'; row.dataset.gi = i;
+    row.innerHTML = `
+      <input class="g-name" value="${esc(m.name)}" maxlength="16" aria-label="Имя" placeholder="Имя">
+      <input class="g-h" type="number" min="50" max="220" value="${m.h}" aria-label="Рост, см" inputmode="numeric"><span class="g-sm">см</span>
+      <button class="g-del" type="button" ${state.group.length <= 1 ? 'disabled' : ''} aria-label="Убрать">✕</button>`;
+    row.querySelector('.g-del').onclick = () => { state.group.splice(i, 1); save(); renderVisit(); };
+    list.appendChild(row);
+  });
+  if (!state.group.length){
+    const empty = document.createElement('p');
+    empty.className = 'seg-note'; empty.style.margin = '0';
+    empty.textContent = 'Добавьте хотя бы одного гостя — без этого Баюн не подключается.';
+    list.appendChild(empty);
+  }
+  $('#segNote').textContent = state.group.length
+    ? 'Группы ниже 120 см растут быстрее — рост можно поправить в любой момент.'
+    : 'Совет: отметьте рост каждого — от него зависят допуски на аттракционы.';
+  $('#toInterests').disabled = !state.group.length;
+}
+$('#dateInput').addEventListener('change', e => { state.date = e.target.value || ''; save(); renderVisit(); });
+/* состояние группы обновляем прямо при вводе (input), а рост докручиваем на change (размытие поля) */
+$('#groupList').addEventListener('input', e => {
+  const row = e.target.closest('.group-row'); if (!row) return;
+  const m = state.group[+row.dataset.gi];
+  if (e.target.classList.contains('g-name')) m.name = e.target.value.trim() || 'Гость';
+  if (e.target.classList.contains('g-h')) m.h = Math.min(220, Math.max(50, Math.round(+e.target.value || m.h)));
+  save();
+});
+$('#groupList').addEventListener('change', e => {
+  const row = e.target.closest('.group-row'); if (!row) return;
+  if (e.target.classList.contains('g-h')) e.target.value = state.group[+row.dataset.gi].h;
+});
+$('#groupList').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+document.addEventListener('click', e => {
+  const add = e.target.closest('[data-gadd]');
+  if (add){
+    state.group.push(add.dataset.gadd === 'kid' ? { name:`Малыш ${state.group.length + 1}`, h:110 } : { name:'Взрослый', h:175 });
+    save(); renderVisit(); return;
+  }
+  const nav = e.target.closest('[data-go]');
+  if (nav){ go(nav.dataset.go); }
+});
+$('#toInterests').addEventListener('click', () => go('interests'));
+
+/* ================= шаг 2: интересы ================= */
+const PICK_MAX = 7;
+const FILTER = { type:'all', q:'' };
+function renderFilters(){
+  $('#typeFilters').innerHTML = ['all', ...Object.keys(TYPE_RU)].map(t =>
+    `<button type="button" data-t="${t}" class="${FILTER.type === t ? 'on' : ''}">${t === 'all' ? '🎈 Все' : TYPE_EMOJI[t] + ' ' + TYPE_RU[t]}</button>`
+  ).join('');
+}
+function renderCards(){
+  const picked = new Set(state.picks);
+  const q = FILTER.q.toLowerCase();
+  const list = CATALOG.filter(a => (FILTER.type === 'all' || a.t === FILTER.type) && (!q || a.n.toLowerCase().includes(q)));
+  const heights = state.group.map(g => g.h);
+  $('#cards').innerHTML = list.map(a => {
+    const sel = picked.has(a.id);
+    const f = sel ? fitTo(a, heights) : null;
+    return `
+    <button type="button" class="card ${sel ? 'sel' : ''}" data-pick="${a.id}" aria-pressed="${sel}">
+      <span class="c-mark">${sel ? '✔' : '+'}</span>
+      <img loading="lazy" referrerpolicy="no-referrer" src="${esc(a.img)}" alt="">
+      <span class="c-name">${TYPE_EMOJI[a.t]} ${esc(a.n)}</span>
+      <span class="c-meta">рост ${a.lo ? 'от ' + a.lo : 'любой'}${a.hi < 250 ? '–' + a.hi : ''} см · от ${a.p} ₽</span>
+      ${f ? `<span class="fit-note ${f.kind}">${f.why}</span>` : ''}
+    </button>`;
+  }).join('') || '<p class="fineprint">Ничего не найдено.</p>';
+  $('#pickCount').innerHTML = `Выбрано <b>${state.picks.length}</b> из ${PICK_MAX} — клик по карточке добавляет и убирает.`;
+}
+function renderInterests(){
+  renderFilters(); renderCards();
+  $('#q').value = FILTER.q;
+}
+$('#typeFilters').addEventListener('click', e => {
+  const b = e.target.closest('[data-t]'); if (!b) return;
+  FILTER.type = b.dataset.t; renderFilters(); renderCards();
+});
+$('#q').addEventListener('input', e => { FILTER.q = e.target.value.trim(); renderCards(); });
+$('#cards').addEventListener('click', e => {
+  const c = e.target.closest('[data-pick]'); if (!c) return;
+  const id = +c.dataset.pick, i = state.picks.indexOf(id);
+  if (i >= 0) state.picks.splice(i, 1);
+  else {
+    if (state.picks.length >= PICK_MAX){ toast(`Максимум ${PICK_MAX} точек — сначала уберите одну`); return; }
+    state.picks.push(id);
+  }
+  save(); renderCards();
+});
+$('#toChat').addEventListener('click', () => go('chat'));
+
+/* ================= шаг 3: чат ================= */
+const log = $('#log'), chips = $('#chips'), form = $('#form'), input = $('#input'), sendBtn = $('#send'), status = $('#status');
+const history = [];                 // {role:'user'|'bayun', text} — уходит в server.js для контекста
+let sending = false, demoMode = false, lastUserText = '';
+let greetingBubble = null;   // приветствие видно до первого вопроса и обновляется вслед за конфигурацией
+
+function nearBottom(){ return log.scrollHeight - log.scrollTop - log.clientHeight < 90; }
+function scrollDown(force){ if (force || nearBottom()) log.scrollTop = log.scrollHeight; }
+function addBubble({ who = 'ai', title, text = '', html = null } = {}){
   const row = document.createElement('div');
   row.className = 'row ' + (who === 'user' ? 'me' : who === 'error' ? 'err ai' : 'ai');
   const ava = who === 'user' ? '' : '<div class="ava">🐈</div>';
@@ -122,28 +449,65 @@ function addBubble({ who = 'ai', title, text = '', html = null } = {}) {
   scrollDown(true);
   return row.querySelector('.bubble');
 }
+function addTyping(){ const b = addBubble({ title:'Баюн' }); b.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>'; return b; }
 
-function addTyping() {
-  const b = addBubble({ title: 'Баюн' });
-  b.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
-  return b;
+function pickedObjs(){ return state.picks.map(byId).filter(Boolean); }
+function configSig(){ return JSON.stringify([state.date, state.group, state.picks]); }
+
+function greeting(){
+  const names = state.group.map(g => g.name).filter(Boolean);
+  const first = names[0];
+  const datePart = state.date ? ` на ${fmtDate(state.date)}` : '';
+  if (!names.length) return 'Мяу! Я Баюн — помощник парка «Сказка». Спрашивайте: аттракционы, цены, как добраться — подскажу!';
+  const picks = pickedObjs();
+  const pickPart = picks.length ? ` Вижу ваш топ: ${picks.slice(0, 3).map(p => '«' + p.n + '»').join(', ')}${picks.length > 3 ? ' и ещё' : ''}.` : '';
+  return `Мяу${first ? ', ' + first : ''}! Вижу: вас ${state.group.length}${datePart}.${pickPart} Спрашивайте что угодно — рост, очереди, дождь, еда, время.`;
 }
-
-/* ---------- приветствие и быстрые вопросы ---------- */
-addBubble({ title: 'Баюн', text: 'Мяу! Я Баюн — помощник парка «Сказка». Спрашивайте: аттракционы, цены, как добраться, что подойдёт детям — подскажу!' });
-
-const QUICK = [
-  'Что есть в парке для ребёнка 5 лет?',
-  'Сколько стоит безлимитный билет?',
-  'Как добраться до парка?',
-  'Расскажи про Дино парк',
-];
-QUICK.forEach(q => {
-  const b = document.createElement('button');
-  b.type = 'button'; b.textContent = q;
-  b.onclick = () => send(q);
-  chips.appendChild(b);
-});
+function quickChips(){
+  const picks = pickedObjs(), heights = state.group.map(g => g.h), minH = heights.length ? Math.min(...heights) : null;
+  const out = [];
+  if (picks[0]) out.push(`Расскажи про «${picks[0].n}»`);
+  if (picks[1]) out.push(`Что сначала: «${picks[0].n}» или «${picks[1].n}»?`);
+  if (minH) out.push(`Гость ${minH} см — всё ли подходит?`);
+  if (state.date) out.push('Что если в день визита дождь?');
+  out.push('Где поесть на маршруте?', 'Сколько времени всё займёт?');
+  return out;
+}
+function renderChips(){
+  chips.innerHTML = '';
+  quickChips().forEach(q => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = q;
+    b.onclick = () => send(q);
+    chips.appendChild(b);
+  });
+}
+function renderStrip(){
+  const parts = [];
+  if (state.date) parts.push(`📅 <b>${esc(fmtDate(state.date))}</b>`);
+  parts.push(`👥 <b>${state.group.length}</b> ${state.group.length === 1 ? 'гость' : state.group.length < 5 ? 'гостя' : 'гостей'}`);
+  if (state.picks.length) parts.push(`🎡 <b>${state.picks.length}</b> точек`);
+  $('#strip').innerHTML = parts.join(' <span class="dot">·</span> ') + ' <button class="edit" type="button" data-go="visit">✏️ изменить</button>';
+}
+function contextPayload(){
+  const ctx = { visitId: state.id };
+  if (state.date) ctx.date = state.date;
+  if (state.group.length) ctx.group = state.group.map(g => ({ name: g.name, height: g.h }));
+  const picks = pickedObjs();
+  if (picks.length) ctx.picks = picks.map(p => ({ name: p.n, type: p.t, hmin: p.lo, hmax: p.hi, priceFrom: p.p }));
+  return ctx;
+}
+/* заявка визита — в хранилище маркетинга (один раз на конфигурацию) */
+function reportVisit(){
+  if (!state.group.length) return;
+  const sig = configSig();
+  if (sig === state.reportedSig) return;
+  fetch('api/visits', {
+    method:'POST',
+    headers:{ 'content-type':'application/json' },
+    body: JSON.stringify({ id: state.id, date: state.date || undefined, group: state.group.map(g => ({ name: g.name, height: g.h })), picks: pickedObjs().map(p => ({ name:p.n, type:p.t, hmin:p.lo, hmax:p.hi, priceFrom:p.p })) }),
+  }).then(r => { if (r.ok){ state.reportedSig = sig; save(); } }).catch(() => {});
+}
 
 /* ---------- демо-ответы (когда сервер Баюна не подключён) ---------- */
 const DEMO = [
@@ -151,31 +515,27 @@ const DEMO = [
   { re: /билет|цена|стоит|стоимость|тариф|безлимит/i, text: 'Безлимитный билет — 2 700 ₽ онлайн и 2 900 ₽ в кассе (данные на 20.10.2026). Вход на территорию бесплатный — платны аттракционы и тематические парки. Совет: перед покупкой уточните список включённых аттракционов — это частая тема в отзывах гостей.' },
   { re: /добраться|метро|автобус|машина|парковк|адрес/i, text: 'Адрес: Москва, ул. Крылатская, 18. Ближайшее метро — «Крылатская», от него ходит бесплатный автобус парка. Также подходят «Молодёжная» и «Народное Ополчение». На машине: парковка под Живописным мостом — 400 ₽/день, у Ледового дворца (Крылатская, 16) — 70 ₽/час; для инвалидов бесплатно.' },
   { re: /дино|динозавр/i, text: 'Дино парк — самый хвалимый объект в отзывах: 30+ динозавров в натуральную величину (до 20 метров), аудиогид и палеонтологическая песочница. Дети обычно «застревают» там надолго — закладывайте на визит не меньше часа.' },
-  { re: /погод/i, text: 'В демо-режиме погоду не подгрузить 🙂 В сайте игры погода приходит из Open-Meteo (прогноз на 16 дней по часам, без ключа) — Баюн использует её, чтобы советовать, что лучше катать прямо сейчас.' },
+  { re: /погод|дожд/i, text: 'В демо-режиме погоду не подгрузить 🙂 В полной версии Баюн знает вашу дату визита и советует, что катать в дождь, а что — в жару.' },
 ];
-const DEMO_FALLBACK = 'Я на связи! В демо-режиме я знаю немного: цены и билеты, как добраться, Дино парк и детские зоны. А с подключённым сервером (runner/chat/server.js) отвечу на любой вопрос о парке — по материалам исследования.';
-
-function demoReply(text) {
-  const hit = DEMO.find(d => d.re.test(text));
-  return hit ? hit.text : DEMO_FALLBACK;
-}
+const DEMO_FALLBACK = 'Я на связи! В демо-режиме я знаю немного: цены и билеты, как добраться, Дино парк и детские зоны. С подключённым сервером отвечу на любой вопрос о парке — и учту состав вашей группы.';
+function demoReply(text){ const hit = DEMO.find(d => d.re.test(text)); return hit ? hit.text : DEMO_FALLBACK; }
 
 /* ---------- отправка ---------- */
 form.addEventListener('submit', e => { e.preventDefault(); send(); });
 
-async function send(preset) {
+async function send(preset){
   const text = (preset ?? input.value).trim();
   if (!text || sending) return;
   sending = true; lastUserText = text;
   input.value = ''; input.disabled = true; sendBtn.disabled = true;
   chips.style.display = 'none';
-  addBubble({ who: 'user', title: 'Вы', text });
-  history.push({ role: 'user', text });
+  addBubble({ who:'user', title:'Вы', text });
+  history.push({ role:'user', text });
 
   const typing = addTyping();
   scrollDown(true);
 
-  if (demoMode) {
+  if (demoMode){
     await new Promise(r => setTimeout(r, 900));
     typing.closest('.row').remove();
     const reply = demoReply(text);
@@ -188,49 +548,46 @@ async function send(preset) {
   try {
     /* путь относительный: работает и на корне (/api/chat), и под префиксом (/bayun/api/chat за nginx) */
     const res = await fetch('api/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message: text, history: history.slice(-7, -1) }),
+      method:'POST',
+      headers:{ 'content-type':'application/json' },
+      body: JSON.stringify({ message: text, history: history.slice(-7, -1), context: contextPayload() }),
     });
     if (!res.ok || !res.body) throw new Error('http_' + res.status);
     const reader = res.body.getReader();
     const dec = new TextDecoder();
     let buf = '';
-    for (;;) {
+    for (;;){
       const { done, value } = await reader.read();
       if (done) break;
-      buf += dec.decode(value, { stream: true });
+      buf += dec.decode(value, { stream:true });
       let i;
-      while ((i = buf.indexOf('\n\n')) >= 0) {
+      while ((i = buf.indexOf('\n\n')) >= 0){
         const block = buf.slice(0, i).trim(); buf = buf.slice(i + 2);
         if (!block.startsWith('data:')) continue;
         let ev; try { ev = JSON.parse(block.slice(5).trim()); } catch { continue; }
         gotAnyEvent = true;
-        if (ev.type === 'assistant_delta' && ev.text) {
-          if (!typing.isConnected) { /* восстановление после ошибки */ }
+        if (ev.type === 'assistant_delta' && ev.text){
           typing.classList.add('streaming');
           typing.textContent = ev.text;
           scrollDown();
-        } else if (ev.type === 'assistant_final' && ev.text) {
+        } else if (ev.type === 'assistant_final' && ev.text){
           typing.classList.remove('streaming');
           typing.textContent = ev.text;
-        } else if (ev.type === 'done') {
+        } else if (ev.type === 'done'){
           answer = (ev.answer || '').trim();
-        } else if (ev.type === 'error') {
+        } else if (ev.type === 'error'){
           failed = ev.message || 'Неизвестная ошибка агента';
         }
       }
     }
-  } catch (err) {
-    failed = err.message;
-  }
+  } catch (err){ failed = err.message; }
 
-  if (answer) {
+  if (answer){
     typing.classList.remove('streaming');
     typing.textContent = answer;
     scrollDown();
     finishTurn(answer);
-  } else if (failed && gotAnyEvent) {
+  } else if (failed && gotAnyEvent){
     typing.closest('.row').remove();
     showError(failed);
     history.pop();
@@ -249,11 +606,10 @@ async function send(preset) {
   }
 }
 
-/* локальный «стриминг» для демо-режима: печатаем ответ частями */
-async function streamLocally(text) {
+async function streamLocally(text){
   const b = addTyping();
   const step = Math.max(2, Math.round(text.length / 60));
-  for (let i = 0; i < text.length; i += step) {
+  for (let i = 0; i < text.length; i += step){
     b.classList.add('streaming');
     b.textContent = text.slice(0, i + step);
     scrollDown();
@@ -263,28 +619,47 @@ async function streamLocally(text) {
   b.textContent = text;
 }
 
-/* финализация: текст последнего bubble уже выставлен, пишем историю */
-function finishTurn(answerText) {
-  history.push({ role: 'bayun', text: answerText });
+function finishTurn(answerText){
+  history.push({ role:'bayun', text: answerText });
   input.disabled = false; sendBtn.disabled = false; input.focus();
   sending = false;
 }
 
-/* ошибка агента: плашка + кнопка «Повторить» */
-function showError(message) {
+function showError(message){
   const bubble = addBubble({
-    who: 'error',
-    title: 'Ошибка',
+    who:'error', title:'Ошибка',
     html: `${esc(message)}<br><button class="retry" type="button">↺ Повторить</button>`,
   });
   bubble.querySelector('.retry').onclick = () => {
     bubble.closest('.row').remove();
-    history.pop(); // убираем «висящее» пользовательское сообщение
+    history.pop();
     send(lastUserText);
   };
 }
 
-input.focus();
+/* ================= рендер вида ================= */
+function render(){
+  const cur = currentView();
+  if (cur === 'chat' && !state.group.length && !EMBED){ location.replace('#/visit'); return; }
+  renderSteps(cur);
+  VIEWS.forEach(v => $('#view-' + v).classList.toggle('on', v === cur));
+  if (cur === 'visit') renderVisit();
+  if (cur === 'interests') renderInterests();
+  if (cur === 'chat'){
+    renderStrip(); renderChips(); reportVisit();
+    if (!history.length){
+      const g = greeting();
+      if (!greetingBubble || !greetingBubble.isConnected) greetingBubble = addBubble({ title:'Баюн', text: g });
+      else greetingBubble.lastChild.textContent = g;
+    }
+  }
+  window.scrollTo(0, 0);
+}
+
+/* ?embed=1 (виджет-панель): сразу в чат, конфигурация необязательна */
+if (EMBED) location.hash = '#/chat';
+render();
+if (!EMBED && !location.hash) history.replaceState(null, '', '#/visit');
 </script>
 </body>
 </html>
