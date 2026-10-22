@@ -90,6 +90,7 @@ export function normalizeVisit(raw) {
   return {
     id,
     date: typeof raw.date === "string" ? raw.date.slice(0, 10) : "",
+    time: typeof raw.time === "string" && /^\d{1,2}:\d{2}$/.test(raw.time.trim()) ? raw.time.trim().slice(0, 5) : "",
     group,
     picks,
     route,
@@ -230,6 +231,7 @@ export function getStats() {
       .map((v) => ({
         ts: v.ts,
         date: v.date,
+        time: v.time || "",
         size: v.parsed?.size || v.group?.length || 0,
         category: v.parsed?.category || "",
         group: (v.group || []).map((m) => ({ name: m.name, height: m.height })),

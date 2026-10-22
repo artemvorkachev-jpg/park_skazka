@@ -83,6 +83,7 @@ input[type=date]:focus{box-shadow:0 0 0 4px rgba(52,180,232,.2)}
 .quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .quick button{background:rgba(255,255,255,.6);border:1.5px solid rgba(52,180,232,.35);color:#1E6E9E;border-radius:100px;padding:8px 16px;font-size:13px;font-weight:500;transition:.2s}
 .quick button:hover{background:#fff;border-color:var(--blue);transform:translateY(-1px)}
+.quick button.on{background:#fff;border-color:var(--blue);font-weight:700;box-shadow:var(--shadow-sm)}
 .date-hint{margin:16px 0 0;font-size:13px;color:var(--muted)}
 .date-hint b{color:var(--ink)}
 
@@ -203,6 +204,9 @@ footer b{color:var(--accent)}
         <label class="field-label" for="dateInput">Дата визита</label>
         <div class="date-row"><input type="date" id="dateInput"></div>
         <div class="quick" id="dateQuick"></div>
+        <label class="field-label" for="timeInput" style="margin-top:18px">Время прихода</label>
+        <div class="date-row"><input type="time" id="timeInput" step="900"></div>
+        <div class="quick" id="timeQuick"></div>
         <p class="date-hint" id="dateHint"></p>
         <div class="nav"><span class="note">Шаг 1 из 2</span><button class="btn primary" id="confirmDate" disabled>Подтвердить дату →</button></div>
       </div>
@@ -289,10 +293,11 @@ function loadState(){
       if (!Array.isArray(s.picks)) s.picks = [];
       // сессии до двухшагового визита: если гость уже настроен — сразу на подшаг «кто идёт»
       if (s.visitStage === undefined) s.visitStage = (s.date && s.group.length) ? 'group' : 'date';
+      if (typeof s.time !== 'string' || !/^\d{1,2}:\d{2}$/.test(s.time)) s.time = '10:00';
       return s;
     }
   }catch{}
-  return { id: uuid(), date: '', group: [], picks: [], reportedSig: '' };
+  return { id: uuid(), date: '', time: '10:00', group: [], picks: [], reportedSig: '' };
 }
 const state = loadState();
 function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch{} }
@@ -352,7 +357,8 @@ const wxEmoji = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️
 const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + '°';
 async function fetchWeather(){
   if (!state.date) return;
-  if (state.weather && state.weather.date === state.date) return;
+  const hour = parseInt(state.time, 10) || 12;
+  if (state.weather && state.weather.date === state.date && state.weather.hour === hour) return;
   try{
     const u = `https://api.open-meteo.com/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
       `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
@@ -361,10 +367,12 @@ async function fetchWeather(){
     if (!r.ok) return;
     const j = await r.json(), h = j.hourly;
     if (!h || !Array.isArray(h.time)) return;
-    const i = h.time.findIndex(t => t.endsWith('T12:00'));
+    let i = h.time.findIndex(t => t.endsWith('T' + String(hour).padStart(2, '0') + ':00'));
+    if (i < 0) i = h.time.findIndex(t => t.endsWith('T12:00'));
     if (i < 0) return;
     state.weather = {
       date: state.date,
+      hour,
       t: h.temperature_2m[i],
       code: h.weathercode[i],
       precip: (h.precipitation_probability || [])[i] ?? 0,
@@ -376,8 +384,8 @@ async function fetchWeather(){
 }
 function dateHintHtml(){
   if (!state.date) return 'Выберите дату — она нужна для маршрута и подсказок Баюна.';
-  let s = `Визит: <b>${esc(fmtDate(state.date))}</b>`;
-  const w = state.weather && state.weather.date === state.date ? state.weather : null;
+  let s = `Визит: <b>${esc(fmtDate(state.date))}</b>, приход в <b>${esc(state.time || '10:00')}</b>`;
+  const w = state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12) ? state.weather : null;
   s += w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}, дождь ${w.precip}%` : ' · погоду подгружаем…';
   return s;
 }
@@ -398,6 +406,15 @@ function renderVisit(){
       b.type = 'button'; b.textContent = label;
       b.onclick = () => { state.date = iso; save(); fetchWeather(); renderVisit(); };
       $('#dateQuick').appendChild(b);
+    });
+    $('#timeInput').value = state.time || '10:00';
+    $('#timeQuick').innerHTML = '';
+    ['10:00', '12:00', '14:00', '16:00'].forEach(t => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = t;
+      if (t === state.time) b.classList.add('on');
+      b.onclick = () => { state.time = t; save(); fetchWeather(); renderVisit(); };
+      $('#timeQuick').appendChild(b);
     });
     $('#dateHint').innerHTML = dateHintHtml();
     $('#confirmDate').disabled = !state.date;
@@ -430,6 +447,10 @@ function renderVisit(){
   $('#toInterests').disabled = !state.group.length;
 }
 $('#dateInput').addEventListener('change', e => { state.date = e.target.value || ''; save(); fetchWeather(); renderVisit(); });
+$('#timeInput').addEventListener('change', e => {
+  state.time = /^\d{1,2}:\d{2}$/.test(e.target.value || '') ? e.target.value : '10:00';
+  save(); fetchWeather(); renderVisit();
+});
 /* состояние группы обновляем прямо при вводе (input), а рост докручиваем на change (размытие поля) */
 $('#groupList').addEventListener('input', e => {
   const row = e.target.closest('.group-row'); if (!row) return;
@@ -519,13 +540,14 @@ const ROUTE_DUR = { zone: 90, extreme: 40, family: 35, kids: 25, interactive: 45
 const ROUTE_PEAK = { kids: 12.5, zone: 13.5, interactive: 14, family: 14.5, extreme: 16 };
 const OPEN_MIN = 10 * 60, CLOSE_MIN = 21 * 60, LUNCH_MIN = 13 * 60, GAP = 15;
 const fmtMin = m => Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0');
+const parseHM = s => { const m = /^(\d{1,2}):(\d{2})$/.exec((s || '').trim()); return m ? (+m[1]) * 60 + (+m[2]) : OPEN_MIN; };
 
 function buildRoute(){
   const picks = pickedObjs();
   if (!picks.length) return { items: [], overflow: 0 };
   const order = [...picks].sort((a, b) => (ROUTE_PEAK[a.t] || 14) - (ROUTE_PEAK[b.t] || 14) || a.id - b.id);
   const items = [];
-  let cursor = OPEN_MIN, lunch = false, overflow = 0;
+  let cursor = Math.min(Math.max(parseHM(state.time), OPEN_MIN), 20 * 60), lunch = false, overflow = 0;
   for (const a of order){
     const dur = ROUTE_DUR[a.t] || 40;
     // обед вставляем перед точкой, которая перелезает через 13:00
@@ -595,7 +617,7 @@ function configSig(){ return JSON.stringify([state.date, state.group, state.pick
 function greeting(){
   const names = state.group.map(g => g.name).filter(Boolean);
   const first = names[0];
-  const datePart = state.date ? ` на ${fmtDate(state.date)}` : '';
+  const datePart = state.date ? ` на ${fmtDate(state.date)}, приход в ${state.time || '10:00'}` : '';
   if (!names.length) return 'Мяу! Я Баюн — помощник парка «Сказка». Спрашивайте: аттракционы, цены, как добраться — подскажу!';
   const picks = pickedObjs();
   const pickPart = picks.length ? ` Вижу ваш топ: ${picks.slice(0, 3).map(p => '«' + p.n + '»').join(', ')}${picks.length > 3 ? ' и ещё' : ''}.` : '';
@@ -623,8 +645,9 @@ function renderChips(){
 function renderStrip(){
   const parts = [];
   if (state.date){
-    const w = state.weather && state.weather.date === state.date ? state.weather : null;
+    const w = state.weather && state.weather.date === state.date && state.weather.hour === (parseInt(state.time, 10) || 12) ? state.weather : null;
     parts.push(`📅 <b>${esc(fmtDate(state.date))}</b>${w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}` : ''}`);
+    parts.push(`⏰ <b>${esc(state.time || '10:00')}</b>`);
   }
   parts.push(`👥 <b>${state.group.length}</b> ${state.group.length === 1 ? 'гость' : state.group.length < 5 ? 'гостя' : 'гостей'}`);
   if (state.picks.length) parts.push(`🎡 <b>${state.picks.length}</b> точек`);
@@ -638,6 +661,7 @@ function renderStrip(){
 function contextPayload(){
   const ctx = { visitId: state.id };
   if (state.date) ctx.date = state.date;
+  if (state.time) ctx.time = state.time;
   if (state.weather && state.weather.date === state.date) ctx.weather = { t: state.weather.t, code: state.weather.code, precip: state.weather.precip, wind: state.weather.wind };
   if (state.group.length) ctx.group = state.group.map(g => ({ name: g.name, height: g.h }));
   const picks = pickedObjs();
@@ -654,7 +678,7 @@ function reportVisit(){
   fetch('api/visits', {
     method:'POST',
     headers:{ 'content-type':'application/json' },
-    body: JSON.stringify({ id: state.id, date: state.date || undefined, group: state.group.map(g => ({ name: g.name, height: g.h })), picks: pickedObjs().map(p => ({ name:p.n, type:p.t, hmin:p.lo, hmax:p.hi, priceFrom:p.p })), route: routePayload() }),
+    body: JSON.stringify({ id: state.id, date: state.date || undefined, time: state.time || '10:00', group: state.group.map(g => ({ name: g.name, height: g.h })), picks: pickedObjs().map(p => ({ name:p.n, type:p.t, hmin:p.lo, hmax:p.hi, priceFrom:p.p })), route: routePayload() }),
   }).then(r => { if (r.ok){ state.reportedSig = sig; save(); } }).catch(() => {});
 }
 

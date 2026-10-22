@@ -71,6 +71,7 @@ function parseContext(raw) {
   const ctx = {};
   if (typeof raw.visitId === "string" && raw.visitId.trim()) ctx.visitId = raw.visitId.trim().slice(0, 64);
   if (typeof raw.date === "string") ctx.date = raw.date.slice(0, 10);
+  if (typeof raw.time === "string" && /^\d{1,2}:\d{2}$/.test(raw.time.trim())) ctx.time = raw.time.trim().slice(0, 5);
   if (Array.isArray(raw.group)) {
     ctx.group = raw.group
       .slice(0, 20)
@@ -113,7 +114,7 @@ function parseContext(raw) {
       };
     }
   }
-  return ctx.group?.length || ctx.picks?.length || ctx.date || ctx.visitId || ctx.route?.length || ctx.weather ? ctx : null;
+  return ctx.group?.length || ctx.picks?.length || ctx.date || ctx.time || ctx.visitId || ctx.route?.length || ctx.weather ? ctx : null;
 }
 
 function formatContext(ctx) {
@@ -121,7 +122,9 @@ function formatContext(ctx) {
   if (ctx.date) {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ctx.date);
     const wd = m ? WEEKDAY_FULL_RU[new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()] : "";
-    lines.push(`Дата визита: ${m ? `${m[3]}.${m[2]}.${m[1]}${wd ? ` (${wd})` : ""}` : ctx.date}`);
+    lines.push(`Дата визита: ${m ? `${m[3]}.${m[2]}.${m[1]}${wd ? ` (${wd})` : ""}` : ctx.date}${ctx.time ? `, приход в ${ctx.time}` : ""}`);
+  } else if (ctx.time) {
+    lines.push(`Время прихода: ${ctx.time}`);
   }
   if (ctx.group?.length) {
     lines.push(`Группа: ${ctx.group.map((g) => `${g.name} — ${Math.round(g.height)} см`).join("; ")}`);
@@ -142,7 +145,7 @@ function formatContext(ctx) {
   }
   if (ctx.weather) {
     lines.push(
-      `Погода на дату визита (около 12:00): ${wmoRu(ctx.weather.code)}, ${fmtT(ctx.weather.t)}` +
+      `Погода на время прихода: ${wmoRu(ctx.weather.code)}, ${fmtT(ctx.weather.t)}` +
       `${ctx.weather.precip >= 0 ? `, вероятность осадков ${ctx.weather.precip}%` : ""}` +
       `${ctx.weather.wind >= 0 ? `, ветер до ${ctx.weather.wind} м/с` : ""}`
     );

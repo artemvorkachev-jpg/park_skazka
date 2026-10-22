@@ -181,7 +181,7 @@ function render(s){
       <tbody>${s.recentVisits.map(v => `
         <tr>
           <td class="muted">${fmtTs(v.ts)}</td>
-          <td>${v.date ? esc(shortDate(v.date)) : '<span class="muted">—</span>'}</td>
+          <td>${v.date ? esc(shortDate(v.date)) + (v.time ? ' · ' + esc(v.time) : '') : '<span class="muted">—</span>'}</td>
           <td>${esc((v.group || []).map(g => `${g.name} (${g.height} см)`).join(', '))}</td>
           <td><span class="pill ${esc(v.category)}">${esc(CATEGORY_RU[v.category] || v.category || '—')}</span></td>
           <td class="muted">${v.route?.length ? esc(v.route.map(r => `${r.time} ${r.name}`).join(' · ')) : v.picks?.length ? esc(v.picks.join(', ')) : '—'}</td>
