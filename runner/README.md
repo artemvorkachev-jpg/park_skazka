@@ -43,6 +43,13 @@ runner/
 │   ├── auth.json          # API credentials
 │   ├── models.json        # Model definitions
 │   └── settings.json      # Agent settings
+├── chat/                  # HTTP/SSE-адаптер (node chat/server.js)
+│   ├── index.html         # планировщик визита + чат с Баюном
+│   ├── game.html          # мини-игра «Прогулка по парку» (симуляция визита)
+│   ├── map.svg            # схема парка без легенды для игры
+│   ├── dashboard.html     # маркетинговый дашборд
+│   ├── server.js          # HTTP: /, /game, /dashboard, /map.svg, /api/*
+│   └── store.js           # JSONL-хранилище заявок и диалога
 ├── package.json
 └── .env                   # (create with your API keys)
 ```

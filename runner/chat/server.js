@@ -5,6 +5,8 @@
 // Протокол:
 //   GET  /            — страница «спланируй визит → спроси Баюна» (index.html рядом с этим файлом)
 //   GET  /dashboard   — маркетинговый дашборд (dashboard.html); данные закрыты токеном, см. ниже
+//   GET  /game        — игра «Прогулка по парку» (game.html): симуляция визита на выбранную дату
+//   GET  /map.svg     — схема парка без легенды для игры (map.svg рядом с этим файлом)
 //   GET  /health      — {"ok":true}
 //   POST /api/chat    — тело { message: string, history?: [...], context?: {visitId?, date?, group?, picks?} }
 //                       ответ — text/event-stream, события runner.js построчно:
@@ -31,6 +33,8 @@ const RUNNER_ROOT = resolve(__dirname, "..");
 const RUNNER_JS = join(RUNNER_ROOT, "runner.js");
 const INDEX_HTML = join(__dirname, "index.html");
 const DASHBOARD_HTML = join(__dirname, "dashboard.html");
+const GAME_HTML = join(__dirname, "game.html");
+const MAP_SVG_PATH = process.env.MAP_SVG || join(__dirname, "map.svg");
 
 const PORT = parseInt(process.env.CHAT_PORT || "8130", 10);
 const TURN_TIMEOUT_MS = parseInt(process.env.TURN_TIMEOUT_MS || "120000", 10);
@@ -40,6 +44,8 @@ const DASHBOARD_TOKEN = process.env.DASHBOARD_TOKEN || "";
 
 const HTML = readFileSync(INDEX_HTML, "utf-8");
 const DASH = readFileSync(DASHBOARD_HTML, "utf-8");
+const GAME = readFileSync(GAME_HTML, "utf-8");
+const MAP_SVG = (() => { try { return readFileSync(MAP_SVG_PATH, "utf-8"); } catch { return ""; } })();
 
 // --- сборка промпта: runner не хранит сессию между сообщениями, историю и
 // --- конфигурацию гостей передаём текстом
@@ -207,6 +213,10 @@ const json = (res, code, obj) => {
   res.writeHead(code, { "content-type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(obj));
 };
+
+/* страницы всегда просим свежие: без no-cache WebView/браузер может показать
+   старую версию UI после обновления сервера (heuristic-кэширование) */
+const HTML_HEADERS = { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" };
 
 // --- POST /api/chat: запуск runner.js и трансляция его NDJSON в SSE ---
 
@@ -383,11 +393,22 @@ function dashboardAllowed(url) {
 createServer((req, res) => {
   const url = new URL(req.url, "http://localhost");
   if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/index.html")) {
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.writeHead(200, HTML_HEADERS);
     res.end(HTML);
   } else if (req.method === "GET" && url.pathname === "/dashboard") {
-    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.writeHead(200, HTML_HEADERS);
     res.end(DASH);
+  } else if (req.method === "GET" && url.pathname === "/game") {
+    res.writeHead(200, HTML_HEADERS);
+    res.end(GAME);
+  } else if (req.method === "GET" && url.pathname === "/map.svg") {
+    if (!MAP_SVG) {
+      res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+      res.end("map.svg не найден рядом с server.js");
+      return;
+    }
+    res.writeHead(200, { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public, max-age=3600" });
+    res.end(MAP_SVG);
   } else if (req.method === "GET" && url.pathname === "/health") {
     json(res, 200, { ok: true });
   } else if (req.method === "POST" && url.pathname === "/api/chat") {
@@ -419,5 +440,5 @@ createServer((req, res) => {
       process.exit(1);
     })
     .listen(PORT, () => {
-      console.log(`Страница Баюна: http://localhost:${PORT}/  · дашборд: /dashboard  (runner: ${RUNNER_JS})`);
+      console.log(`Страница Баюна: http://localhost:${PORT}/  · дашборд: /dashboard  · игра: /game  (runner: ${RUNNER_JS})`);
     });

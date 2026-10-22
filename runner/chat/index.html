@@ -18,7 +18,8 @@
   --disp:'Oswald','Bebas Neue','Arial Narrow',Impact,sans-serif;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
+/* без height:100% на body: иначе длинный маршрут дня вылезает из-под flex-контейнера
+   и футер рисуется поверх списка (на низких экранах и на мобильных) */
 body{margin:0;font:16px/1.5 'PT Root UI','Segoe UI',system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#E6F6FE 0%,#F4FBFF 60%,#fff 100%);min-height:100vh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
 button{font:inherit;cursor:pointer}
 input,select{font:inherit}
@@ -56,7 +57,7 @@ main{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:18px 20px 0;min-he
 .container.beige{background:var(--beige)}
 .container h2{font-size:32px;text-align:center;margin-bottom:6px}
 .container .sub{text-align:center;color:var(--muted);font-size:14.5px;margin:0 auto 22px;max-width:560px}
-@media(max-width:640px){.container{padding:24px 18px;border-radius:32px}.container h2{font-size:26px}}
+@media(max-width:640px){.container{padding:24px 18px;border-radius:32px}.container h2{font-size:26px}.chat-wrap{height:calc(100vh - 430px);min-height:300px}}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:100px;padding:14px 34px;font:700 15px/1 'PT Root UI',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#fff;transition:.25s;text-decoration:none}
 .btn:hover:not(:disabled){filter:brightness(.92);transform:translateY(-2px)}
@@ -174,9 +175,6 @@ input[type=date]:focus{box-shadow:0 0 0 4px rgba(52,180,232,.2)}
 .composer .send:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
 #demoBanner{display:none;margin:0 auto 10px;max-width:fit-content;background:#FFF6D9;border:1px solid #F2DC8E;color:#7A5A00;border-radius:100px;padding:7px 18px;font-size:13px}
 
-footer{max-width:1080px;width:100%;margin:0 auto;padding:8px 20px 18px;font-size:12.5px;color:var(--muted);text-align:center}
-footer b{color:var(--accent)}
-
 /* ---------- тост ---------- */
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:100px;padding:11px 24px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:50;box-shadow:var(--shadow)}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -195,8 +193,7 @@ footer b{color:var(--accent)}
 <div class="steps" id="steps"></div>
 
 <main>
-  <!-- ---------- шаг 1: визит (подшаг 1: дата → подшаг 2: кто идёт) ---------- -->
-  <section class="view" id="view-visit">
+  <!-- ---------- шаг 1: визит (подшаг 1: дата → подшаг 2: кто идёт) ---------- -->  <section class="view" id="view-visit">
     <div class="two solo" id="visitPanels">
       <div class="container beige" id="panelDate">
         <h2>Когда идёте</h2>
@@ -250,6 +247,7 @@ footer b{color:var(--accent)}
     </div>
     <div class="nav">
       <button class="btn ghost" data-go="interests">← Интересы</button>
+      <a class="btn blue" href="game" target="_blank" rel="noopener">🎮 Погулять по парку</a>
       <button class="btn primary" id="toChat">Спросить Баюна →</button>
     </div>
   </section>
@@ -268,8 +266,6 @@ footer b{color:var(--accent)}
     </div>
   </section>
 </main>
-
-<footer>«Хранитель Сказки» · хакатон 2026 · конфигурация гостей передаётся Баюну с каждым вопросом · стили по <b>DESIGN.md</b></footer>
 
 <div id="toast"></div>
 
@@ -333,7 +329,9 @@ function fitTo(a, heights){
 
 /* ================= маршрутизация ================= */
 const VIEWS = ['visit', 'interests', 'route', 'chat'];
+let bootDone = false;   // повторное открытие всегда стартует с шага «Визит» — до конца загрузки
 function currentView(){
+  if (!EMBED && !bootDone) return 'visit';
   const v = (location.hash || '').replace(/^#\/?/, '');
   return VIEWS.includes(v) ? v : 'visit';
 }
@@ -514,7 +512,10 @@ $('#dateLine').addEventListener('click', e => {
 /* после даты — только состав гостей: интересы/маршрут/чат закрыты, пока группа не собрана */
 function go(v){
   if (v !== 'visit' && !state.group.length && !EMBED){ toast('Сначала добавьте, кто идёт — шаг 1'); location.hash = '#/visit'; return; }
+  const before = location.hash;
   location.hash = '#/' + v;
+  /* хэш мог совпасть со «залипшим» из прошлого раза — тогда hashchange не будет и надо рисовать самим */
+  if (location.hash === before) render();
 }
 document.addEventListener('click', e => {
   const add = e.target.closest('[data-gadd]');
@@ -698,7 +699,7 @@ function renderStrip(){
     const totalMin = R.items.reduce((s, it) => s + it.dur, 0) + GAP * Math.max(0, R.items.length - 1);
     parts.push(`⏱ <b>~${Math.round(totalMin / 60 * 10) / 10} ч</b>`);
   }
-  $('#strip').innerHTML = parts.join(' <span class="dot">·</span> ') + ' <button class="edit" type="button" data-go="visit">✏️ изменить</button>';
+  $('#strip').innerHTML = parts.join(' <span class="dot">·</span> ') + ' <button class="edit" type="button" data-go="visit">✏️ изменить</button> <a class="edit" href="game" target="_blank" rel="noopener" style="text-decoration:none">🎮 прогулка</a>';
 }
 function contextPayload(){
   const ctx = { visitId: state.id };
@@ -885,11 +886,14 @@ function render(){
   window.scrollTo(0, 0);
 }
 
-/* ?embed=1 (виджет-панель): сразу в чат, конфигурация необязательна */
-if (EMBED) location.hash = '#/chat';
+/* ?embed=1 (виджет-панель): сразу в чат, конфигурация необязательна.
+   Обычное открытие — всегда с шага «Визит»: «залипший» в адресе #/chat с прошлого
+   раза не должен сбрасывать гостя сразу в чат (см. currentView). Здесь только
+   приводим адрес в порядок: history.replaceState есть не во всех WebView */
+if (!EMBED){ try { history.replaceState(null, '', '#/visit'); } catch {} }
 fetchWeather();
 render();
-if (!EMBED && !location.hash) history.replaceState(null, '', '#/visit');
+bootDone = true;
 </script>
 </body>
 </html>

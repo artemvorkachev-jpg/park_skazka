@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Прогулка по парку «Сказка» — игра-симулятор визита</title>
+<meta name="description" content="Мини-игра «Хранителя Сказки»: погуляйте по парку в день вашего визита — маршрут из планировщика, гости и очереди из дашборда, погода с прогноза.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=PT+Root+UI:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Дизайн-система — см. DESIGN.md (стиль parkskazka.com) */
+:root{
+  --blue:#34B4E8; --accent:#D32D6B; --red:#FF2400; --green:#00B453; --lime:#D2F366; --lilac:#CCB5FB;
+  --ink:#222222; --muted:#5A6572; --light:#E6F6FE; --sky:#9CD6EE; --beige:#FDEBBF;
+  --shadow-sm:0 2px 8px rgba(35,40,47,.10); --shadow:0 8px 24px rgba(35,40,47,.15);
+  --disp:'Oswald','Bebas Neue','Arial Narrow',Impact,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:15px/1.5 'PT Root UI','Segoe UI',system-ui,sans-serif;color:var(--ink);background:linear-gradient(180deg,#E6F6FE 0%,#F4FBFF 100%);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;cursor:pointer}
+
+/* ---------- шапка ---------- */
+header{background:var(--blue);color:#fff;box-shadow:var(--shadow-sm);z-index:6}
+.hbar{display:flex;align-items:center;gap:13px;padding:9px 16px}
+.ava{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#fff;font-size:22px;flex:none;box-shadow:var(--shadow-sm)}
+.name{font:600 21px/1 var(--disp);text-transform:uppercase;letter-spacing:.02em}
+.name small{display:block;font:500 10.5px/1.3 'PT Root UI',sans-serif;letter-spacing:.13em;text-transform:uppercase;opacity:.9;margin-top:2px}
+.status{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;background:rgba(255,255,255,.18);padding:6px 14px;border-radius:100px}
+.status i{width:8px;height:8px;border-radius:50%;background:#7CFFB2;box-shadow:0 0 0 3px rgba(124,255,178,.3)}
+.status.off i{background:#FFD54D;box-shadow:0 0 0 3px rgba(255,213,77,.3)}
+.hbar .btn{margin-left:auto}
+@media(max-width:760px){.status{display:none}}
+.btn{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:100px;padding:10px 20px;font:700 12.5px/1 'PT Root UI',sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#fff;text-decoration:none;transition:.25s}
+.btn:hover{filter:brightness(.92);transform:translateY(-1px)}
+.btn.blue{background:var(--blue);box-shadow:0 6px 18px rgba(52,180,232,.3)}
+.btn.primary{background:var(--accent);box-shadow:0 6px 18px rgba(211,45,107,.3)}
+.btn.small{padding:8px 15px;font-size:11.5px}
+
+/* ---------- HUD ---------- */
+.hud{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 16px 0}
+.pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border-radius:100px;box-shadow:var(--shadow-sm);padding:7px 15px;font-size:13px;font-weight:500;white-space:nowrap}
+.pill b{font-weight:700}
+.hud .btns{margin-left:auto;display:flex;gap:6px}
+.ibtn{width:36px;height:36px;border:0;border-radius:50%;background:#fff;color:var(--ink);font-size:15px;font-weight:700;box-shadow:var(--shadow-sm);display:grid;place-items:center;transition:.2s}
+.ibtn:hover{background:var(--light);transform:translateY(-1px)}
+.ibtn.wide{width:auto;border-radius:100px;padding:0 14px;font-size:12px}
+@media(max-width:640px){.hud .btns .ibtn:not(.wide){display:none}}
+/* мобильный экран: шапка в одну строку, HUD — одна прокручиваемая строка,
+   карточка квеста и тост компактнее, панель точек почти на всю ширину */
+@media(max-width:640px){
+  .hbar{padding:7px 12px;gap:9px}
+  .ava{width:34px;height:34px;font-size:19px}
+  .name{font-size:15px}
+  .name small{display:none}
+  .hbar .btn{padding:8px 11px;font-size:10.5px;white-space:nowrap;margin-left:auto}
+  .hud{flex-wrap:nowrap;overflow-x:auto;padding:8px 10px 2px;gap:6px;scrollbar-width:none}
+  .hud::-webkit-scrollbar{display:none}
+  .pill{flex:none;padding:6px 12px;font-size:12px}
+  .hud .btns{margin-left:auto;flex:none;gap:5px}
+  main{margin:8px 10px 10px;border-radius:20px;min-height:300px}
+  .qcard{left:8px;top:8px;max-width:calc(100% - 56px);padding:10px 14px;border-radius:18px}
+  .qcard h3{font-size:14.5px}
+  #toast{font-size:12.5px;max-width:92%;padding:9px 16px}
+  #poiPanel{width:min(300px,calc(100% - 16px));right:8px;top:8px;bottom:8px}
+}
+
+/* ---------- сцена ---------- */
+main{position:relative;flex:1;margin:10px 16px 14px;border-radius:32px;overflow:hidden;background:#8fc454;box-shadow:var(--shadow);min-height:340px}
+#svgWrap{position:absolute;left:0;top:0;width:1470px;height:1080px;transform-origin:0 0;pointer-events:none}
+#svgWrap svg{display:block;width:1470px;height:1080px}
+#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+
+/* карточка квеста */
+.qcard{position:absolute;left:14px;top:14px;max-width:300px;background:rgba(255,255,255,.96);border-radius:22px;box-shadow:var(--shadow);padding:13px 18px;z-index:4}
+.qcard h3{margin:0 0 3px;font:600 17px/1.2 var(--disp);text-transform:uppercase;letter-spacing:.02em}
+.qcard .sub{font-size:12.5px;color:var(--muted)}
+.qcard .sub b{color:var(--accent)}
+.qcard.done{outline:3px solid var(--lime)}
+.qcard button{margin-top:8px}
+
+/* панель «Точки парка» — интерактивная замена легенды карты */
+#poiPanel{position:absolute;right:12px;top:12px;bottom:12px;width:288px;background:rgba(255,255,255,.97);border-radius:24px;box-shadow:var(--shadow);z-index:5;display:flex;flex-direction:column;overflow:hidden}
+#poiPanel[hidden]{display:none}
+#poiPanel .ph{padding:13px 18px 9px;border-bottom:1.5px solid #EAF2F8}
+#poiPanel .ph b{font:600 16px/1.2 var(--disp);text-transform:uppercase}
+#poiPanel .ph small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+#poiList{flex:1;min-height:0;overflow-y:auto;padding:6px 10px 14px}
+#poiList h4{margin:12px 8px 4px;font:700 11px/1 'PT Root UI',sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.poi-row{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:0;background:none;border-radius:14px;padding:7px 9px;transition:.15s}
+.poi-row:hover{background:var(--light)}
+.poi-row .pe{flex:none;font-size:15px}
+.poi-row .pn{flex:1;min-width:0;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poi-row .pm{flex:none;font-size:11px;color:var(--muted);white-space:nowrap}
+.poi-row .pm .q{color:var(--accent);font-weight:700}
+#poiPanel .pf{padding:8px 18px 12px;border-top:1.5px solid #EAF2F8;font-size:11.5px;color:var(--muted)}
+
+/* тултип точки */
+#tip{position:fixed;z-index:30;background:var(--ink);color:#fff;border-radius:14px;padding:8px 13px;font-size:12.5px;pointer-events:none;display:none;max-width:240px;box-shadow:var(--shadow)}
+#tip small{display:block;opacity:.8;font-size:11px;margin-top:2px}
+
+/* подсказка управления */
+#hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(34,34,34,.72);color:#fff;border-radius:100px;padding:7px 18px;font-size:12px;z-index:4;white-space:nowrap;pointer-events:none;transition:opacity .6s}
+@media(max-width:640px){#hint{display:none}}
+
+/* загрузка/ошибка */
+#load{position:absolute;inset:0;display:grid;place-items:center;background:var(--light);z-index:8;text-align:center}
+#load .box{font:600 22px/1.3 var(--disp);text-transform:uppercase;color:#1E6E9E}
+#load .spin{font-size:44px;animation:bump 1.1s ease-in-out infinite;display:block;margin-bottom:10px}
+@keyframes bump{50%{transform:translateY(-8px) scale(1.06)}}
+#load .err{max-width:420px;background:#fff;border-radius:24px;box-shadow:var(--shadow);padding:24px 30px;font:500 15px/1.5 'PT Root UI',sans-serif;color:var(--ink);text-transform:none}
+#load .err button{margin-top:12px}
+
+/* финал */
+#finish{position:absolute;inset:0;background:rgba(255,255,255,.88);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:9}
+#finish[hidden]{display:none}
+#finish .card{background:#fff;border-radius:32px;box-shadow:var(--shadow);padding:30px 40px;max-width:430px;text-align:center;margin:16px}
+#finish h2{margin:0 0 4px;font:600 30px/1.1 var(--disp);text-transform:uppercase}
+#finish .big{font:600 56px/1 var(--disp);color:var(--accent);margin:10px 0 2px}
+#finish ul{list-style:none;margin:14px 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+#finish ul b{font-weight:700}
+#finish .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+
+/* тост */
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%) translateY(-8px);background:var(--ink);color:#fff;border-radius:100px;padding:10px 22px;font-size:13.5px;opacity:0;pointer-events:none;transition:.35s;z-index:10;box-shadow:var(--shadow);max-width:82%;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <div class="ava">🎡</div>
+    <div class="name">Прогулка по парку<small>симулятор визита · «Хранитель Сказки»</small></div>
+    <div class="status" id="dataStatus"><i></i><span>загружаем…</span></div>
+    <a class="btn small" style="background:rgba(255,255,255,.2)" href="./">📅 К планировщику</a>
+  </div>
+</header>
+
+<div class="hud">
+  <span class="pill" id="hudDate">📅 —</span>
+  <span class="pill" id="hudClock">⏰ —</span>
+  <span class="pill" id="hudWx">☀️ —</span>
+  <span class="pill" id="hudStops">🎯 0/0</span>
+  <span class="pill" id="hudScore">⭐ 0</span>
+  <span class="pill" id="hudCrowd">👥 —</span>
+  <span class="btns">
+    <button class="ibtn wide" id="speedBtn" title="Скорость времени">⏱ ×1</button>
+    <button class="ibtn" id="zoomOut" title="Отдалить">−</button>
+    <button class="ibtn" id="zoomIn" title="Приблизить">+</button>
+    <button class="ibtn" id="zoomFit" title="Вся карта">⛶</button>
+    <button class="ibtn" id="panelBtn" title="Точки парка"> ❓ </button>
+  </span>
+</div>
+
+<main id="stage">
+  <div id="svgWrap" aria-hidden="true"></div>
+  <canvas id="cv"></canvas>
+
+  <div class="qcard" id="qcard" hidden></div>
+
+  <aside id="poiPanel" hidden>
+    <div class="ph"><b>Точки парка</b><small>вместо легенды на карте · клик — проложить путь</small></div>
+    <div id="poiList"></div>
+    <div class="pf" id="poiFooter">Гости и очереди — из заявок дашборда</div>
+  </aside>
+
+  <div id="hint">WASD / стрелки — идти · клик — к точке · Shift — бежать · колесо — зум</div>
+
+  <div id="load"><div class="box"><span class="spin">🎡</span><span id="loadText">Открываем парк…</span></div></div>
+
+  <div id="finish" hidden></div>
+  <div id="toast"></div>
+</main>
+
+<div id="tip"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   Прогулка по парку «Сказка» — играбельная симуляция визита.
+   Входные данные:
+     · визит гостя из планировщика (localStorage bayun.page.v1 — та же страница,
+       что и чат Баюна): дата, время прихода, группа, топ точек → маршрут дня;
+     · дашборд маркетинга (GET api/stats): категории групп, топ аттракционов
+       (очереди), загрузка дней недели (сколько гостей «сегодня»), имена гостей
+       из реальных заявок;
+     · погода (GET api/weather?date&hour): дождь/снег/туман/гроза поверх карты.
+   Карта — runner/chat/map.svg (схема 2026 без легенды: правая часть обрезана,
+   viewBox 1470×1080; легенда заменена интерактивной панелью «Точки парка»).
+   ===================================================================== */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const dist2 = (ax, ay, bx, by) => { const dx = ax - bx, dy = ay - by; return dx * dx + dy * dy; };
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pickOf = arr => arr[Math.floor(Math.random() * arr.length)];
+const fmtHM = m => Math.floor(m / 60) + ':' + String(Math.round(m) % 60).padStart(2, '0');
+const parseHM = s => { const m = /^(\d{1,2}):(\d{2})$/.exec((s || '').trim()); return m ? (+m[1]) * 60 + (+m[2]) : 600; };
+const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WD_SHORT = ['вс','пн','вт','ср','чт','пт','сб'];
+function fmtDateShort(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return '—';
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return `${+m[3]}.${+m[2]} · ${WD_SHORT[d.getDay()]}`;
+}
+function fmtDateFull(iso){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return '';
+  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return `${+m[3]} ${MONTHS_RU[d.getMonth()]}, ${WD_SHORT[d.getDay()]}`;
+}
+
+/* ================= каталог точек — синхронизирован с планировщиком (index.html) ================= */
+const TYPE_RU = { extreme:'Экстрим', family:'Семейные', kids:'Детские', interactive:'Интерактив', zone:'Зоны' };
+const TYPE_EMOJI = { extreme:'⚡', family:'👨‍👩‍👧', kids:'🎠', interactive:'🧩', zone:'🌳' };
+const CATALOG = [
+{id:1,n:"Бумеранг",t:"extreme",lo:130,hi:250,p:133},{id:2,n:"Американские горки «Молния»",t:"extreme",lo:120,hi:250,p:133},
+{id:3,n:"Дискавери",t:"extreme",lo:120,hi:250,p:133},{id:4,n:"Смерч",t:"extreme",lo:140,hi:250,p:133},
+{id:5,n:"Вихрь",t:"extreme",lo:140,hi:190,p:133},{id:6,n:"Небесная карусель",t:"extreme",lo:130,hi:250,p:133},
+{id:7,n:"Звездопад",t:"extreme",lo:105,hi:250,p:133},{id:8,n:"Галактика",t:"extreme",lo:140,hi:250,p:133},
+{id:9,n:"Ладья «360»",t:"extreme",lo:120,hi:250,p:133},{id:10,n:"Высший пилотаж",t:"extreme",lo:120,hi:250,p:133},
+{id:11,n:"Формула",t:"extreme",lo:120,hi:250,p:133},{id:12,n:"Петля времени",t:"extreme",lo:105,hi:250,p:133},
+{id:13,n:"Кракен",t:"extreme",lo:120,hi:250,p:133},{id:14,n:"Шейкер",t:"extreme",lo:130,hi:250,p:133},
+{id:15,n:"Карусель «Колобок»",t:"extreme",lo:120,hi:250,p:133},{id:16,n:"Экстремальные качели «Микс»",t:"extreme",lo:120,hi:250,p:133},
+{id:17,n:"Башня падения «Ракета»",t:"extreme",lo:105,hi:250,p:133},{id:18,n:"Паук",t:"extreme",lo:120,hi:250,p:133},
+{id:19,n:"Путь дракона",t:"extreme",lo:130,hi:190,p:133},{id:20,n:"Сладкоежка",t:"kids",lo:0,hi:250,p:133},
+{id:21,n:"Дорожный патруль",t:"kids",lo:80,hi:250,p:133},{id:22,n:"Вертолеты",t:"kids",lo:50,hi:250,p:133},
+{id:23,n:"Качели «Самолет»",t:"kids",lo:90,hi:250,p:133},{id:24,n:"Паровозик",t:"kids",lo:50,hi:250,p:133},
+{id:25,n:"Карусель «Рекс»",t:"kids",lo:90,hi:250,p:133},{id:26,n:"Солнышко",t:"kids",lo:90,hi:140,p:133},
+{id:27,n:"Ветерок",t:"kids",lo:90,hi:250,p:133},{id:28,n:"Город машин",t:"kids",lo:100,hi:110,p:133},
+{id:29,n:"Долина индейской реки",t:"kids",lo:90,hi:250,p:400},{id:30,n:"Колесо Обозрения",t:"family",lo:0,hi:250,p:133},
+{id:31,n:"Кругосветное путешествие",t:"family",lo:105,hi:250,p:133},{id:32,n:"Нитро",t:"family",lo:100,hi:250,p:133},
+{id:33,n:"Автодром",t:"family",lo:105,hi:250,p:133},{id:34,n:"Карусель «Вальс»",t:"family",lo:110,hi:250,p:133},
+{id:35,n:"Бамперные лодки «Нептун»",t:"family",lo:80,hi:250,p:133},{id:36,n:"Юла",t:"family",lo:110,hi:250,p:133},
+{id:37,n:"Сказочная карусель «Лошадки»",t:"family",lo:50,hi:250,p:133},{id:38,n:"Космодром",t:"family",lo:70,hi:250,p:133},
+{id:39,n:"Летающие велосипеды",t:"family",lo:90,hi:250,p:133},{id:40,n:"Летучий плавник",t:"family",lo:90,hi:105,p:133},
+{id:41,n:"Гусеница",t:"family",lo:50,hi:250,p:133},{id:42,n:"Пружинка",t:"family",lo:105,hi:250,p:133},
+{id:43,n:"Чаепитие",t:"family",lo:75,hi:250,p:133},{id:44,n:"Верёвочный парк",t:"family",lo:100,hi:210,p:0},
+{id:45,n:"ТИР",t:"family",lo:90,hi:250,p:500},{id:46,n:"Аркады",t:"family",lo:90,hi:250,p:133},
+{id:47,n:"Бабл Стар",t:"family",lo:95,hi:175,p:133},{id:48,n:"Ленточный лабиринт",t:"interactive",lo:0,hi:250,p:133},
+{id:49,n:"Дом вверх дном",t:"interactive",lo:0,hi:250,p:133},{id:50,n:"Зеркальный лабиринт",t:"interactive",lo:100,hi:250,p:133},
+{id:51,n:"Дом Страха",t:"interactive",lo:100,hi:250,p:133},{id:52,n:"Лабиринт Страха",t:"interactive",lo:100,hi:250,p:133},
+{id:53,n:"Дом Бабы Яги",t:"interactive",lo:0,hi:250,p:133},{id:54,n:"Парк птиц Авиариум",t:"zone",lo:0,hi:250,p:219},
+{id:55,n:"Страус парк",t:"zone",lo:0,hi:250,p:219},{id:56,n:"Альпака",t:"zone",lo:0,hi:250,p:219},
+{id:57,n:"Хаски Лэнд",t:"zone",lo:0,hi:250,p:219},{id:58,n:"Дино парк",t:"zone",lo:0,hi:250,p:219},
+{id:59,n:"Дино сафари",t:"zone",lo:90,hi:250,p:219},{id:60,n:"Зоодом «Страна ЕНОТиЯ»",t:"zone",lo:0,hi:250,p:219},
+];
+const byId = id => CATALOG.find(a => a.id === id);
+
+/* координаты точек на схеме (map.svg, 1470×1080) — по номерным меткам карты */
+const POS = {
+1:[298,859],2:[352,486],3:[970,715],4:[714,837],5:[1095,292],6:[426,500],7:[186,468],8:[394,470],
+9:[543,472],10:[797,594],11:[921,723],12:[906,536],13:[771,435],14:[451,319],15:[745,352],16:[762,630],
+17:[1133,421],18:[804,700],19:[1360,833],20:[1162,562],21:[1205,540],22:[1050,455],23:[668,282],24:[760,282],
+25:[741,491],26:[940,200],27:[986,166],28:[1165,522],29:[350,745],30:[480,150],31:[766,519],32:[895,772],
+33:[575,270],34:[729,315],35:[1070,490],36:[1073,362],37:[1082,390],38:[1030,588],39:[814,570],40:[1015,625],
+41:[946,478],42:[834,515],43:[912,410],44:[1190,508],45:[355,421],46:[707,580],47:[735,612],48:[762,335],
+49:[990,162],50:[1002,232],51:[1085,265],52:[230,505],53:[705,385],54:[1430,648],55:[1400,606],56:[1210,373],
+57:[1334,540],58:[1265,285],59:[1370,200],60:[1119,319],
+};
+/* кафе — для обеда в маршруте */
+const CAFES = [
+{n:'Кафе',x:470,y:459},{n:'Бум Вадя',x:836,y:373},{n:'Блинная',x:836,y:443},{n:'Бургерная',x:1027,y:545},
+{n:'Кофейная симфония',x:1104,y:513},{n:'Кафе «Базилик»',x:1104,y:324},{n:'Фудкорт',x:1258,y:322},{n:'Эко-лофт',x:1195,y:775},
+];
+const ENTRANCE = { x:960, y:986 };
+const WORLD = { w:1470, h:1080 };
+const OPEN_MIN = 10 * 60, CLOSE_MIN = 21 * 60;
+/* радиус подхода к точке (для крупных построек — больше) */
+const reachRof = id => id === 30 ? 118 : (id === 18 || id === 55) ? 48 : 38;
+
+/* препятствия: здания схемы (деревья парсятся из svg) */
+const BUILDINGS = [
+{type:'c',x:480,y:150,r:92},{type:'c',x:804,y:700,r:30},{type:'c',x:771,y:435,r:20},{type:'c',x:955,y:640,r:26},
+{type:'c',x:1070,y:490,r:22},{type:'c',x:1245,y:585,r:32},
+{type:'r',x:540,y:250,w:70,h:40},{type:'r',x:585,y:895,w:85,h:55},{type:'r',x:686,y:348,w:38,h:46},
+{type:'r',x:975,y:150,w:30,h:42},{type:'r',x:1150,y:752,w:90,h:46},{type:'r',x:1140,y:505,w:50,h:34},
+{type:'r',x:921,y:1006,w:108,h:28},{type:'r',x:852,y:118,w:58,h:20},{type:'r',x:798,y:105,w:52,h:24},
+];
+let OBSTACLES = [...BUILDINGS]; // после загрузки карты добавятся деревья
+
+/* ================= визит из планировщика ================= */
+function isoOf(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function loadVisit(){
+  try{
+    const s = JSON.parse(localStorage.getItem('bayun.page.v1') || 'null');
+    if (s && Array.isArray(s.group) && s.group.length){
+      return {
+        demo:false,
+        date:/^\d{4}-\d{2}-\d{2}$/.test(s.date || '') ? s.date : isoOf(new Date()),
+        time:/^\d{1,2}:\d{2}$/.test(s.time || '') ? s.time : '10:00',
+        group:s.group.slice(0, 8).map(g => ({ name:String(g?.name || 'Гость').slice(0, 16), h:clamp(Math.round(+g?.h || 120), 50, 220) })),
+        picks:(Array.isArray(s.picks) ? s.picks : []).filter(id => byId(id) && POS[id]).slice(0, 7),
+      };
+    }
+  }catch{}
+  /* демо-визит: страница открыта без планирования */
+  return { demo:true, date:isoOf(new Date()), time:'10:00',
+           group:[{name:'Аня',h:172},{name:'Миша',h:112}], picks:[30,58,46,19] };
+}
+const visit = loadVisit();
+
+/* ---------- маршрут дня — тот же алгоритм, что в планировщике (index.html) ---------- */
+const ROUTE_DUR = { zone:90, extreme:40, family:35, kids:25, interactive:45 };
+const ROUTE_PEAK = { kids:12.5, zone:13.5, interactive:14, family:14.5, extreme:16 };
+const GAP = 15, LUNCH_MIN = 13 * 60;
+function buildRoute(ids){
+  const picks = ids.map(byId).filter(Boolean);
+  if (!picks.length) return [];
+  const order = [...picks].sort((a, b) => (ROUTE_PEAK[a.t] || 14) - (ROUTE_PEAK[b.t] || 14) || a.id - b.id);
+  const items = [];
+  let cursor = clamp(parseHM(visit.time), OPEN_MIN, 20 * 60), lunch = false;
+  for (const a of order){
+    const dur = ROUTE_DUR[a.t] || 40;
+    if (!lunch && cursor < LUNCH_MIN && cursor + dur > LUNCH_MIN){
+      items.push({ h:LUNCH_MIN, name:'Обед', dur:60, lunch:true });
+      cursor = LUNCH_MIN + 60 + GAP; lunch = true;
+    }
+    if (cursor + dur > CLOSE_MIN) continue;
+    items.push({ h:cursor, name:a.n, dur, type:a.t, id:a.id });
+    cursor += dur + GAP;
+  }
+  return items;
+}
+function fitAll(a, hs){ return hs.every(h => h >= a.lo && h <= a.hi); }
+
+/* ================= погода (бэкенд → напрямую Open-Meteo) ================= */
+const PARK = { lat:55.771505, lon:37.434665 };
+const wxEmoji = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c < 50 ? '🌫️' : c < 60 ? '🌦️' : c < 70 ? '🌧️' : c < 80 ? '❄️' : c < 95 ? '🌧️' : '⛈️';
+const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + ' °C';
+const wxKind = c => c === 0 ? 'clear' : c <= 2 ? 'partly' : c === 3 ? 'cloudy' : c < 50 ? 'fog' :
+  (c < 70 || (c >= 80 && c < 83)) ? 'rain' : (c < 87) ? 'snow' : c < 95 ? 'rain' : 'storm';
+let weather = null;   // {t, code, precip, wind, approx, kind} | null
+async function fetchWeather(date, hour){
+  const tryBackend = async () => {
+    const r = await fetch(`api/weather?date=${date}&hour=${hour}`);
+    if (!r.ok) throw new Error('http_' + r.status);
+    const w = await r.json();
+    if (!w || typeof w.t !== 'number') throw new Error('bad_payload');
+    return w;
+  };
+  const tryDirect = async () => {
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
+      `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
+      `&start_date=${date}&end_date=${date}&timezone=Europe%2FMoscow`;
+    const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 6000);
+    let r; try{ r = await fetch(u, { signal:ctrl.signal }); } finally { clearTimeout(timer); }
+    if (!r.ok) throw new Error('http_' + r.status);
+    const h = (await r.json()).hourly;
+    let i = h.time.findIndex(t => t.endsWith('T' + String(hour).padStart(2, '0') + ':00'));
+    if (i < 0) i = h.time.findIndex(t => t.endsWith('T12:00'));
+    return { t:h.temperature_2m[i], code:h.weathercode[i], precip:(h.precipitation_probability || [])[i] ?? 0, wind:Math.round(h.wind_speed_10m[i] || 0), approx:false };
+  };
+  for (const f of [tryBackend, tryDirect]){
+    try{
+      const w = await f();
+      return { ...w, kind:wxKind(w.code) };
+    }catch{}
+  }
+  return null;
+}
+
+/* ================= дашборд: гости, интересы, очереди ================= */
+let stats = null;      // ответ api/stats | null
+let statsDemo = false; // данные не получены — толпа синтетическая
+const NAME_POOL = ['Аня','Миша','Соня','Тима','Лиза','Катя','Оля','Рома','Даша','Петя','Вера','Гоша','Ника','Игорь','Юля','Сава','Мама','Папа','Бабушка','Дедушка'];
+async function fetchStats(){
+  try{
+    const token = localStorage.getItem('bayun.dash.token') || '';
+    const r = await fetch('api/stats' + (token ? '?token=' + encodeURIComponent(token) : ''));
+    if (!r.ok) throw new Error('http_' + r.status);
+    const s = await r.json();
+    if (!s || typeof s !== 'object') throw new Error('bad_payload');
+    return s;
+  }catch{ return null; }
+}
+/* имя аттракциона из дашборда → id каталога */
+const nameToId = new Map(CATALOG.map(a => [a.n, a.id]));
+function topIdsFromStats(){
+  return (stats?.topAttractions || [])
+    .map(a => ({ id:nameToId.get(a.name), count:a.count }))
+    .filter(x => x.id && POS[x.id]);
+}
+/* толпа: размер — из загрузки этого дня недели, состав — из категорий,
+   имена — из реальных заявок, интересы — из топа аттракционов */
+function buildCrowd(){
+  const tops = topIdsFromStats();
+  const realNames = [];
+  for (const v of (stats?.recentVisits || [])) for (const g of (v.group || [])) if (g.name) realNames.push(String(g.name).slice(0, 16));
+  const pool = realNames.length >= 6 ? realNames : NAME_POOL;
+
+  /* масштаб дня: сколько заявок планировали визит на этот день недели (и на эту дату) */
+  let factor = 1;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(visit.date);
+  if (m && stats?.weekdays?.length){
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    const wd = (d.getDay() + 6) % 7;                       // 0 = понедельник
+    const mx = Math.max(1, ...stats.weekdays.map(w => w.count || 0));
+    const c = stats.weekdays[wd]?.count || 0;
+    factor = 0.55 + 0.9 * (c / mx);
+    if ((stats.dates || []).some(([dstr]) => dstr === visit.date)) factor += 0.25;
+  }
+  if (weather) factor *= { rain:0.65, storm:0.5, snow:0.6, fog:0.85 }[weather.kind] || 1;
+
+  const baseGroups = clamp(Math.round((stats?.visitsCount || 12) * 0.9 * factor), 5, 16);
+  const C = stats?.categories || {};
+  const catSum = (C.family || 0) + (C.adults || 0) + (C.kids || 0);
+  const catW = catSum ? [ (C.family || 0) / catSum, (C.adults || 0) / catSum, (C.kids || 0) / catSum ] : [0.55, 0.25, 0.2];
+  const sampleCat = () => { const r = Math.random(); return r < catW[0] ? 'family' : r < catW[0] + catW[1] ? 'adults' : 'kids'; };
+
+  const CAT_COLOR = { family:['#34B4E8','#5BC6EE','#2AA0D0'], adults:['#00B453','#33C276','#00914A'], kids:['#CCB5FB','#B882D0','#DDCBFC'] };
+  const mkMember = (cat, name) => {
+    const h = cat === 'kid' ? Math.round(rnd(92, 118)) : cat === 'child' ? Math.round(rnd(122, 148)) : Math.round(rnd(155, 190));
+    return { name, h, cat, color:pickOf(CAT_COLOR[cat === 'kid' || cat === 'child' ? 'kids' : cat] || CAT_COLOR.adults), kid:h < 130 };
+  };
+  const groups = [];
+  for (let i = 0; i < baseGroups; i++){
+    const cat = sampleCat();
+    let members = [];
+    if (cat === 'family'){
+      members = [mkMember('adult', pickOf(pool)), mkMember('adult', pickOf(pool))];
+      const nk = Math.random() < 0.6 ? 2 : 1;
+      for (let k = 0; k < nk; k++) members.push(mkMember(Math.random() < 0.5 ? 'kid' : 'child', pickOf(pool)));
+    } else if (cat === 'adults'){
+      const n = 2 + Math.floor(Math.random() * 2);
+      for (let k = 0; k < n; k++) members.push(mkMember('adult', pickOf(pool)));
+    } else {
+      members = [mkMember('adult', pickOf(pool))];
+      const n = 2 + Math.floor(Math.random() * 2);
+      for (let k = 0; k < n; k++) members.push(mkMember(Math.random() < 0.5 ? 'kid' : 'child', pickOf(pool)));
+    }
+    /* интересы: тянутся к топу дашборда + пара случайных точек */
+    const plan = [];
+    const nWanted = 2 + Math.floor(Math.random() * 3);
+    const topsShuffled = [...tops].sort(() => Math.random() - 0.5);
+    for (const t of topsShuffled){ if (plan.length >= nWanted) break; if (Math.random() < 0.75) plan.push(t.id); }
+    while (plan.length < Math.max(1, nWanted)){ const id = pickOf(CATALOG.filter(a => POS[a.id])).id; if (!plan.includes(id)) plan.push(id); }
+    groups.push({ members, plan, delay:i * rnd(1.6, 2.6), speed:rnd(52, 82) });
+  }
+  /* очереди у топ-3 аттракционов */
+  const mxCount = Math.max(1, ...tops.map(t => t.count));
+  const queues = tops.slice(0, 3).map(t => ({
+    id:t.id,
+    people:clamp(Math.round(2 + (t.count / mxCount) * 4 * factor + 0.5), 2, 6),
+    waitMin:Math.max(2, Math.round((3 + t.count * 2) * ({ rain:0.6, storm:0.5, snow:0.6 }[weather?.kind] || 1))),
+  }));
+  return { groups, queues };
+}
+
+/* ================= группа-«гусеница» (игрок и компании гостей) ================= */
+const TRAIL_SPACING = 13; // кадров между членами группы
+function makeGroup(o){
+  return {
+    x:o.x, y:o.y, speed:o.speed || 65, members:o.members, npc:!!o.npc,
+    hist:[], target:null, phase:'idle', waitT:o.delay || 0, bubble:0,
+    plan:o.plan || [], pi:0, stuck:0, avoidT:0, avoid:null, umbrella:!!o.umbrella,
+    dist:0, bob:Math.random() * 6,
+  };
+}
+function groupUpdate(g, dt, input){
+  if (g.npc && g.waitT > 0 && g.phase === 'idle'){ g.waitT -= dt; return; }
+  let tx = null, ty = null;
+  if (!g.npc){
+    if (input.dir){ tx = g.x + input.dir.x * 100; ty = g.y + input.dir.y * 100; }
+    else if (input.target){ tx = input.target.x; ty = input.target.y; }
+  } else {
+    if (g.phase === 'idle' && g.waitT <= 0){
+      const id = g.pi < g.plan.length ? g.plan[g.pi] : pickOf(CATALOG.filter(a => POS[a.id])).id;
+      const p = POS[id];
+      g.target = { x:clamp(p[0] + rnd(-26, 26), 24, WORLD.w - 24), y:clamp(p[1] + rnd(-26, 26), 24, WORLD.h - 24) };
+      g.phase = 'walk';
+    }
+    if (g.phase === 'walk' && g.target && dist2(g.x, g.y, g.target.x, g.target.y) < 14 * 14){
+      g.phase = 'linger'; g.waitT = rnd(6, 14); g.bubble = 5;
+    }
+    if (g.phase === 'linger'){
+      g.waitT -= dt; g.bubble -= dt;
+      if (g.waitT <= 0){ g.pi++; g.phase = 'idle'; }
+      g.hist.unshift({ x:g.x, y:g.y }); if (g.hist.length > 240) g.hist.pop();
+      return;
+    }
+    if (g.target){ tx = g.target.x; ty = g.target.y; }
+  }
+  let moving = false;
+  if (tx !== null){
+    let dx = tx - g.x, dy = ty - g.y;
+    const d = Math.hypot(dx, dy);
+    const stopAt = g.npc ? 10 : 3;
+    if (d > stopAt){
+      if (g.avoidT > 0){ dx = g.avoid.dx; dy = g.avoid.dy; g.avoidT -= dt; }
+      const sp = g.speed * (input?.run ? 1.6 : 1);
+      const nx = g.x + (dx / d) * sp * dt, ny = g.y + (dy / d) * sp * dt;
+      const before = { x:g.x, y:g.y };
+      g.x = clamp(nx, 18, WORLD.w - 18); g.y = clamp(ny, 18, WORLD.h - 18);
+      collide(g, 7);
+      const moved = Math.hypot(g.x - before.x, g.y - before.y);
+      g.dist += moved; moving = moved > 0.1;
+      /* упёрлись — короткий обход вбок */
+      if (moved < sp * dt * 0.25){ g.stuck += dt; } else g.stuck = 0;
+      if (g.stuck > 0.7){
+        const a = Math.atan2(dy, dx) + (Math.random() < 0.5 ? 1 : -1) * rnd(0.9, 1.6);
+        g.avoid = { dx:Math.cos(a), dy:Math.sin(a) }; g.avoidT = rnd(0.5, 1.0); g.stuck = 0;
+      }
+      g.bob += dt * 10;
+    } else if (!g.npc && input.target){ input.target = null; }
+  }
+  g.moving = moving;
+  g.hist.unshift({ x:g.x, y:g.y }); if (g.hist.length > 240) g.hist.pop();
+}
+function trailPos(g, i){
+  const e = g.hist[Math.min(g.hist.length - 1, (i + 1) * TRAIL_SPACING)];
+  return e || { x:g.x, y:g.y };
+}
+/* выталкивание из препятствий (круги и прямоугольники) */
+function collide(e, r){
+  for (const o of OBSTACLES){
+    if (o.type === 'c'){
+      const d2 = dist2(e.x, e.y, o.x, o.y), rr = o.r + r;
+      if (d2 < rr * rr && d2 > 0.01){
+        const d = Math.sqrt(d2); e.x = o.x + (e.x - o.x) / d * rr; e.y = o.y + (e.y - o.y) / d * rr;
+      }
+    } else {
+      const cx = clamp(e.x, o.x, o.x + o.w), cy = clamp(e.y, o.y, o.y + o.h);
+      const d2 = dist2(e.x, e.y, cx, cy);
+      if (d2 < r * r){
+        if (d2 > 0.01){
+          const d = Math.sqrt(d2); e.x = cx + (e.x - cx) / d * r; e.y = cy + (e.y - cy) / d * r;
+        } else {
+          /* внутри — выталкиваем к ближайшей стороне */
+          const dl = e.x - o.x, dr = o.x + o.w - e.x, dt2 = e.y - o.y, db = o.y + o.h - e.y;
+          const mn = Math.min(dl, dr, dt2, db);
+          if (mn === dl) e.x = o.x - r; else if (mn === dr) e.x = o.x + o.w + r;
+          else if (mn === dt2) e.y = o.y - r; else e.y = o.y + o.h + r;
+        }
+      }
+    }
+  }
+}
+function pointBlocked(x, y, r){
+  for (const o of OBSTACLES){
+    if (o.type === 'c'){ if (dist2(x, y, o.x, o.y) < (o.r + r) * (o.r + r)) return true; }
+    else { const cx = clamp(x, o.x, o.x + o.w), cy = clamp(y, o.y, o.y + o.h); if (dist2(x, y, cx, cy) < r * r) return true; }
+  }
+  return false;
+}
+
+/* ================= квесты маршрута ================= */
+let quests = [];         // {name,by,poi:{x,y},kind,id,reachR,state,doneAt,onTime}
+let gameMin = 0, clockSpeed = 1, dayEnded = false, score = 0, visitedOnTime = 0;
+function buildQuests(){
+  let ids = visit.picks;
+  if (!ids.length){
+    /* пустой топ — собираем демо-маршрут из топа дашборда (по росту группы) */
+    const hs = visit.group.map(g => g.h);
+    const fits = topIdsFromStats().map(t => byId(t.id)).filter(a => fitAll(a, hs)).map(a => a.id);
+    ids = (fits.length >= 3 ? fits : [30, 58, 46, 19]).slice(0, 5);
+  }
+  const items = buildRoute(ids);
+  let last = { x:ENTRANCE.x, y:ENTRANCE.y };
+  quests = items.map(it => {
+    let poi, kind, id = null;
+    if (it.lunch){
+      kind = 'lunch';
+      let best = null, bd = 1e18;
+      for (const c of CAFES){
+        const d = dist2(last.x, last.y, c.x, c.y);
+        if (d < bd){ bd = d; best = c; }
+      }
+      poi = { x:best.x, y:best.y, label:'🍝 ' + best.n };
+    } else {
+      kind = 'attr'; id = it.id;
+      poi = { x:POS[id][0], y:POS[id][1], label:(TYPE_EMOJI[it.type] || '🎡') + ' ' + it.name };
+    }
+    last = poi;
+    return { name:it.name, by:it.h, poi, kind, id, reachR:kind === 'lunch' ? 42 : reachRof(id), state:'pending', rideT:0 };
+  });
+  gameMin = parseHM(visit.time);
+}
+
+/* ================= сущности ================= */
+let player = null, npcs = [], idlers = [], sparkles = [];
+const PLAYER_COLORS = ['#FF2400', '#00B453', '#CCB5FB', '#34B4E8', '#F57C00', '#26A69A', '#EC407A', '#8D6E63'];
+function spawnEntities(crowd){
+  player = makeGroup({ x:ENTRANCE.x, y:ENTRANCE.y, speed:150,
+    members:visit.group.map((g, i) => ({ name:g.name, h:g.h, kid:g.h < 130, color:PLAYER_COLORS[i % PLAYER_COLORS.length] })) });
+  npcs = crowd.groups.map(g => makeGroup({
+    x:ENTRANCE.x + rnd(-30, 30), y:ENTRANCE.y + rnd(-6, 10), speed:g.speed, delay:g.delay,
+    members:g.members, plan:g.plan, npc:true, umbrella:weather && (weather.kind === 'rain' || weather.kind === 'storm') && Math.random() < 0.55,
+  }));
+  idlers = [];
+  for (const q of crowd.queues){
+    const p = POS[q.id];
+    const a = rnd(0, Math.PI * 2), ux = Math.cos(a), uy = Math.sin(a);
+    for (let i = 0; i < q.people; i++){
+      const px = clamp(p[0] + ux * (26 + i * 13) + rnd(-4, 4), 20, WORLD.w - 20);
+      const py = clamp(p[1] + uy * (26 + i * 13) + rnd(-4, 4), 20, WORLD.h - 20);
+      idlers.push({ x:px, y:py, baseX:px, baseY:py, color:pickOf(['#34B4E8', '#00B453', '#CCB5FB', '#F57C00']), phase:rnd(0, 6), kid:Math.random() < 0.3 });
+    }
+  }
+  /* «сказки» — бонусные искорки у точек парка */
+  sparkles = [];
+  const allPois = CATALOG.filter(a => POS[a.id]);
+  let guard = 0;
+  while (sparkles.length < 18 && guard++ < 300){
+    const a = pickOf(allPois), p = POS[a.id];
+    const x = p[0] + rnd(-55, 55), y = p[1] + rnd(-55, 55);
+    if (x < 24 || x > WORLD.w - 24 || y < 24 || y > WORLD.h - 24 || pointBlocked(x, y, 12)) continue;
+    if (sparkles.some(s => dist2(s.x, s.y, x, y) < 70 * 70)) continue;
+    sparkles.push({ x, y, taken:false, phase:rnd(0, 6) });
+  }
+}
+
+/* ================= эффекты ================= */
+let bursts = [], floaters = [];
+function burst(x, y, color, n = 14){
+  for (let i = 0; i < n; i++){
+    const a = rnd(0, Math.PI * 2), sp = rnd(40, 150);
+    bursts.push({ x, y, vx:Math.cos(a) * sp, vy:Math.sin(a) * sp - 40, life:rnd(0.5, 0.9), color });
+  }
+}
+function floatText(x, y, text, color = '#D32D6B'){ floaters.push({ x, y, text, life:1.2, color }); }
+
+/* ================= погодные частицы (экранное пространство) ================= */
+let wxParts = [], wxFlash = 0, wxFlashIn = 5, fogBlobs = [];
+function buildWeatherFx(){
+  wxParts = []; fogBlobs = [];
+  const kind = weather?.kind || 'clear';
+  const n = kind === 'storm' ? 150 : kind === 'rain' ? 95 : kind === 'snow' ? 110 : 0;
+  for (let i = 0; i < n; i++){
+    wxParts.push({ x:Math.random(), y:Math.random(), r:rnd(1.2, 2.6), ph:rnd(0, 6), sp:rnd(0.7, 1.3) });
+  }
+  for (let i = 0; i < 4; i++) fogBlobs.push({ x:Math.random(), y:rnd(0.1, 0.9), r:rnd(0.25, 0.5), vx:rnd(0.008, 0.02) * (Math.random() < 0.5 ? -1 : 1) });
+}
+function drawWeather(ctx, W, H, t, dt){
+  const kind = weather?.kind || 'clear';
+  if (kind === 'rain' || kind === 'storm'){
+    const wind = (weather?.wind ?? 3);
+    ctx.strokeStyle = kind === 'storm' ? 'rgba(178,205,232,0.62)' : 'rgba(190,214,238,0.5)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    const L = kind === 'storm' ? 20 : 15;
+    for (const p of wxParts){
+      const x = p.x * W, y = p.y * H;
+      ctx.moveTo(x, y); ctx.lineTo(x + wind * 1.6, y + L * p.sp);
+    }
+    ctx.stroke();
+    for (const p of wxParts){
+      p.y += (0.9 + wind * 0.02) * p.sp * dt; p.x += wind * 0.004 * dt;
+      if (p.y > 1.02){ p.y = -0.02; p.x = Math.random(); }
+      if (p.x > 1.02) p.x = -0.02;
+    }
+    if (kind === 'storm'){
+      wxFlashIn -= dt;
+      if (wxFlashIn <= 0){ wxFlash = 0.4; wxFlashIn = rnd(4, 9); }
+      if (wxFlash > 0){ ctx.fillStyle = `rgba(255,255,255,${wxFlash * 0.55})`; ctx.fillRect(0, 0, W, H); wxFlash = Math.max(0, wxFlash - dt * 1.4); }
+    }
+  } else if (kind === 'snow'){
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    for (const p of wxParts){
+      const x = (p.x + Math.sin(t * 0.7 + p.ph) * 0.012) * W, y = p.y * H;
+      ctx.globalAlpha = 0.5 + 0.4 * Math.sin(p.ph + t);
+      ctx.beginPath(); ctx.arc(x, y, p.r * 1.4, 0, 7); ctx.fill();
+      p.y += 0.045 * p.sp * dt; if (p.y > 1.02){ p.y = -0.02; p.x = Math.random(); }
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (kind === 'fog' || kind === 'cloudy' || kind === 'rain' || kind === 'storm' || kind === 'snow'){
+    ctx.fillStyle = kind === 'fog' ? 'rgba(214,224,232,0.28)' : 'rgba(150,165,180,0.12)';
+    ctx.fillRect(0, 0, W, H);
+  }
+  if (kind === 'fog'){
+    for (const b of fogBlobs){
+      const g = ctx.createRadialGradient(b.x * W, b.y * H, 0, b.x * W, b.y * H, b.r * Math.max(W, H));
+      g.addColorStop(0, 'rgba(228,236,242,0.4)'); g.addColorStop(1, 'rgba(228,236,242,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      b.x += b.vx * dt; if (b.x > 1.2) b.x = -0.2; if (b.x < -0.2) b.x = 1.2;
+    }
+  }
+  if (kind === 'clear' || kind === 'partly'){
+    const g = ctx.createLinearGradient(0, 0, W * 0.7, H);
+    g.addColorStop(0, 'rgba(255,214,110,0.16)'); g.addColorStop(0.5, 'rgba(255,214,110,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  if (kind === 'partly' || kind === 'cloudy'){
+    /* тени облаков */
+    ctx.fillStyle = 'rgba(40,60,80,0.05)';
+    for (let i = 0; i < 4; i++){
+      const cx = ((t * 8 + i * 430) % (W + 500)) - 250, cy = H * (0.15 + 0.24 * i);
+      ctx.beginPath(); ctx.ellipse(cx, cy, 170, 60, 0, 0, 7); ctx.fill();
+    }
+  }
+}
+const WX_FILTER = {
+  clear:'saturate(1.08) brightness(1.02)', partly:'saturate(1.04)', cloudy:'saturate(0.94) brightness(0.97)',
+  fog:'saturate(0.6) brightness(0.96) contrast(0.95)', rain:'saturate(0.8) brightness(0.88)',
+  storm:'saturate(0.7) brightness(0.76)', snow:'saturate(0.72) brightness(1.07)',
+};
+
+/* ================= камера и ввод ================= */
+const stage = $('#stage'), cv = $('#cv'), ctx = cv.getContext('2d'), svgWrap = $('#svgWrap');
+let W = 100, H = 100, dpr = 1;
+const cam = { x:ENTRANCE.x, y:ENTRANCE.y - 40, z:1, zFollow:1 };
+let follow = true;
+function zFit(){ return Math.min(W / WORLD.w, H / WORLD.h); }
+function resize(){
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = stage.clientWidth; H = stage.clientHeight;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+}
+window.addEventListener('resize', resize);
+function camClamp(){
+  const vw = W / cam.z, vh = H / cam.z;
+  cam.x = vw >= WORLD.w ? WORLD.w / 2 : clamp(cam.x, vw / 2, WORLD.w - vw / 2);
+  cam.y = vh >= WORLD.h ? WORLD.h / 2 : clamp(cam.y, vh / 2, WORLD.h - vh / 2);
+}
+function screenToWorld(px, py){ return { x:(px - W / 2) / cam.z + cam.x, y:(py - H / 2) / cam.z + cam.y }; }
+function zoomAt(px, py, dz){
+  const w = screenToWorld(px, py);
+  cam.z = clamp(cam.z * dz, zFit() * 0.95, 2.6);
+  cam.x = w.x - (px - W / 2) / cam.z; cam.y = w.y - (py - H / 2) / cam.z;
+  follow = false; camClamp();
+}
+cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.12 : 0.89); }, { passive:false });
+$('#zoomIn').onclick = () => zoomAt(W / 2, H / 2, 1.25);
+$('#zoomOut').onclick = () => zoomAt(W / 2, H / 2, 0.8);
+$('#zoomFit').onclick = () => { cam.zFollow = cam.z; cam.z = zFit(); cam.x = WORLD.w / 2; cam.y = WORLD.h / 2; follow = false; };
+const keys = new Set();
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (['arrowup','arrowdown','arrowleft','arrowright','w','a','s','d','ц','ф','ы','в',' '].includes(k)) e.preventDefault();
+  keys.add(k);
+  if (k === 'escape') poiPanel.hidden = true;
+});
+window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+/* мышь/тач: клик — идти к точке, драг — панорама */
+let ptr = null;
+cv.addEventListener('pointerdown', e => { ptr = { x:e.clientX, y:e.clientY, moved:false }; cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e => {
+  hoverCheck(e);
+  if (!ptr) return;
+  const dx = e.clientX - ptr.x, dy = e.clientY - ptr.y;
+  if (Math.abs(dx) + Math.abs(dy) > 6) ptr.moved = true;
+  if (ptr.moved){
+    cam.x -= dx / cam.z; cam.y -= dy / cam.z; follow = false; camClamp();
+    ptr.x = e.clientX; ptr.y = e.clientY;
+  }
+});
+cv.addEventListener('pointerup', e => {
+  if (ptr && !ptr.moved){
+    const r = cv.getBoundingClientRect();
+    const w = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+    /* клик рядом с точкой — путь к точке, иначе — к месту */
+    let best = null, bd = 1e18;
+    for (const a of CATALOG){ if (!POS[a.id]) continue; const d = dist2(w.x, w.y, POS[a.id][0], POS[a.id][1]); if (d < bd){ bd = d; best = a; } }
+    if (best && bd < 34 * 34){ player.target = { x:POS[best.id][0], y:POS[best.id][1] }; toast((TYPE_EMOJI[best.t] || '🎡') + ' Идём к «' + best.n + '»'); }
+    else player.target = { x:clamp(w.x, 18, WORLD.w - 18), y:clamp(w.y, 18, WORLD.h - 18) };
+    follow = true;
+  }
+  ptr = null;
+});
+cv.addEventListener('pointerleave', () => { $('#tip').style.display = 'none'; });
+
+/* тултип точки под курсором */
+function hoverCheck(e){
+  const r = cv.getBoundingClientRect();
+  const w = screenToWorld(e.clientX - r.left, e.clientY - r.top);
+  let best = null, bd = 1e18;
+  for (const a of CATALOG){ if (!POS[a.id]) continue; const d = dist2(w.x, w.y, POS[a.id][0], POS[a.id][1]); if (d < bd){ bd = d; best = a; } }
+  const tip = $('#tip');
+  const rr = reachRof(best?.id);
+  if (best && bd < (rr + 10) * (rr + 10)){
+    const q = queueOf(best.id);
+    tip.innerHTML = `${TYPE_EMOJI[best.t] || ''} <b>${esc(best.n)}</b>` +
+      `<small>рост ${best.lo ? 'от ' + best.lo : 'любой'}${best.hi < 250 ? '–' + best.hi : ''} см · от ${best.p} ₽${q ? ' · очередь ⏱ ~' + q.waitMin + ' мин' : ''}</small>`;
+    tip.style.display = 'block';
+    tip.style.left = Math.min(window.innerWidth - 250, e.clientX + 14) + 'px';
+    tip.style.top = (e.clientY + 16) + 'px';
+  } else tip.style.display = 'none';
+}
+function queueOf(id){ return queues.find(q => q.id === id) || null; }
+let queues = [];
+
+/* ================= HUD, панель точек, тосты ================= */
+function toast(msg, ms = 2600){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._tm); t._tm = setTimeout(() => t.classList.remove('on'), ms);
+}
+function plural(n, one, few, many){ return n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many; }
+function updateHud(){
+  $('#hudDate').innerHTML = '📅 <b>' + esc(fmtDateShort(visit.date)) + '</b>' + (visit.demo ? ' · демо' : '');
+  $('#hudClock').innerHTML = '⏰ <b>' + fmtHM(gameMin) + '</b>';
+  $('#hudWx').innerHTML = weather
+    ? `${wxEmoji(weather.code)} <b>${fmtTemp(weather.t)}</b>${weather.approx ? ' · ориентир' : ''}`
+    : '🌡️ погода недоступна';
+  const done = quests.filter(q => q.state === 'done').length;
+  $('#hudStops').innerHTML = `🎯 <b>${done}/${quests.length}</b>`;
+  $('#hudScore').innerHTML = '⭐ <b>' + score + '</b>';
+  const crowd = npcs.reduce((s, g) => s + (g.waitT > 0 && g.phase === 'idle' ? 0 : g.members.length), 0) + idlers.length;
+  $('#hudCrowd').innerHTML = `👥 <b>${crowd}</b> ${plural(crowd, 'гость', 'гостя', 'гостей')} на карте`;
+}
+function buildPoiPanel(){
+  const order = ['kids', 'family', 'extreme', 'interactive', 'zone'];
+  const heads = { kids:'🎠 Детские', family:'👨‍👩‍👧 Семейные', extreme:'⚡ Экстрим', interactive:'🧩 Интерактив', zone:'🌳 Зоны и парки' };
+  let html = '';
+  for (const t of order){
+    const rows = CATALOG.filter(a => a.t === t && POS[a.id]).sort((a, b) => a.n.localeCompare(b.n, 'ru'));
+    if (!rows.length) continue;
+    html += `<h4>${heads[t]}</h4>`;
+    for (const a of rows){
+      const q = queueOf(a.id);
+      html += `<button type="button" class="poi-row" data-poi="${a.id}">` +
+        `<span class="pe">${TYPE_EMOJI[t]}</span><span class="pn">${esc(a.n)}</span>` +
+        `<span class="pm">${q ? `<span class="q">⏱ ~${q.waitMin} мин</span>` : `от ${a.p} ₽`}</span></button>`;
+    }
+  }
+  html += '<h4>🍝 Поесть</h4>';
+  for (const c of CAFES) html += `<button type="button" class="poi-row" data-cafe="${esc(c.n)}" data-x="${c.x}" data-y="${c.y}"><span class="pe">🍝</span><span class="pn">${esc(c.n)}</span></button>`;
+  $('#poiList').innerHTML = html;
+  $('#poiFooter').textContent = stats && !statsDemo
+    ? `Гости и очереди — из дашборда (${stats.visitsCount} ${plural(stats.visitsCount, 'заявка', 'заявки', 'заявок')})`
+    : 'Дашборд недоступен — гости смоделированы';
+}
+$('#poiList').addEventListener('click', e => {
+  const row = e.target.closest('.poi-row'); if (!row || !player) return;
+  if (row.dataset.poi){ const id = +row.dataset.poi; player.target = { x:POS[id][0], y:POS[id][1] }; }
+  else player.target = { x:+row.dataset.x, y:+row.dataset.y };
+  follow = true;
+  toast('Идём к «' + (row.dataset.poi ? byId(+row.dataset.poi).n : row.dataset.cafe) + '»');
+});
+const poiPanel = $('#poiPanel');
+$('#panelBtn').onclick = () => { poiPanel.hidden = !poiPanel.hidden; };
+$('#speedBtn').onclick = () => { clockSpeed = clockSpeed === 1 ? 2 : clockSpeed === 2 ? 4 : 1; $('#speedBtn').textContent = '⏱ ×' + clockSpeed; };
+
+/* ================= карта ================= */
+async function loadMap(){
+  const r = await fetch('map.svg');
+  if (!r.ok) throw new Error('Карта недоступна (HTTP ' + r.status + ')');
+  const text = await r.text();
+  const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+  const svg = doc.querySelector('svg');
+  if (!svg || svg.querySelector('parsererror')) throw new Error('Не удалось разобрать map.svg');
+  /* страховка: если подсунули полную схему с легендой — срезаем её же кодом */
+  for (const g of [...svg.children].filter(el => el.tagName === 'g')){
+    if (g.querySelector('rect[x="1492"]')) g.remove();
+  }
+  for (const t of [...svg.querySelectorAll('text')]) if (['ВЫ', 'ЗДЕСЬ'].includes(t.textContent.trim())) t.remove();
+  svg.querySelector('use[href="#pin"][transform*="940,878"]')?.remove();
+  svg.setAttribute('viewBox', `0 0 ${WORLD.w} ${WORLD.h}`);
+  svgWrap.appendChild(svg);
+  /* деревья как препятствия */
+  for (const u of svg.querySelectorAll('use')){
+    const href = u.getAttribute('href') || u.getAttribute('xlink:href');
+    if (href !== '#tr') continue;
+    const m = /translate\(\s*([\d.]+)[ ,]+([\d.]+)/.exec(u.getAttribute('transform') || '');
+    if (m) OBSTACLES.push({ type:'c', x:+m[1], y:+m[2], r:12 });
+  }
+}
+
+/* ================= рисование ================= */
+function rr(c, x, y, w, h, r){
+  c.beginPath();
+  c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+function drawPerson(c, x, y, color, kid, bob, umbrellaColor){
+  const s = kid ? 0.78 : 1;
+  c.fillStyle = 'rgba(30,40,30,0.22)';
+  c.beginPath(); c.ellipse(x, y + 9 * s, 7 * s, 3 * s, 0, 0, 7); c.fill();
+  const by = y - Math.abs(Math.sin(bob)) * 1.6;
+  c.fillStyle = color;
+  rr(c, x - 4.5 * s, by - 3 * s, 9 * s, 13 * s, 4 * s); c.fill();
+  c.fillStyle = '#FFD9B3';
+  c.beginPath(); c.arc(x, by - 7 * s, 4.6 * s, 0, 7); c.fill();
+  c.fillStyle = 'rgba(60,40,25,0.85)';
+  c.beginPath(); c.arc(x, by - 8.6 * s, 4.6 * s, Math.PI, 0); c.fill();
+  if (umbrellaColor){
+    c.strokeStyle = '#555'; c.lineWidth = 1.2;
+    c.beginPath(); c.moveTo(x, by - 9 * s); c.lineTo(x, by - 20 * s); c.stroke();
+    c.fillStyle = umbrellaColor;
+    c.beginPath(); c.arc(x, by - 19 * s, 11 * s, Math.PI, 0); c.fill();
+  }
+}
+function drawBubble(c, x, y, text){
+  c.font = '600 11px "PT Root UI", sans-serif';
+  const w = c.measureText(text).width + 16;
+  const bx = clamp(x - w / 2, 4, WORLD.w - w - 4), by = y - 34;
+  c.fillStyle = 'rgba(255,255,255,0.96)';
+  rr(c, bx, by - 12, w, 21, 10); c.fill();
+  c.beginPath(); c.moveTo(x - 4, by + 9); c.lineTo(x + 4, by + 9); c.lineTo(x, by + 15); c.fill();
+  c.fillStyle = '#222'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(text, bx + w / 2, by - 1);
+  c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+}
+function drawGroup(c, g, showNames){
+  for (let i = g.members.length - 1; i >= 0; i--){
+    const m = g.members[i], p = i === 0 ? g : trailPos(g, i);
+    drawPerson(c, p.x, p.y, m.color, m.kid, g.moving || g.npc ? g.bob + i : 0, g.umbrella && i === 0 ? '#E53935' : null);
+    if (showNames && i === 0){
+      c.font = '700 11px "PT Root UI", sans-serif';
+      c.textAlign = 'center';
+      c.lineWidth = 3; c.strokeStyle = 'rgba(255,255,255,0.9)'; c.strokeText(m.name, p.x, p.y + 21);
+      c.fillStyle = '#222'; c.fillText(m.name, p.x, p.y + 21);
+      c.textAlign = 'left';
+    }
+  }
+}
+function draw(c, t, dt){
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, W, H);
+  c.setTransform(dpr * cam.z, 0, 0, dpr * cam.z, dpr * (W / 2 - cam.x * cam.z), dpr * (H / 2 - cam.y * cam.z));
+
+  /* цели квестов: пульсирующие кольца + подпись */
+  for (const q of quests){
+    if (q.state !== 'pending') continue;
+    const pulse = 1 + 0.08 * Math.sin(t * 4);
+    c.strokeStyle = 'rgba(211,45,107,0.75)'; c.lineWidth = 3;
+    c.beginPath(); c.arc(q.poi.x, q.poi.y, q.reachR * pulse, 0, 7); c.stroke();
+    c.strokeStyle = 'rgba(211,45,107,0.28)'; c.lineWidth = 8;
+    c.beginPath(); c.arc(q.poi.x, q.poi.y, q.reachR * pulse + 7, 0, 7); c.stroke();
+    c.font = '700 13px "PT Root UI", sans-serif'; c.textAlign = 'center';
+    c.lineWidth = 4; c.strokeStyle = 'rgba(255,255,255,0.95)';
+    const label = q.poi.label + ' · до ' + fmtHM(q.by);
+    c.strokeText(label, q.poi.x, q.poi.y - q.reachR - 12);
+    c.fillStyle = '#D32D6B'; c.fillText(label, q.poi.x, q.poi.y - q.reachR - 12);
+    c.textAlign = 'left';
+  }
+  /* «сказки»-искорки */
+  for (const s of sparkles){
+    if (s.taken) continue;
+    const a = 0.55 + 0.45 * Math.sin(t * 5 + s.phase);
+    c.fillStyle = `rgba(255,240,150,${a})`;
+    c.strokeStyle = `rgba(255,200,40,${a})`; c.lineWidth = 1.5;
+    const r = 6 + Math.sin(t * 5 + s.phase) * 1.5;
+    c.beginPath();
+    for (let i = 0; i < 8; i++){
+      const rad = i % 2 ? r * 0.42 : r, an = i * Math.PI / 4 + s.phase;
+      const px = s.x + Math.cos(an) * rad, py = s.y + Math.sin(an) * rad;
+      i ? c.lineTo(px, py) : c.moveTo(px, py);
+    }
+    c.closePath(); c.fill(); c.stroke();
+  }
+  /* цель клика */
+  const input = playerInput();
+  if (player && player.target){
+    c.strokeStyle = 'rgba(52,180,232,0.9)'; c.lineWidth = 2;
+    c.beginPath(); c.arc(player.target.x, player.target.y, 9, 0, 7); c.stroke();
+    c.beginPath(); c.moveTo(player.target.x, player.target.y - 16); c.lineTo(player.target.x + 5, player.target.y - 7); c.lineTo(player.target.x - 5, player.target.y - 7); c.closePath();
+    c.fillStyle = '#34B4E8'; c.fill();
+  }
+  /* очереди у топ-точек */
+  for (const q of queues){
+    const p = POS[q.id];
+    c.font = '700 11px "PT Root UI", sans-serif'; c.textAlign = 'center';
+    const label = `⏱ ~${q.waitMin} мин`;
+    const wpx = c.measureText(label).width + 14;
+    c.fillStyle = 'rgba(255,255,255,0.92)';
+    rr(c, p[0] - wpx / 2, p[1] + 18, wpx, 18, 9); c.fill();
+    c.fillStyle = '#C62828'; c.fillText(label, p[0], p[1] + 31);
+    c.textAlign = 'left';
+  }
+  /* гости */
+  for (const il of idlers) drawPerson(c, il.x + Math.sin(t * 1.6 + il.phase) * 1.2, il.y, il.color, il.kid, t * 2 + il.phase, (weather?.kind === 'rain' || weather?.kind === 'storm') && il.phase > 3 ? '#455A64' : null);
+  for (const g of npcs){
+    if (g.phase === 'idle' && g.waitT > 0 && !g.hist.length) continue; // ещё не зашли
+    drawGroup(c, g, false);
+  }
+  /* пузыри интересов (ближайшие 6) */
+  const bubbling = npcs.filter(g => g.bubble > 0 && g.pi > 0)
+    .sort((a, b) => dist2(a.x, a.y, player.x, player.y) - dist2(b.x, b.y, player.x, player.y)).slice(0, 6);
+  for (const g of bubbling){
+    const id = g.plan[Math.min(g.pi - 1, g.plan.length - 1)];
+    const a = id && byId(id);
+    if (a) drawBubble(c, g.x, g.y - (g.members[0].kid ? 30 : 36), (TYPE_EMOJI[a.t] || '🎡') + ' ' + (a.n.length > 17 ? a.n.slice(0, 16) + '…' : a.n));
+  }
+  /* игрок */
+  if (player){
+    drawGroup(c, player, true);
+    /* прогресс «катания» */
+    const q = quests.find(q => q.state === 'pending' && dist2(player.x, player.y, q.poi.x, q.poi.y) < q.reachR * q.reachR);
+    if (q && q.rideT > 0.15){
+      c.strokeStyle = '#D32D6B'; c.lineWidth = 5;
+      c.beginPath(); c.arc(player.x, player.y, 16, -Math.PI / 2, -Math.PI / 2 + (q.rideT / 2.2) * Math.PI * 2); c.stroke();
+      c.font = '700 11px "PT Root UI", sans-serif'; c.textAlign = 'center';
+      c.lineWidth = 3; c.strokeStyle = 'rgba(255,255,255,0.9)';
+      c.strokeText('катаемся…', player.x, player.y - 24);
+      c.fillStyle = '#D32D6B'; c.fillText('катаемся…', player.x, player.y - 24);
+      c.textAlign = 'left';
+    }
+  }
+  /* эффекты: искры и всплывающие очки */
+  for (const b of bursts){
+    c.globalAlpha = Math.max(0, b.life * 1.6);
+    c.fillStyle = b.color;
+    c.beginPath(); c.arc(b.x, b.y, 2.6, 0, 7); c.fill();
+  }
+  c.globalAlpha = 1;
+  c.font = '700 13px "PT Root UI", sans-serif'; c.textAlign = 'center';
+  for (const f of floaters){
+    c.globalAlpha = Math.max(0, f.life);
+    c.lineWidth = 3; c.strokeStyle = 'rgba(255,255,255,0.9)';
+    c.strokeText(f.text, f.x, f.y); c.fillStyle = f.color; c.fillText(f.text, f.x, f.y);
+  }
+  c.globalAlpha = 1; c.textAlign = 'left';
+
+  /* ---------- экранное пространство ---------- */
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawWeather(c, W, H, t, dt);
+  /* указатель на текущую цель, если она за экраном */
+  const cur = currentQuest();
+  if (cur && player){
+    const sx = (cur.poi.x - cam.x) * cam.z + W / 2, sy = (cur.poi.y - cam.y) * cam.z + H / 2;
+    if (sx < 0 || sx > W || sy < 0 || sy > H){
+      const cx = clamp(sx, 36, W - 36), cy = clamp(sy, 90, H - 60);
+      const an = Math.atan2(sy - cy, sx - cx);
+      c.save(); c.translate(cx, cy); c.rotate(an);
+      c.fillStyle = '#D32D6B';
+      c.beginPath(); c.moveTo(14, 0); c.lineTo(-8, -9); c.lineTo(-8, 9); c.closePath(); c.fill();
+      c.restore();
+      c.font = '700 11px "PT Root UI", sans-serif'; c.textAlign = 'center';
+      c.fillStyle = '#D32D6B';
+      const meters = Math.round(Math.hypot(cur.poi.x - player.x, cur.poi.y - player.y));
+      c.fillText(meters + ' м', cx, cy + 24);
+      c.textAlign = 'left';
+    }
+  }
+}
+function playerInput(){
+  const kx = (keys.has('d') || keys.has('в') || keys.has('arrowright')) - (keys.has('a') || keys.has('ф') || keys.has('arrowleft'));
+  const ky = (keys.has('s') || keys.has('ы') || keys.has('arrowdown')) - (keys.has('w') || keys.has('ц') || keys.has('arrowup'));
+  let dir = null;
+  if (kx || ky){ const l = Math.hypot(kx, ky); dir = { x:kx / l, y:ky / l }; player.target = null; }
+  return { dir, run:keys.has('shift') };
+}
+function currentQuest(){
+  const pending = quests.filter(q => q.state === 'pending');
+  return pending.length ? pending.reduce((a, b) => (a.by <= b.by ? a : b)) : null;
+}
+
+/* ================= логика визита ================= */
+function updateQuests(dt){
+  if (dayEnded) return;
+  gameMin = Math.min(CLOSE_MIN, gameMin + dt * clockSpeed);
+  const cur = currentQuest();
+  for (const q of quests){
+    if (q.state !== 'pending') continue;
+    const near = dist2(player.x, player.y, q.poi.x, q.poi.y) < q.reachR * q.reachR;
+    q.rideT = near ? q.rideT + dt : 0;
+    if (q.rideT >= 2.2){
+      q.state = 'done'; q.doneAt = gameMin;
+      q.onTime = gameMin <= q.by + 15;
+      const pts = q.kind === 'lunch' ? (q.onTime ? 40 : 25) : (q.onTime ? 100 : 60);
+      score += pts; if (q.onTime) visitedOnTime++;
+      burst(q.poi.x, q.poi.y, q.kind === 'lunch' ? '#F57C00' : '#D32D6B');
+      floatText(q.poi.x, q.poi.y - 20, '+' + pts + (q.onTime ? ' · вовремя!' : ' · с опозданием'));
+      toast((q.kind === 'lunch' ? '🍝 Поели в «' : '✅ ') + (q.kind === 'lunch' ? q.poi.label.replace('🍝 ', '') + '»' : q.name) + (q.onTime ? ' — по плану!' : ' — не успели к ' + fmtHM(q.by)));
+      renderQuestCard();
+      if (quests.every(x => x.state === 'done')){ score += 200; finish(true); }
+    }
+  }
+  if (gameMin >= CLOSE_MIN) finish(false);
+}
+let questCardTimer = null;
+function renderQuestCard(){
+  const card = $('#qcard');
+  const cur = currentQuest();
+  const done = quests.filter(q => q.state === 'done').length;
+  if (!cur){
+    card.hidden = true;
+    return;
+  }
+  const late = gameMin > cur.by + 15;
+  const next = quests.filter(q => q.state === 'pending' && q !== cur).sort((a, b) => a.by - b.by)[0];
+  card.innerHTML = `
+    <h3>${cur.kind === 'lunch' ? '🍝 Обед' : (TYPE_EMOJI[byId(cur.id)?.t] || '🎡') + ' ' + esc(cur.name)}</h3>
+    <div class="sub">по плану до <b>${fmtHM(cur.by)}</b>${late ? ' · <b>опаздываете</b>' : ' · успеваете'}${next ? `<br>дальше: ${esc(next.name)} в ${fmtHM(next.by)}` : ''}</div>
+    <button class="btn primary small" type="button" id="qGo">К точке →</button>
+    <div class="sub" style="margin-top:7px">пройдено: <b>${done}</b> из ${quests.length}</div>`;
+  card.hidden = false;
+  card.classList.toggle('done', done === quests.length - 1 && cur);
+  $('#qGo').onclick = () => { player.target = { x:cur.poi.x, y:cur.poi.y }; follow = true; };
+}
+function finish(allDone){
+  if (dayEnded) return;
+  dayEnded = true;
+  const done = quests.filter(q => q.state === 'done').length;
+  const meters = Math.round(player.dist);
+  $('#finish').innerHTML = `
+    <div class="card">
+      <h2>${allDone ? 'Маршрут выполнен!' : 'Парк закрывается'}</h2>
+      <div style="color:var(--muted);font-size:13.5px">${esc(fmtDateFull(visit.date))} · приход в ${esc(visit.time)}${visit.demo ? ' · демо-визит' : ''}</div>
+      <div class="big">${score}<span style="font-size:22px"> ⭐</span></div>
+      <ul>
+        <li>🎯 Точек пройдено: <b>${done} из ${quests.length}</b> (вовремя — <b>${visitedOnTime}</b>)</li>
+        <li>🚶 Пройдено по парку: <b>~${meters} м</b></li>
+        <li>👥 Гостей в парке: <b>${npcs.reduce((s, g) => s + g.members.length, 0) + idlers.length}</b> ${stats && !statsDemo ? `· по дашборду (${stats.visitsCount} ${plural(stats.visitsCount, 'заявка', 'заявки', 'заявок')})` : '· демо-данные'}</li>
+        ${weather ? `<li>${wxEmoji(weather.code)} Погода: <b>${fmtTemp(weather.t)}</b>, ${weather.approx ? 'ориентир на 10 дней' : 'прогноз на час прихода'}</li>` : ''}
+      </ul>
+      <div class="row">
+        <button class="btn primary" type="button" onclick="location.reload()">↻ Ещё раз</button>
+        <button class="btn blue" type="button" id="strollBtn">🚶 Гулять дальше</button>
+        <a class="btn blue" href="./">📅 К планировщику</a>
+      </div>
+    </div>`;
+  $('#strollBtn').onclick = () => { $('#finish').hidden = true; };
+  $('#finish').hidden = false;
+}
+
+/* ================= главный цикл ================= */
+let lastT = 0;
+function frame(now){
+  const t = now / 1000;
+  const dt = Math.min(0.05, lastT ? t - lastT : 0.016);
+  lastT = t;
+  const input = playerInput();
+  groupUpdate(player, dt, input);
+  for (const g of npcs) groupUpdate(g, dt, null);
+  /* «сказки» */
+  for (const s of sparkles){
+    if (!s.taken && dist2(player.x, player.y, s.x, s.y) < 18 * 18){
+      s.taken = true; score += 10;
+      burst(s.x, s.y, '#FFC400', 8); floatText(s.x, s.y - 10, '+10 ✨', '#B8860B');
+    }
+  }
+  for (const b of bursts){ b.x += b.vx * dt; b.y += b.vy * dt; b.vy += 160 * dt; b.life -= dt; }
+  bursts = bursts.filter(b => b.life > 0);
+  for (const f of floaters){ f.y -= 24 * dt; f.life -= dt; }
+  floaters = floaters.filter(f => f.life > 0);
+  updateQuests(dt);
+  /* камера */
+  if (follow){ cam.x += (player.x - cam.x) * Math.min(1, dt * 5); cam.y += (player.y - cam.y) * Math.min(1, dt * 5); }
+  camClamp();
+  /* отображение */
+  svgWrap.style.transform = `translate(${W / 2 - cam.x * cam.z}px, ${H / 2 - cam.y * cam.z}px) scale(${cam.z})`;
+  draw(ctx, t, dt);
+  updateHud();
+  if (questCardTimer !== currentQuest()){ questCardTimer = currentQuest(); if (questCardTimer) renderQuestCard(); }
+  requestAnimationFrame(frame);
+}
+
+/* ================= запуск ================= */
+(async function init(){
+  resize();
+  try{
+    $('#loadText').textContent = 'Открываем парк…';
+    await loadMap();
+  }catch(e){
+    $('#load').innerHTML = `<div class="box"><div class="err"><b>Не удалось открыть карту.</b><br>${esc(e.message)}<br><button class="btn blue small" type="button" onclick="location.reload()">↻ Повторить</button></div></div>`;
+    return;
+  }
+  $('#loadText').textContent = 'Собираем гостей из дашборда…';
+  stats = await fetchStats();
+  statsDemo = !stats;
+  const crowd = buildCrowd();
+  queues = crowd.queues;
+  buildQuests();
+  spawnEntities(crowd);
+  buildPoiPanel();
+  /* статус данных */
+  const st = $('#dataStatus');
+  if (stats && !statsDemo){ st.querySelector('span').textContent = `дашборд · ${stats.visitsCount} ${plural(stats.visitsCount, 'заявка', 'заявки', 'заявок')}`; }
+  else { st.classList.add('off'); st.querySelector('span').textContent = 'демо-данные'; }
+  $('#load').style.display = 'none';
+  renderQuestCard();
+  resize();
+  cam.z = cam.zFollow = clamp(H / 620, zFit(), 2.2);
+  camClamp();
+  requestAnimationFrame(frame);
+  /* вступление */
+  setTimeout(() => toast(`Добро пожаловать! Приход в ${visit.time} · ${visit.group.length} ${plural(visit.group.length, 'гость', 'гостя', 'гостей')} · точек в маршруте: ${quests.filter(q => q.kind === 'attr').length}`), 400);
+  if (visit.demo) setTimeout(() => toast('Это демо-визит — спланируйте свой на странице Баюна 📅', 3600), 7000);
+
+  /* погода догоняет, но не задерживает открытие парка: её таймауты (до 12 с на
+     двух путях) не должны держать гостя на экране загрузки */
+  fetchWeather(visit.date, parseInt(visit.time, 10) || 12).then(w => {
+    if (!w) return;
+    weather = w;
+    svgWrap.style.filter = WX_FILTER[w.kind] || '';
+    buildWeatherFx();
+    if (w.kind === 'rain' || w.kind === 'storm'){
+      for (const g of npcs) g.umbrella = Math.random() < 0.55;
+      setTimeout(() => toast('🌧 Дождь! Баюн советует крытые точки — интерактив и кафе'), 2500);
+    }
+    if (w.kind === 'snow') setTimeout(() => toast('❄️ Снег! Одевайтесь теплее — и на Колесо Обозрения, пока обзор хороший'), 2500);
+  });
+})();
+</script>
+</body>
+</html>

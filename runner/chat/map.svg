@@ -1,0 +1,364 @@
+<svg id="skz" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1470 1080" font-family="Arial, 'Segoe UI', sans-serif">
+  <title>Парк развлечений «Сказка» — схема парка 2026</title>
+  <desc>Векторная схема парка Сказка: дорожки, деревья, аттракционы 1-71, кафе, сервисы, вход/выход, легенда.</desc>
+  <style>
+    .bt{fill:#fff;font-weight:700;font-size:13px;text-anchor:middle}
+    .lbl{font-size:9.5px;font-weight:700;fill:#37474f;text-anchor:middle;paint-order:stroke;stroke:#ffffff;stroke-width:3px;stroke-linejoin:round}
+    .lgt{font-size:12px;fill:#fff}
+    .li{font-size:10px;fill:#fff}
+    .lin{font-size:9px;font-weight:700;fill:#e65100;text-anchor:middle}
+    .sig{font-size:9px;font-weight:700;fill:#fff;text-anchor:middle}
+  </style>
+
+  <defs>
+    <g id="tr">
+      <circle r="15" fill="#5f9e3f"/>
+      <circle cx="-4" cy="-4" r="9" fill="#79b851"/>
+    </g>
+    <path id="pin" d="M0,0 C-6,-14 -20,-22 -20,-38 A20,20 0 1,1 20,-38 C20,-22 6,-14 0,0 Z"/>
+    <g id="qr">
+      <rect width="30" height="30" fill="#fff"/>
+      <g fill="#000">
+        <rect x="0" y="0" width="8" height="8"/><rect x="22" y="0" width="8" height="8"/><rect x="0" y="22" width="8" height="8"/>
+        <rect x="2" y="2" width="4" height="4" fill="#fff"/><rect x="24" y="2" width="4" height="4" fill="#fff"/><rect x="2" y="24" width="4" height="4" fill="#fff"/>
+        <rect x="3" y="3" width="2" height="2"/><rect x="25" y="3" width="2" height="2"/><rect x="3" y="25" width="2" height="2"/>
+        <rect x="11" y="0" width="3" height="3"/><rect x="16" y="3" width="3" height="3"/><rect x="11" y="6" width="2" height="2"/>
+        <rect x="0" y="11" width="3" height="3"/><rect x="5" y="14" width="3" height="3"/><rect x="10" y="11" width="3" height="3"/>
+        <rect x="15" y="12" width="2" height="2"/><rect x="20" y="11" width="3" height="3"/><rect x="25" y="14" width="3" height="3"/>
+        <rect x="11" y="16" width="3" height="3"/><rect x="16" y="19" width="3" height="3"/><rect x="11" y="23" width="2" height="2"/>
+        <rect x="16" y="25" width="3" height="3"/><rect x="22" y="22" width="3" height="3"/><rect x="25" y="26" width="2" height="2"/>
+      </g>
+    </g>
+  </defs>
+
+  <!-- ФОН -->
+  <rect width="1920" height="1080" fill="#8fc454"/>
+  <ellipse cx="420" cy="760" rx="360" ry="220" fill="#a5d16b" opacity="0.35"/>
+  <ellipse cx="1000" cy="900" rx="420" ry="180" fill="#a5d16b" opacity="0.30"/>
+  <ellipse cx="300" cy="250" rx="300" ry="160" fill="#a5d16b" opacity="0.25"/>
+
+  <!-- ДОРОГИ (серые) -->
+  <g fill="none" stroke="#9e9e9e" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-10,392 L250,376 L450,346 L650,276 L850,172 L1000,106 L1300,74 L1470,62 L1930,58" stroke-width="26"/>
+    <path d="M-10,792 L200,830 L352,902 L482,1012 L545,1090" stroke-width="26"/>
+    <path d="M852,1090 L930,1052 L988,1036" stroke-width="22"/>
+  </g>
+
+  <!-- ДИНО-ЗОНА (песок) -->
+  <path d="M1100,140 Q1150,90 1260,100 Q1380,90 1440,140 Q1460,220 1430,300 Q1450,400 1380,450 Q1300,470 1220,450 Q1130,440 1110,360 Q1090,250 1100,140 Z" fill="#e0d2ac" opacity="0.8"/>
+  <g fill="none" stroke="#cbb98d" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1150,330 L1240,290 L1320,236 L1390,182 L1422,152"/>
+    <path d="M1190,420 L1250,478 L1320,534"/>
+  </g>
+
+  <!-- ДОРОЖКИ ПАРКА -->
+  <g fill="none" stroke="#d9d2bd" stroke-width="19" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M960,1022 L957,900 L950,780 L955,640 L955,594"/>
+    <path d="M955,594 L940,480 L928,380 L915,300 L905,238"/>
+    <path d="M955,594 L850,560 L760,540 L640,505 L540,492 L440,478 L340,470 L255,485 L228,496"/>
+    <path d="M255,485 L262,570 L285,660 L298,760 L298,858 L340,915 L430,948 L540,940 L628,926 L720,895 L820,855 L890,820 L950,860 L957,900"/>
+    <path d="M340,470 L336,390 L390,335 L445,318"/>
+    <path d="M455,316 L560,272 L660,252 L760,236 L850,230 L905,238"/>
+    <path d="M955,594 L1040,600 L1140,612 L1240,622 L1310,570 L1334,545 L1380,568 L1420,598 L1430,644"/>
+    <path d="M1140,612 L1170,700 L1181,756 L1220,830 L1300,858 L1360,836"/>
+    <path d="M1360,836 L1404,782 L1386,702"/>
+    <path d="M905,238 L895,190 L884,150"/>
+    <path d="M105,480 L150,486 L200,490 L228,496"/>
+    <path d="M760,540 L800,600 L804,664"/>
+    <path d="M440,478 L451,340"/>
+    <path d="M860,556 L838,452"/>
+    <path d="M1040,600 L1046,654"/>
+    <path d="M1140,612 L1172,560 L1188,516"/>
+    <path d="M905,238 L1002,240 L1046,242 L1085,268"/>
+    <path d="M895,190 L940,162 L966,136"/>
+  </g>
+  <g fill="none" stroke="#f7f4ea" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M960,1022 L957,900 L950,780 L955,640 L955,594"/>
+    <path d="M955,594 L940,480 L928,380 L915,300 L905,238"/>
+    <path d="M955,594 L850,560 L760,540 L640,505 L540,492 L440,478 L340,470 L255,485 L228,496"/>
+    <path d="M255,485 L262,570 L285,660 L298,760 L298,858 L340,915 L430,948 L540,940 L628,926 L720,895 L820,855 L890,820 L950,860 L957,900"/>
+    <path d="M340,470 L336,390 L390,335 L445,318"/>
+    <path d="M455,316 L560,272 L660,252 L760,236 L850,230 L905,238"/>
+    <path d="M955,594 L1040,600 L1140,612 L1240,622 L1310,570 L1334,545 L1380,568 L1420,598 L1430,644"/>
+    <path d="M1140,612 L1170,700 L1181,756 L1220,830 L1300,858 L1360,836"/>
+    <path d="M1360,836 L1404,782 L1386,702"/>
+    <path d="M905,238 L895,190 L884,150"/>
+    <path d="M105,480 L150,486 L200,490 L228,496"/>
+    <path d="M760,540 L800,600 L804,664"/>
+    <path d="M440,478 L451,340"/>
+    <path d="M860,556 L838,452"/>
+    <path d="M1040,600 L1046,654"/>
+    <path d="M1140,612 L1172,560 L1188,516"/>
+    <path d="M905,238 L1002,240 L1046,242 L1085,268"/>
+    <path d="M895,190 L940,162 L966,136"/>
+  </g>
+
+  <!-- ДЕРЕВЬЯ -->
+  <g>
+    <use href="#tr" transform="translate(100,300)"/><use href="#tr" transform="translate(250,318)"/><use href="#tr" transform="translate(400,268)"/><use href="#tr" transform="translate(550,198)"/><use href="#tr" transform="translate(620,120)"/><use href="#tr" transform="translate(700,148)"/><use href="#tr" transform="translate(760,182)"/><use href="#tr" transform="translate(205,240)"/>
+    <use href="#tr" transform="translate(90,340)"/><use href="#tr" transform="translate(150,300)"/><use href="#tr" transform="translate(210,352)"/><use href="#tr" transform="translate(120,560)"/><use href="#tr" transform="translate(70,622)"/><use href="#tr" transform="translate(160,644)"/><use href="#tr" transform="translate(88,722)"/><use href="#tr" transform="translate(190,700)"/><use href="#tr" transform="translate(148,782)"/><use href="#tr" transform="translate(258,760)"/><use href="#tr" transform="translate(118,852)"/><use href="#tr" transform="translate(196,928)"/><use href="#tr" transform="translate(60,950)"/><use href="#tr" transform="translate(310,560)"/><use href="#tr" transform="translate(372,592)"/><use href="#tr" transform="translate(322,652)"/><use href="#tr" transform="translate(422,682)"/><use href="#tr" transform="translate(502,652)"/><use href="#tr" transform="translate(562,622)"/><use href="#tr" transform="translate(622,662)"/><use href="#tr" transform="translate(452,882)"/><use href="#tr" transform="translate(522,872)"/><use href="#tr" transform="translate(602,842)"/><use href="#tr" transform="translate(682,822)"/>
+    <use href="#tr" transform="translate(700,762)"/><use href="#tr" transform="translate(762,762)"/><use href="#tr" transform="translate(852,748)"/><use href="#tr" transform="translate(882,668)"/><use href="#tr" transform="translate(925,628)"/><use href="#tr" transform="translate(1015,560)"/><use href="#tr" transform="translate(1065,566)"/><use href="#tr" transform="translate(1032,432)"/><use href="#tr" transform="translate(1082,408)"/><use href="#tr" transform="translate(900,592)"/><use href="#tr" transform="translate(980,462)"/>
+    <use href="#tr" transform="translate(660,330)"/><use href="#tr" transform="translate(640,398)"/><use href="#tr" transform="translate(672,562)"/><use href="#tr" transform="translate(720,470)"/>
+    <use href="#tr" transform="translate(1232,652)"/><use href="#tr" transform="translate(1272,692)"/><use href="#tr" transform="translate(1342,712)"/><use href="#tr" transform="translate(1422,622)"/><use href="#tr" transform="translate(1090,822)"/><use href="#tr" transform="translate(1082,862)"/><use href="#tr" transform="translate(1152,892)"/><use href="#tr" transform="translate(1252,892)"/><use href="#tr" transform="translate(1322,902)"/><use href="#tr" transform="translate(1188,832)"/>
+    <use href="#tr" transform="translate(1152,152)"/><use href="#tr" transform="translate(1252,142)"/><use href="#tr" transform="translate(1352,122)"/><use href="#tr" transform="translate(1428,172)"/><use href="#tr" transform="translate(1202,118)"/><use href="#tr" transform="translate(1308,102)"/><use href="#tr" transform="translate(1152,232)"/><use href="#tr" transform="translate(1382,262)"/>
+    <use href="#tr" transform="translate(1052,132)"/><use href="#tr" transform="translate(1448,478)"/><use href="#tr" transform="translate(1440,558)"/>
+  </g>
+
+  <!-- ЗДАЧИ / МАЯКИ ПАРКА -->
+  <!-- Колесо обозрения 32 -->
+  <g transform="translate(480,150)">
+    <path d="M-40,105 L-12,162 M40,105 L12,162" stroke="#90a4ae" stroke-width="5" fill="none"/>
+    <circle r="112" fill="none" stroke="#eceff1" stroke-width="5"/>
+    <circle r="112" fill="none" stroke="#b0bec5" stroke-width="1.5"/>
+    <path d="M0,-112 L0,112 M-112,0 L112,0 M-79,-79 L79,79 M-79,79 L79,-79 M-97,-56 L97,56 M-97,56 L97,-56 M-56,-97 L56,97 M-56,97 L56,-97" stroke="#cfd8dc" stroke-width="2"/>
+    <g stroke="#fff" stroke-width="1.5">
+      <circle cx="0" cy="-112" r="7" fill="#1e88e5"/><circle cx="56" cy="-97" r="7" fill="#eceff1"/><circle cx="97" cy="-56" r="7" fill="#1e88e5"/><circle cx="112" cy="0" r="7" fill="#eceff1"/><circle cx="97" cy="56" r="7" fill="#1e88e5"/><circle cx="56" cy="97" r="7" fill="#eceff1"/><circle cx="0" cy="112" r="7" fill="#1e88e5"/><circle cx="-56" cy="97" r="7" fill="#eceff1"/><circle cx="-97" cy="56" r="7" fill="#1e88e5"/><circle cx="-112" cy="0" r="7" fill="#eceff1"/><circle cx="-97" cy="-56" r="7" fill="#1e88e5"/><circle cx="-56" cy="-97" r="7" fill="#eceff1"/>
+    </g>
+    <circle r="17" fill="#1e88e5" stroke="#fff" stroke-width="3"/>
+    <text y="4" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff">СКАЗКА</text>
+  </g>
+
+  <!-- Башни -->
+  <rect x="181" y="392" width="10" height="72" fill="#fdd835" stroke="#f9a825"/>
+  <circle cx="186" cy="384" r="7" fill="#f9a825" stroke="#fff" stroke-width="1.5"/>
+  <rect x="709" y="770" width="10" height="62" fill="#fdd835" stroke="#f9a825"/>
+  <circle cx="714" cy="762" r="8" fill="#f9a825" stroke="#fff" stroke-width="1.5"/>
+
+  <!-- Аттракцион 12 Автодром -->
+  <rect x="540" y="250" width="70" height="40" rx="6" fill="#42a5f5" stroke="#fff" stroke-width="2"/>
+  <!-- Аттракцион 17 Паук -->
+  <g>
+    <circle cx="804" cy="700" r="28" fill="#eceff1" stroke="#b0bec5" stroke-width="2"/>
+    <path d="M804,672 L804,728 M776,700 L832,700 M784,680 L824,720 M824,680 L784,720" stroke="#b0bec5" stroke-width="1.5"/>
+    <circle cx="804" cy="700" r="6" fill="#78909c"/>
+  </g>
+  <!-- Аттракцион 19 Сердце Москвы -->
+  <rect x="585" y="895" width="85" height="55" rx="10" fill="#26a69a" stroke="#fff" stroke-width="2"/>
+  <path d="M627,912 c-6,-7 -16,-2 -16,5 c0,7 9,11 16,17 c7,-6 16,-10 16,-17 c0,-7 -10,-12 -16,-5 z" fill="#fff"/>
+  <!-- Аттракцион 24 Дом бабы яги -->
+  <g>
+    <rect x="690" y="368" width="30" height="26" fill="#5c6bc0" stroke="#fff" stroke-width="1.5"/>
+    <polygon points="686,368 724,368 705,348" fill="#ef5350" stroke="#fff" stroke-width="1.5"/>
+    <rect x="701" y="380" width="8" height="14" fill="#eceff1"/>
+  </g>
+  <!-- Аттракцион 58 Дом вверх дном -->
+  <g>
+    <rect x="975" y="150" width="30" height="24" fill="#eceff1" stroke="#90a4ae" stroke-width="1.5"/>
+    <polygon points="975,174 1005,174 990,192" fill="#ef5350" stroke="#fff" stroke-width="1.5"/>
+    <rect x="981" y="156" width="8" height="8" fill="#90a4ae"/>
+    <rect x="993" y="156" width="8" height="8" fill="#90a4ae"/>
+  </g>
+  <!-- Аттракцион 25 Кракен -->
+  <circle cx="771" cy="435" r="20" fill="#42a5f5" stroke="#fff" stroke-width="2"/>
+  <!-- Аттракцион 31 Каноэ -->
+  <ellipse cx="955" cy="640" rx="34" ry="18" fill="#4fc3f7" stroke="#fff" stroke-width="2"/>
+  <!-- Аттракцион 49 Нептун -->
+  <ellipse cx="1070" cy="490" rx="24" ry="13" fill="#4fc3f7" stroke="#fff" stroke-width="2"/>
+  <!-- Аттракцион 51 Город машин -->
+  <rect x="1140" y="505" width="50" height="34" rx="4" fill="#ffb74d" stroke="#fff" stroke-width="2"/>
+  <!-- Аттракцион 55 Шатер -->
+  <polygon points="1215,600 1275,600 1245,560" fill="#ec407a" stroke="#fff" stroke-width="2"/>
+  <!-- Эко лофт -->
+  <rect x="1150" y="752" width="90" height="46" rx="6" fill="#4e342e" stroke="#fff" stroke-width="2"/>
+  <text x="1195" y="779" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">ЭКО ЛОФТ</text>
+
+  <!-- Американские горки (стилизованные треки) -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M320,470 C300,520 340,560 380,540 C420,520 400,600 360,620 C330,636 318,600 340,585" stroke="#e53935" stroke-width="4"/>
+    <path d="M180,940 C230,900 280,930 320,890 C350,860 320,830 290,850 C260,870 300,910 350,880" stroke="#43a047" stroke-width="4"/>
+    <path d="M870,700 C910,690 940,720 920,750 C905,772 880,760 890,735 M950,700 C990,715 985,770 945,780 C915,787 910,750 940,740" stroke="#e53935" stroke-width="4"/>
+    <path d="M870,790 C900,830 950,830 970,790 C985,760 940,745 925,775 C915,795 950,810 970,800" stroke="#7b1fa2" stroke-width="4"/>
+    <path d="M1300,880 C1350,850 1400,870 1420,820 C1435,780 1400,760 1380,790 C1365,812 1395,830 1420,810" stroke="#f57c00" stroke-width="4"/>
+  </g>
+
+  <!-- Входная группа (низ) -->
+  <g>
+    <rect x="925" y="1008" width="32" height="24" fill="#ef5350" stroke="#fff" stroke-width="1.5"/>
+    <rect x="995" y="1008" width="32" height="24" fill="#ef5350" stroke="#fff" stroke-width="1.5"/>
+    <polygon points="921,1008 961,1008 941,994" fill="#b71c1c"/>
+    <polygon points="991,1008 1031,1008 1011,994" fill="#b71c1c"/>
+    <path d="M957,1032 Q976,1002 995,1032" stroke="#e53935" stroke-width="5" fill="none"/>
+    <rect x="893" y="1040" width="70" height="22" rx="11" fill="#2e7d32"/>
+    <text x="928" y="1055" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">ВХОД</text>
+    <rect x="985" y="1040" width="80" height="22" rx="11" fill="#1565c0"/>
+    <text x="1025" y="1055" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">ВЫХОД</text>
+  </g>
+  <!-- Верхние ворота -->
+  <rect x="852" y="118" width="58" height="20" rx="10" fill="#2e7d32"/>
+  <text x="881" y="132" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">ВХОД</text>
+
+  <!-- Автобус -->
+  <g>
+    <rect x="798" y="105" width="52" height="20" rx="4" fill="#1565c0" stroke="#fff" stroke-width="1.5"/>
+    <rect x="804" y="109" width="10" height="7" fill="#bbdefb"/><rect x="818" y="109" width="10" height="7" fill="#bbdefb"/><rect x="832" y="109" width="10" height="7" fill="#bbdefb"/>
+    <circle cx="810" cy="127" r="4" fill="#37474f"/><circle cx="838" cy="127" r="4" fill="#37474f"/>
+  </g>
+
+  <!-- Парковки -->
+  <g>
+    <rect x="874" y="46" width="26" height="26" rx="5" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+    <text x="887" y="65" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">P</text>
+    <rect x="382" y="252" width="26" height="26" rx="5" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+    <text x="395" y="271" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">P</text>
+    <rect x="1107" y="1040" width="26" height="26" rx="5" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+    <text x="1120" y="1059" text-anchor="middle" font-size="16" font-weight="700" fill="#fff">P</text>
+  </g>
+
+  <!-- Сервисные точки -->
+  <g font-size="9" font-weight="700" text-anchor="middle">
+    <g fill="#00838f" stroke="#fff" stroke-width="2">
+      <circle cx="860" cy="245" r="10"/><circle cx="912" cy="292" r="10"/><circle cx="701" cy="416" r="10"/><circle cx="505" cy="510" r="10"/><circle cx="960" cy="650" r="10"/><circle cx="1258" cy="578" r="10"/><circle cx="995" cy="672" r="10"/><circle cx="1015" cy="700" r="10"/><circle cx="1027" cy="324" r="10"/><circle cx="1030" cy="362" r="10"/><circle cx="676" cy="326" r="10"/>
+    </g>
+    <g fill="#fff">
+      <text x="860" y="248">А</text><text x="912" y="295">i</text><text x="701" y="419">WC</text><text x="505" y="519" font-size="7">WC</text><text x="960" y="653">WC</text><text x="1258" y="581">WC</text><text x="995" y="675">М</text><text x="1015" y="702" font-size="7">WC+</text><text x="1027" y="327">С</text><text x="1030" y="365">И</text><text x="676" y="329">♪</text>
+    </g>
+  </g>
+
+  <!-- Указатели (деревянные таблички) -->
+  <g>
+    <rect x="1187" y="159" width="86" height="18" rx="3" fill="#795548" stroke="#5d4037"/><text class="sig" x="1230" y="172">ДИНО САФАРИ</text>
+    <rect x="1237" y="249" width="76" height="18" rx="3" fill="#795548" stroke="#5d4037"/><text class="sig" x="1275" y="262">ДИНО ПАРК</text>
+    <rect x="1030" y="203" width="120" height="18" rx="3" fill="#795548" stroke="#5d4037"/><text class="sig" x="1090" y="216">ТОПЛЯРЫ-ПАРК «АЙВА»</text>
+    <rect x="1238" y="343" width="60" height="18" rx="3" fill="#795548" stroke="#5d4037"/><text class="sig" x="1268" y="356">АЛЬПАКА</text>
+    <rect x="1260" y="493" width="80" height="18" rx="3" fill="#795548" stroke="#5d4037"/><text class="sig" x="1300" y="506">ХАСКИ ЛЭНД</text>
+    <rect x="1370" y="583" width="76" height="18" rx="3" fill="#795548" stroke="#5d4037"/><text class="sig" x="1408" y="596">СТРАУС ПАРК</text>
+    <rect x="1373" y="603" width="70" height="18" rx="3" fill="#795548" stroke="#5d4037"/><text class="sig" x="1408" y="616">ПАРК ПТИЦ</text>
+  </g>
+
+  <!-- Пины: Касса и Вы здесь -->
+  <g>
+    <use href="#pin" transform="translate(105,480)" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+    <text x="105" y="448" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">КАССА</text>
+    <use href="#pin" transform="translate(893,222)" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+    <text x="893" y="190" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">КАССА</text>
+    <use href="#pin" transform="translate(1046,915)" fill="#1e88e5" stroke="#fff" stroke-width="2"/>
+    <text x="1046" y="883" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">КАССА</text>
+  </g>
+
+  <!-- АТТРАКЦИОНЫ: номерные метки -->
+  <g>
+    <g transform="translate(230,505)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">1</text></g>
+    <g transform="translate(186,468)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">2</text></g>
+    <g transform="translate(298,859)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">3</text></g>
+    <g transform="translate(355,421)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">4</text></g>
+    <g transform="translate(445,464)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">4</text></g>
+    <g transform="translate(818,672)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">4</text></g>
+    <g transform="translate(394,470)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">5</text></g>
+    <g transform="translate(352,486)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">6</text></g>
+    <g transform="translate(426,500)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">7</text></g>
+    <g transform="translate(543,472)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">8</text></g>
+    <g transform="translate(895,772)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">10</text></g>
+    <g transform="translate(451,319)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">11</text></g>
+    <g transform="translate(570,270)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">12</text></g>
+    <g transform="translate(766,519)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">13</text></g>
+    <g transform="translate(834,515)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">14</text></g>
+    <g transform="translate(797,594)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">15</text></g>
+    <g transform="translate(707,580)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">16</text></g>
+    <g transform="translate(804,700)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">17</text></g>
+    <g transform="translate(998,853)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">18</text></g>
+    <g transform="translate(600,888)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">19</text></g>
+    <g transform="translate(624,259)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">20</text></g>
+    <g transform="translate(729,315)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">21</text></g>
+    <g transform="translate(762,335)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">22</text></g>
+    <g transform="translate(745,352)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">23</text></g>
+    <g transform="translate(670,412)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">24</text></g>
+    <g transform="translate(771,435)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">25</text></g>
+    <g transform="translate(741,491)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">26</text></g>
+    <g transform="translate(814,570)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">27</text></g>
+    <g transform="translate(762,630)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">28</text></g>
+    <g transform="translate(714,837)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">29</text></g>
+    <g transform="translate(921,723)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">30</text></g>
+    <g transform="translate(955,640)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">31</text></g>
+    <g transform="translate(528,118)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">32</text></g>
+    <g transform="translate(1360,833)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">33</text></g>
+    <g transform="translate(1162,562)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">34</text></g>
+    <g transform="translate(1073,362)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">35</text></g>
+    <g transform="translate(1082,390)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">36</text></g>
+    <g transform="translate(906,536)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">39</text></g>
+    <g transform="translate(940,200)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">40</text></g>
+    <g transform="translate(912,410)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">41</text></g>
+    <g transform="translate(946,478)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">42</text></g>
+    <g transform="translate(1050,455)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">43</text></g>
+    <g transform="translate(986,512)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">44</text></g>
+    <g transform="translate(1123,470)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">45</text></g>
+    <g transform="translate(1133,421)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">47</text></g>
+    <g transform="translate(1140,452)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">48</text></g>
+    <g transform="translate(1070,490)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">49</text></g>
+    <g transform="translate(1165,522)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">51</text></g>
+    <g transform="translate(1185,585)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">52</text></g>
+    <g transform="translate(1030,588)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">54</text></g>
+    <g transform="translate(1245,585)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">55</text></g>
+    <g transform="translate(1128,552)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">56</text></g>
+    <g transform="translate(1002,232)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">57</text></g>
+    <g transform="translate(948,124)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">58</text></g>
+    <g transform="translate(1085,265)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">59</text></g>
+    <g transform="translate(1095,292)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">60</text></g>
+    <g transform="translate(1190,508)"><circle r="13" fill="#1e88e5" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">61</text></g>
+    <!-- Кафе (красные) -->
+    <g transform="translate(470,459)"><circle r="13" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">9</text></g>
+    <g transform="translate(836,373)"><circle r="13" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">37</text></g>
+    <g transform="translate(836,443)"><circle r="13" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">38</text></g>
+    <g transform="translate(1027,545)"><circle r="13" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">46</text></g>
+    <g transform="translate(1104,513)"><circle r="13" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">50</text></g>
+    <g transform="translate(1104,324)"><circle r="13" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">63</text></g>
+    <g transform="translate(1258,322)"><circle r="13" fill="#e53935" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">68</text></g>
+    <!-- Тематические парки (зелёные) -->
+    <g transform="translate(1152,265)"><circle r="13" fill="#7cb342" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">64</text></g>
+    <g transform="translate(1175,294)"><circle r="13" fill="#7cb342" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">65</text></g>
+    <g transform="translate(1119,319)"><circle r="13" fill="#7cb342" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">66</text></g>
+    <g transform="translate(1046,238)"><circle r="13" fill="#7cb342" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">67</text></g>
+    <g transform="translate(1210,373)"><circle r="13" fill="#7cb342" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">69</text></g>
+    <g transform="translate(1334,540)"><circle r="13" fill="#7cb342" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">70</text></g>
+    <g transform="translate(1430,648)"><circle r="13" fill="#7cb342" stroke="#fff" stroke-width="2.5"/><text class="bt" y="4.5">71</text></g>
+  </g>
+
+  <!-- Подписи ключевых объектов -->
+  <g class="lblgrp">
+    <text class="lbl" x="230" y="527">ЛАБИРИНТ СТРАХА</text>
+    <text class="lbl" x="186" y="490">ЗВЕЗДОПАД</text>
+    <text class="lbl" x="298" y="881">БУМЕРАНГ</text>
+    <text class="lbl" x="895" y="794">НИТРО</text>
+    <text class="lbl" x="627" y="968">СЕРДЦЕ МОСКВЫ</text>
+    <text class="lbl" x="705" y="395" font-size="8.5">ДОМ БАБЫ ЯГИ</text>
+    <text class="lbl" x="714" y="859">СМЕРЧИ</text>
+    <text class="lbl" x="921" y="745">ФОРМУЛА</text>
+    <text class="lbl" x="955" y="212" font-size="8.5">ДОМ ВВЕРХ ДНОМ</text>
+    <text class="lbl" x="1360" y="855">ПУТЬ ДРАКОНА</text>
+    <text class="lbl" x="1245" y="616">ШАТЕР</text>
+    <text class="lbl" x="1218" y="488" font-size="8.5">ВЕРЕВОЧНЫЙ ПАРК</text>
+    <text class="lbl" x="482" y="484">КАФЕ</text>
+    <text class="lbl" x="836" y="395" font-size="8.5">БУМ ВАДЯ</text>
+    <text class="lbl" x="836" y="465" font-size="8.5">БЛИННАЯ</text>
+    <text class="lbl" x="1027" y="567" font-size="8.5">БУРГЕРНАЯ</text>
+    <text class="lbl" x="1092" y="538" font-size="8">КОФЕЙНАЯ СИМФОНИЯ</text>
+    <text class="lbl" x="1155" y="356" font-size="8.5">«БАЗИЛИК»</text>
+    <text class="lbl" x="1292" y="337" font-size="8.5">ФУДКОРТ</text>
+    <text class="lbl" x="1080" y="345" font-size="8">ЗООДОМ «СТРАНА ЕНОТОВ»</text>
+  </g>
+
+  <!-- ЛЕГЕНДА -->
+  <!-- Синяя: на территории парка -->
+  
+
+  <!-- Красная: кафе и рестораны -->
+  
+
+  <!-- Оранжевая: аттракционы -->
+  
+
+  <!-- Розовая: персональные мероприятия -->
+  
+
+  <!-- Зелёная: тематические парки -->
+  
+
+  <!-- Нижний блок: контакты и QR -->
+  
+
+  <!-- Заголовок -->
+  <g>
+    <text x="62" y="126" font-size="72" font-weight="800" fill="#fff" letter-spacing="2">СКАЗКА</text>
+    <text x="70" y="172" font-size="22" font-weight="700" fill="#fff" letter-spacing="4">ПАРК РАЗВЛЕЧЕНИЙ</text>
+    <text x="70" y="200" font-size="13" fill="#f1f8e9">Векторная схема по карте 2026 · parkskazka.com</text>
+  </g>
+</svg>
