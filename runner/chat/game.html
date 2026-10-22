@@ -126,9 +126,79 @@ main{position:relative;flex:1;margin:10px 16px 14px;border-radius:32px;overflow:
 /* тост */
 #toast{position:absolute;left:50%;top:14px;transform:translateX(-50%) translateY(-8px);background:var(--ink);color:#fff;border-radius:100px;padding:10px 22px;font-size:13.5px;opacity:0;pointer-events:none;transition:.35s;z-index:10;box-shadow:var(--shadow);max-width:82%;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ---------- шапка парка (как на parkskazka.com), складывается ⌃ ---------- */
+.skz-head{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1.5px solid #EAF0F5;max-height:64px;overflow:hidden;transition:max-height .3s ease,opacity .25s ease}
+.skz-bar{max-width:1180px;margin:0 auto;padding:8px 20px;display:flex;align-items:center;gap:18px}
+.skz-info{display:flex;align-items:center;gap:18px;font-size:13px;color:#5A6572;min-width:0}
+.skz-i{white-space:nowrap}
+.skz-i b{color:#222;font-weight:500}
+.skz-logo{flex:none;display:block;line-height:0}
+.skz-logo img{height:40px;width:auto;display:block}
+.skz-logo-txt{display:none;font:600 22px/1 var(--disp);color:#39C2EA;letter-spacing:.04em}
+.skz-actions{margin-left:auto;display:flex;align-items:center;gap:16px}
+.skz-phone{font-size:14.5px;font-weight:700;color:#222;text-decoration:none;white-space:nowrap}
+.skz-phone:hover{color:var(--accent)}
+.skz-buy{display:inline-flex;align-items:center;background:var(--accent);color:#fff;border-radius:100px;padding:11px 26px;font:700 12.5px/1 'PT Root UI',sans-serif;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap;transition:.25s}
+.skz-buy:hover{filter:brightness(.92);transform:translateY(-1px)}
+.skz-fold{flex:none;width:32px;height:32px;border:1.5px solid #E2EAF0;background:#fff;border-radius:50%;color:#5A6572;font-size:14px;line-height:1;cursor:pointer;transition:.2s}
+.skz-fold:hover{background:#F2F8FC;color:#222}
+.skz-restore{display:none;width:100%;border:0;border-bottom:1.5px solid #EAF0F5;background:rgba(255,255,255,.85);color:#5A6572;font:500 11px/1 'PT Root UI',sans-serif;padding:4px 12px;cursor:pointer;text-align:right}
+body.skz-folded .skz-head{max-height:0;opacity:0;border-bottom-width:0}
+body.skz-folded .skz-restore{display:block}
+@media(max-width:900px){.skz-info{display:none}.skz-phone{display:none}}
+@media(max-width:640px){.skz-bar{padding:7px 12px;gap:10px}.skz-logo img{height:32px}.skz-buy{padding:9px 16px;font-size:11.5px}}
+
+/* ---------- демо-переключатель погоды ---------- */
+.wx-demo{gap:4px;padding:6px 10px}
+.wx-demo select{border:0;background:transparent;font:500 12.5px 'PT Root UI',sans-serif;color:var(--ink);outline:none;cursor:pointer;max-width:130px}
 </style>
 </head>
 <body>
+
+<!-- шапка парка в стиле parkskazka.com; складывается ⌃, состояние живёт в sessionStorage -->
+<header class="skz-head" id="skzHead">
+  <div class="skz-bar">
+    <div class="skz-info">
+      <span class="skz-i">📍 <b>Москва, ул. Крылатская, 18</b></span>
+      <span class="skz-i">🕐 Пт, Сб, Вс: 10:00–22:00</span>
+    </div>
+    <a class="skz-logo" href="https://parkskazka.com/" target="_blank" rel="noopener" title="Парк развлечений «Сказка»">
+      <img src="https://parkskazka.com/local/templates/main/img/logo-500.png" alt="СКАЗКА — парк развлечений"
+           onerror="this.style.display='none';this.parentNode.querySelector('.skz-logo-txt').style.display='block'">
+      <span class="skz-logo-txt">СКАЗКА</span>
+    </a>
+    <div class="skz-actions">
+      <a class="skz-phone" href="tel:+74951336566">+7 (495) 133-65-66</a>
+      <a class="skz-buy" href="dashboard" title="Дашборд маркетинга">Купить билет</a>
+      <button class="skz-fold" id="skzFold" type="button" title="Свернуть шапку">⌃</button>
+    </div>
+  </div>
+</header>
+<button class="skz-restore" id="skzRestore" type="button" title="Развернуть шапку">⌄ шапка парка</button>
+<script>
+(function(){
+  const head = document.getElementById('skzHead'), fold = document.getElementById('skzFold'), restore = document.getElementById('skzRestore');
+  if (!head || !fold) return;
+  const KEY = 'skz.head.folded';
+  let folded = false;
+  try { folded = sessionStorage.getItem(KEY) === '1'; } catch {}
+  const apply = () => {
+    document.body.classList.toggle('skz-folded', folded);
+    fold.textContent = folded ? '⌄' : '⌃';
+    fold.title = folded ? 'Развернуть шапку' : 'Свернуть шапку';
+    window.dispatchEvent(new Event('resize')); // игре нужно пересчитать сцену
+  };
+  const toggle = () => {
+    folded = !folded;
+    try { sessionStorage.setItem(KEY, folded ? '1' : '0'); } catch {}
+    apply();
+  };
+  fold.addEventListener('click', toggle);
+  restore.addEventListener('click', toggle);
+  apply();
+})();
+</script>
 
 <header>
   <div class="hbar">
@@ -147,6 +217,17 @@ main{position:relative;flex:1;margin:10px 16px 14px;border-radius:32px;overflow:
   <span class="pill" id="hudScore">⭐ 0</span>
   <span class="pill" id="hudCrowd">👥 —</span>
   <span class="btns">
+    <label class="pill wx-demo" title="Демо-погода: мгновенно меняет вид карты, не дожидаясь прогноза">🌤
+      <select id="wxSel" aria-label="Демо-погода">
+        <option value="real" selected>По прогнозу</option>
+        <option value="clear">☀️ Ясно</option>
+        <option value="partly">🌤 Облачно</option>
+        <option value="rain">🌧 Дождь</option>
+        <option value="storm">⛈ Гроза</option>
+        <option value="snow">❄️ Снег</option>
+        <option value="fog">🌫 Туман</option>
+      </select>
+    </label>
     <button class="ibtn wide" id="speedBtn" title="Скорость времени">⏱ ×1</button>
     <button class="ibtn" id="zoomOut" title="Отдалить">−</button>
     <button class="ibtn" id="zoomIn" title="Приблизить">+</button>
@@ -336,6 +417,7 @@ const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + ' °C';
 const wxKind = c => c === 0 ? 'clear' : c <= 2 ? 'partly' : c === 3 ? 'cloudy' : c < 50 ? 'fog' :
   (c < 70 || (c >= 80 && c < 83)) ? 'rain' : (c < 87) ? 'snow' : c < 95 ? 'rain' : 'storm';
 let weather = null;   // {t, code, precip, wind, approx, kind} | null
+let wxManual = false; // демо-переключатель погоды активен — прогноз не перебивает его
 async function fetchWeather(date, hour){
   const tryBackend = async () => {
     const r = await fetch(`api/weather?date=${date}&hour=${hour}`);
@@ -1182,17 +1264,35 @@ function frame(now){
   /* погода догоняет, но не задерживает открытие парка: её таймауты (до 12 с на
      двух путях) не должны держать гостя на экране загрузки */
   fetchWeather(visit.date, parseInt(visit.time, 10) || 12).then(w => {
-    if (!w) return;
-    weather = w;
-    svgWrap.style.filter = WX_FILTER[w.kind] || '';
-    buildWeatherFx();
-    if (w.kind === 'rain' || w.kind === 'storm'){
-      for (const g of npcs) g.umbrella = Math.random() < 0.55;
-      setTimeout(() => toast('🌧 Дождь! Баюн советует крытые точки — интерактив и кафе'), 2500);
-    }
+    if (!w || wxManual) return;
+    applyWeather(w);
+    if (w.kind === 'rain' || w.kind === 'storm') setTimeout(() => toast('🌧 Дождь! Баюн советует крытые точки — интерактив и кафе'), 2500);
     if (w.kind === 'snow') setTimeout(() => toast('❄️ Снег! Одевайтесь теплее — и на Колесо Обозрения, пока обзор хороший'), 2500);
   });
 })();
+
+/* ---------- демо-переключатель погоды ---------- */
+const DEMO_WX = {
+  clear:{code:0,t:24,wind:2,precip:0}, partly:{code:2,t:20,wind:4,precip:10}, cloudy:{code:3,t:13,wind:5,precip:20},
+  rain:{code:63,t:8,wind:7,precip:80}, storm:{code:95,t:11,wind:10,precip:95}, snow:{code:73,t:-5,wind:4,precip:65}, fog:{code:45,t:6,wind:1,precip:15},
+};
+function applyWeather(w){
+  weather = w;
+  svgWrap.style.filter = WX_FILTER[w.kind] || '';
+  buildWeatherFx();
+  const wet = w.kind === 'rain' || w.kind === 'storm';
+  for (const g of npcs) g.umbrella = wet && Math.random() < 0.55;
+}
+$('#wxSel').addEventListener('change', e => {
+  const v = e.target.value;
+  if (v === 'real'){
+    wxManual = false;
+    fetchWeather(visit.date, parseInt(visit.time, 10) || 12).then(w => { if (w && !wxManual) applyWeather(w); });
+    return;
+  }
+  const d = DEMO_WX[v];
+  if (d){ wxManual = true; applyWeather({ t:d.t, code:d.code, precip:d.precip, wind:d.wind, approx:false, kind:v }); }
+});
 </script>
 </body>
 </html>

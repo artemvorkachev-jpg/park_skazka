@@ -178,9 +178,75 @@ input[type=date]:focus{box-shadow:0 0 0 4px rgba(52,180,232,.2)}
 /* ---------- тост ---------- */
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:100px;padding:11px 24px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:50;box-shadow:var(--shadow)}
 #toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ---------- шапка парка (как на parkskazka.com), складывается ⌃ ---------- */
+.skz-head{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1.5px solid #EAF0F5;max-height:64px;overflow:hidden;transition:max-height .3s ease,opacity .25s ease}
+.skz-bar{max-width:1180px;margin:0 auto;padding:8px 20px;display:flex;align-items:center;gap:18px}
+.skz-info{display:flex;align-items:center;gap:18px;font-size:13px;color:#5A6572;min-width:0}
+.skz-i{white-space:nowrap}
+.skz-i b{color:#222;font-weight:500}
+.skz-logo{flex:none;display:block;line-height:0}
+.skz-logo img{height:40px;width:auto;display:block}
+.skz-logo-txt{display:none;font:600 22px/1 var(--disp);color:#39C2EA;letter-spacing:.04em}
+.skz-actions{margin-left:auto;display:flex;align-items:center;gap:16px}
+.skz-phone{font-size:14.5px;font-weight:700;color:#222;text-decoration:none;white-space:nowrap}
+.skz-phone:hover{color:var(--accent)}
+.skz-buy{display:inline-flex;align-items:center;background:var(--accent);color:#fff;border-radius:100px;padding:11px 26px;font:700 12.5px/1 'PT Root UI',sans-serif;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;white-space:nowrap;transition:.25s}
+.skz-buy:hover{filter:brightness(.92);transform:translateY(-1px)}
+.skz-fold{flex:none;width:32px;height:32px;border:1.5px solid #E2EAF0;background:#fff;border-radius:50%;color:#5A6572;font-size:14px;line-height:1;cursor:pointer;transition:.2s}
+.skz-fold:hover{background:#F2F8FC;color:#222}
+.skz-restore{display:none;width:100%;border:0;border-bottom:1.5px solid #EAF0F5;background:rgba(255,255,255,.85);color:#5A6572;font:500 11px/1 'PT Root UI',sans-serif;padding:4px 12px;cursor:pointer;text-align:right}
+body.skz-folded .skz-head{max-height:0;opacity:0;border-bottom-width:0}
+body.skz-folded .skz-restore{display:block}
+@media(max-width:900px){.skz-info{display:none}.skz-phone{display:none}}
+@media(max-width:640px){.skz-bar{padding:7px 12px;gap:10px}.skz-logo img{height:32px}.skz-buy{padding:9px 16px;font-size:11.5px}}
 </style>
 </head>
 <body>
+
+<!-- шапка парка в стиле parkskazka.com; складывается ⌃, состояние живёт в sessionStorage -->
+<header class="skz-head" id="skzHead">
+  <div class="skz-bar">
+    <div class="skz-info">
+      <span class="skz-i">📍 <b>Москва, ул. Крылатская, 18</b></span>
+      <span class="skz-i">🕐 Пт, Сб, Вс: 10:00–22:00</span>
+    </div>
+    <a class="skz-logo" href="https://parkskazka.com/" target="_blank" rel="noopener" title="Парк развлечений «Сказка»">
+      <img src="https://parkskazka.com/local/templates/main/img/logo-500.png" alt="СКАЗКА — парк развлечений"
+           onerror="this.style.display='none';this.parentNode.querySelector('.skz-logo-txt').style.display='block'">
+      <span class="skz-logo-txt">СКАЗКА</span>
+    </a>
+    <div class="skz-actions">
+      <a class="skz-phone" href="tel:+74951336566">+7 (495) 133-65-66</a>
+      <a class="skz-buy" href="dashboard" title="Дашборд маркетинга">Купить билет</a>
+      <button class="skz-fold" id="skzFold" type="button" title="Свернуть шапку">⌃</button>
+    </div>
+  </div>
+</header>
+<button class="skz-restore" id="skzRestore" type="button" title="Развернуть шапку">⌄ шапка парка</button>
+<script>
+(function(){
+  const head = document.getElementById('skzHead'), fold = document.getElementById('skzFold'), restore = document.getElementById('skzRestore');
+  if (!head || !fold) return;
+  const KEY = 'skz.head.folded';
+  let folded = false;
+  try { folded = sessionStorage.getItem(KEY) === '1'; } catch {}
+  const apply = () => {
+    document.body.classList.toggle('skz-folded', folded);
+    fold.textContent = folded ? '⌄' : '⌃';
+    fold.title = folded ? 'Развернуть шапку' : 'Свернуть шапку';
+    window.dispatchEvent(new Event('resize')); // игре нужно пересчитать сцену
+  };
+  const toggle = () => {
+    folded = !folded;
+    try { sessionStorage.setItem(KEY, folded ? '1' : '0'); } catch {}
+    apply();
+  };
+  fold.addEventListener('click', toggle);
+  restore.addEventListener('click', toggle);
+  apply();
+})();
+</script>
 
 <header>
   <div class="hbar">
