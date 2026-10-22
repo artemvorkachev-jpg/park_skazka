@@ -71,6 +71,10 @@ main{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:18px 20px 0;min-he
 
 /* ---------- шаг 1: визит ---------- */
 .two{display:grid;grid-template-columns:1fr 1.35fr;gap:26px;align-items:start}
+.two.solo{grid-template-columns:minmax(0,660px);justify-content:center}
+.nav .note{color:var(--muted);font-size:13px}
+.linkish{border:0;background:none;color:#1E6E9E;font-weight:700;cursor:pointer;padding:0;font:inherit;font-size:13px;text-decoration:underline}
+.linkish:hover{color:var(--accent)}
 @media(max-width:860px){.two{grid-template-columns:1fr}}
 .field-label{display:block;font:700 13px/1 'PT Root UI',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
 .date-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -190,31 +194,30 @@ footer b{color:var(--accent)}
 <div class="steps" id="steps"></div>
 
 <main>
-  <!-- ---------- шаг 1: визит ---------- -->
+  <!-- ---------- шаг 1: визит (подшаг 1: дата → подшаг 2: кто идёт) ---------- -->
   <section class="view" id="view-visit">
-    <div class="two">
-      <div class="container beige">
+    <div class="two solo" id="visitPanels">
+      <div class="container beige" id="panelDate">
         <h2>Когда идёте</h2>
         <p class="sub">Баюн учтёт дату: подскажет про погоду, очереди и что надеть.</p>
         <label class="field-label" for="dateInput">Дата визита</label>
         <div class="date-row"><input type="date" id="dateInput"></div>
         <div class="quick" id="dateQuick"></div>
         <p class="date-hint" id="dateHint"></p>
+        <div class="nav"><span class="note">Шаг 1 из 2</span><button class="btn primary" id="confirmDate" disabled>Подтвердить дату →</button></div>
       </div>
-      <div class="container">
+      <div class="container" id="panelGroup" hidden>
         <h2>Кто идёт</h2>
         <p class="sub">Рост определяет, какие аттракционы доступны. Имена — чтобы Баюн обращался лично.</p>
+        <p class="seg-note" id="dateLine"></p>
         <div class="group-list" id="groupList"></div>
         <div class="group-add">
           <button class="btn blue small" data-gadd="kid">+ Малыш (110 см)</button>
           <button class="btn ghost small" data-gadd="adult">+ Взрослый (175 см)</button>
         </div>
         <p class="seg-note" id="segNote"></p>
+        <div class="nav"><button class="btn ghost small" id="backDate">← Изменить дату</button><button class="btn primary" id="toInterests" disabled>Далее: интересные точки →</button></div>
       </div>
-    </div>
-    <div class="nav">
-      <span></span>
-      <button class="btn primary" id="toInterests">Далее: интересные точки →</button>
     </div>
   </section>
 
@@ -284,6 +287,8 @@ function loadState(){
       s.id = typeof s.id === 'string' && s.id ? s.id : uuid();
       if (!Array.isArray(s.group)) s.group = [];
       if (!Array.isArray(s.picks)) s.picks = [];
+      // сессии до двухшагового визита: если гость уже настроен — сразу на подшаг «кто идёт»
+      if (s.visitStage === undefined) s.visitStage = (s.date && s.group.length) ? 'group' : 'date';
       return s;
     }
   }catch{}
@@ -327,10 +332,6 @@ function currentView(){
   const v = (location.hash || '').replace(/^#\/?/, '');
   return VIEWS.includes(v) ? v : 'visit';
 }
-function go(v){
-  if (v === 'chat' && !state.group.length && !EMBED){ toast('Сначала добавьте, кто идёт — шаг 1'); location.hash = '#/visit'; return; }
-  location.hash = '#/' + v;
-}
 window.addEventListener('hashchange', render);
 
 /* ================= шаги-пилюли ================= */
@@ -344,23 +345,67 @@ function renderSteps(cur){
   }).join('');
 }
 
-/* ================= шаг 1: визит ================= */
+/* ================= шаг 1: визит (дата → кто идёт) ================= */
+/* ---------- погода по дате визита (Open-Meteo, как в игре — core.js) ---------- */
+const PARK = { lat: 55.771505, lon: 37.434665 };
+const wxEmoji = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c < 50 ? '🌫️' : c < 60 ? '🌦️' : c < 70 ? '🌧️' : c < 80 ? '❄️' : c < 95 ? '🌧️' : '⛈️';
+const fmtTemp = t => (t > 0 ? '+' : '') + Math.round(t) + '°';
+async function fetchWeather(){
+  if (!state.date) return;
+  if (state.weather && state.weather.date === state.date) return;
+  try{
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${PARK.lat}&longitude=${PARK.lon}` +
+      `&hourly=temperature_2m,precipitation_probability,weathercode,wind_speed_10m` +
+      `&start_date=${state.date}&end_date=${state.date}&timezone=Europe%2FMoscow`;
+    const r = await fetch(u);
+    if (!r.ok) return;
+    const j = await r.json(), h = j.hourly;
+    if (!h || !Array.isArray(h.time)) return;
+    const i = h.time.findIndex(t => t.endsWith('T12:00'));
+    if (i < 0) return;
+    state.weather = {
+      date: state.date,
+      t: h.temperature_2m[i],
+      code: h.weathercode[i],
+      precip: (h.precipitation_probability || [])[i] ?? 0,
+      wind: Math.round(h.wind_speed_10m[i] || 0),
+    };
+    save();
+    if (currentView() === 'visit') renderVisit();
+  }catch{}
+}
+function dateHintHtml(){
+  if (!state.date) return 'Выберите дату — она нужна для маршрута и подсказок Баюна.';
+  let s = `Визит: <b>${esc(fmtDate(state.date))}</b>`;
+  const w = state.weather && state.weather.date === state.date ? state.weather : null;
+  s += w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}, дождь ${w.precip}%` : ' · погоду подгружаем…';
+  return s;
+}
 function renderVisit(){
-  $('#dateInput').value = state.date || '';
-  const quick = [
-    ['Сегодня', isoOf(new Date())],
-    ['Завтра', isoOf(new Date(Date.now() + 864e5))],
-    ['В выходные', isoOf((() => { const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return d; })())],
-  ];
-  $('#dateQuick').innerHTML = '';
-  quick.forEach(([label, iso]) => {
-    const b = document.createElement('button');
-    b.type = 'button'; b.textContent = label;
-    b.onclick = () => { state.date = iso; save(); renderVisit(); };
-    $('#dateQuick').appendChild(b);
-  });
-  $('#dateHint').innerHTML = state.date ? `Визит: <b>${esc(fmtDate(state.date))}</b>` : 'Дату можно выбрать позже — Баюн спросит сам.';
-
+  const stage = state.visitStage === 'group' ? 'group' : 'date';
+  $('#panelDate').hidden = stage !== 'date';
+  $('#panelGroup').hidden = stage !== 'group';
+  if (stage === 'date'){
+    $('#dateInput').value = state.date || '';
+    const quick = [
+      ['Сегодня', isoOf(new Date())],
+      ['Завтра', isoOf(new Date(Date.now() + 864e5))],
+      ['В выходные', isoOf((() => { const d = new Date(); d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7)); return d; })())],
+    ];
+    $('#dateQuick').innerHTML = '';
+    quick.forEach(([label, iso]) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = label;
+      b.onclick = () => { state.date = iso; save(); fetchWeather(); renderVisit(); };
+      $('#dateQuick').appendChild(b);
+    });
+    $('#dateHint').innerHTML = dateHintHtml();
+    $('#confirmDate').disabled = !state.date;
+    return;
+  }
+  $('#dateLine').innerHTML = state.date
+    ? `📅 Дата визита: <b>${esc(fmtDate(state.date))}</b>${state.weather && state.weather.date === state.date ? ` · ${wxEmoji(state.weather.code)} ${fmtTemp(state.weather.t)}` : ''} · <button class="linkish" type="button" data-stage="date">изменить</button>`
+    : 'Дата не выбрана · <button class="linkish" type="button" data-stage="date">выбрать</button>';
   const list = $('#groupList');
   list.innerHTML = '';
   state.group.forEach((m, i) => {
@@ -384,7 +429,7 @@ function renderVisit(){
     : 'Совет: отметьте рост каждого — от него зависят допуски на аттракционы.';
   $('#toInterests').disabled = !state.group.length;
 }
-$('#dateInput').addEventListener('change', e => { state.date = e.target.value || ''; save(); renderVisit(); });
+$('#dateInput').addEventListener('change', e => { state.date = e.target.value || ''; save(); fetchWeather(); renderVisit(); });
 /* состояние группы обновляем прямо при вводе (input), а рост докручиваем на change (размытие поля) */
 $('#groupList').addEventListener('input', e => {
   const row = e.target.closest('.group-row'); if (!row) return;
@@ -398,6 +443,16 @@ $('#groupList').addEventListener('change', e => {
   if (e.target.classList.contains('g-h')) e.target.value = state.group[+row.dataset.gi].h;
 });
 $('#groupList').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+$('#confirmDate').addEventListener('click', () => { state.visitStage = 'group'; save(); fetchWeather(); renderVisit(); window.scrollTo(0, 0); });
+$('#backDate').addEventListener('click', () => { state.visitStage = 'date'; save(); renderVisit(); });
+$('#dateLine').addEventListener('click', e => {
+  if (e.target.closest('[data-stage="date"]')){ state.visitStage = 'date'; save(); renderVisit(); }
+});
+/* после даты — только состав гостей: интересы/маршрут/чат закрыты, пока группа не собрана */
+function go(v){
+  if (v !== 'visit' && !state.group.length && !EMBED){ toast('Сначала добавьте, кто идёт — шаг 1'); location.hash = '#/visit'; return; }
+  location.hash = '#/' + v;
+}
 document.addEventListener('click', e => {
   const add = e.target.closest('[data-gadd]');
   if (add){
@@ -567,7 +622,10 @@ function renderChips(){
 }
 function renderStrip(){
   const parts = [];
-  if (state.date) parts.push(`📅 <b>${esc(fmtDate(state.date))}</b>`);
+  if (state.date){
+    const w = state.weather && state.weather.date === state.date ? state.weather : null;
+    parts.push(`📅 <b>${esc(fmtDate(state.date))}</b>${w ? ` · ${wxEmoji(w.code)} ${fmtTemp(w.t)}` : ''}`);
+  }
   parts.push(`👥 <b>${state.group.length}</b> ${state.group.length === 1 ? 'гость' : state.group.length < 5 ? 'гостя' : 'гостей'}`);
   if (state.picks.length) parts.push(`🎡 <b>${state.picks.length}</b> точек`);
   const R = buildRoute();
@@ -580,6 +638,7 @@ function renderStrip(){
 function contextPayload(){
   const ctx = { visitId: state.id };
   if (state.date) ctx.date = state.date;
+  if (state.weather && state.weather.date === state.date) ctx.weather = { t: state.weather.t, code: state.weather.code, precip: state.weather.precip, wind: state.weather.wind };
   if (state.group.length) ctx.group = state.group.map(g => ({ name: g.name, height: g.h }));
   const picks = pickedObjs();
   if (picks.length) ctx.picks = picks.map(p => ({ name: p.n, type: p.t, hmin: p.lo, hmax: p.hi, priceFrom: p.p }));
@@ -727,14 +786,26 @@ function showError(message){
   };
 }
 
+/* возврат к «Интересам» — сессия чата начинается заново */
+function resetChatSession(){
+  history.length = 0; lastUserText = ''; sending = false;
+  log.innerHTML = ''; chips.innerHTML = ''; chips.style.display = '';
+  greetingBubble = null;
+  input.value = ''; input.disabled = false; sendBtn.disabled = false;
+  demoMode = false;                          // перезапуск — снова пробуем живой сервер
+  $('#demoBanner').style.display = 'none';
+  status.classList.remove('off');
+  status.querySelector('span').textContent = 'онлайн';
+}
+
 /* ================= рендер вида ================= */
 function render(){
   const cur = currentView();
-  if (cur === 'chat' && !state.group.length && !EMBED){ location.replace('#/visit'); return; }
+  if (!EMBED && cur !== 'visit' && !state.group.length){ location.replace('#/visit'); return; }
   renderSteps(cur);
   VIEWS.forEach(v => $('#view-' + v).classList.toggle('on', v === cur));
   if (cur === 'visit') renderVisit();
-  if (cur === 'interests') renderInterests();
+  if (cur === 'interests'){ resetChatSession(); renderInterests(); }
   if (cur === 'route') renderRoute();
   if (cur === 'chat'){
     renderStrip(); renderChips(); reportVisit();
@@ -749,6 +820,7 @@ function render(){
 
 /* ?embed=1 (виджет-панель): сразу в чат, конфигурация необязательна */
 if (EMBED) location.hash = '#/chat';
+fetchWeather();
 render();
 if (!EMBED && !location.hash) history.replaceState(null, '', '#/visit');
 </script>

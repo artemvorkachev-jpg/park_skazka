@@ -52,6 +52,20 @@ const TYPE_RU = {
 };
 const WEEKDAY_FULL_RU = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
 
+// коды WMO из Open-Meteo (weathercode)
+const wmoRu = (c) => {
+  if (c === 0) return "ясно";
+  if (c <= 2) return "переменная облачность";
+  if (c === 3) return "пасмурно";
+  if (c < 50) return "туман";
+  if (c < 60) return "морось";
+  if (c < 70) return "дождь";
+  if (c < 80) return "снег";
+  if (c < 95) return "ливень";
+  return "гроза";
+};
+const fmtT = (t) => (t > 0 ? "+" : "") + Math.round(t) + "°";
+
 function parseContext(raw) {
   if (!raw || typeof raw !== "object") return null;
   const ctx = {};
@@ -88,7 +102,18 @@ function parseContext(raw) {
       }))
       .filter((r) => r.name && r.time);
   }
-  return ctx.group?.length || ctx.picks?.length || ctx.date || ctx.visitId || ctx.route?.length ? ctx : null;
+  if (raw.weather && typeof raw.weather === "object") {
+    const t = Number(raw.weather.t);
+    if (Number.isFinite(t)) {
+      ctx.weather = {
+        t,
+        code: Number.isFinite(Number(raw.weather.code)) ? Number(raw.weather.code) : -1,
+        precip: Number.isFinite(Number(raw.weather.precip)) ? Number(raw.weather.precip) : -1,
+        wind: Number.isFinite(Number(raw.weather.wind)) ? Number(raw.weather.wind) : -1,
+      };
+    }
+  }
+  return ctx.group?.length || ctx.picks?.length || ctx.date || ctx.visitId || ctx.route?.length || ctx.weather ? ctx : null;
 }
 
 function formatContext(ctx) {
@@ -114,6 +139,13 @@ function formatContext(ctx) {
   }
   if (ctx.route?.length) {
     lines.push(`Маршрут дня: ${ctx.route.map((r) => `${r.time} «${r.name}»${r.dur ? ` (${r.dur} мин)` : ""}`).join(" → ")}`);
+  }
+  if (ctx.weather) {
+    lines.push(
+      `Погода на дату визита (около 12:00): ${wmoRu(ctx.weather.code)}, ${fmtT(ctx.weather.t)}` +
+      `${ctx.weather.precip >= 0 ? `, вероятность осадков ${ctx.weather.precip}%` : ""}` +
+      `${ctx.weather.wind >= 0 ? `, ветер до ${ctx.weather.wind} м/с` : ""}`
+    );
   }
   return lines.join("\n").slice(0, 1500);
 }
