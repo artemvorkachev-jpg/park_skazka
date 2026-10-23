@@ -48,7 +48,8 @@ runner/
 │   ├── game.html          # мини-игра «Прогулка по парку» (симуляция визита)
 │   ├── map.svg            # схема парка без легенды для игры
 │   ├── dashboard.html     # маркетинговый дашборд
-│   ├── server.js          # HTTP: /, /game, /dashboard, /map.svg, /api/*
+│   ├── landing/           # лендинг защиты (копия «Защита/Команда — Хранитель Сказки»), GET /landing/
+│   ├── server.js          # HTTP: /, /game, /dashboard, /landing/, /map.svg, /api/*
 │   └── store.js           # JSONL-хранилище заявок и диалога
 ├── package.json
 └── .env                   # (create with your API keys)

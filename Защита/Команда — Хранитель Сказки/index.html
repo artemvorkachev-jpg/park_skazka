@@ -439,9 +439,10 @@ document.getElementById('trsrc').addEventListener('error', () => { document.getE
 </div>
 <script>
 (function () {
-  /* адрес чат-бэкенда; под nginx с location /bayun/ работает значение по умолчанию.
-     Если защита идёт без бэкенда — задайте window.BAYUN_URL = '' , и кнопка скроется сама. */
-  const BAYUN_URL = window.BAYUN_URL !== undefined ? window.BAYUN_URL : '/bayun/';
+  /* адрес чат-бэкенда. Прод живёт в корне https://skazka.koljanos.ru (подпуть /bayun/ больше не используется),
+     поэтому адрес абсолютный — кнопка работает, где бы ни лежал сам лендинг.
+     Если защита идёт без интернета — задайте window.BAYUN_URL = '' , и кнопка скроется сама. */
+  const BAYUN_URL = window.BAYUN_URL !== undefined ? window.BAYUN_URL : 'https://skazka.koljanos.ru';
   const fab = document.getElementById('bayunFab');
   if (!BAYUN_URL) { fab.style.display = 'none'; return; }
   const panel = document.getElementById('bayunPanel');

@@ -24,7 +24,8 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getStats, logDialogue, normalizeVisit, saveVisit } from "./store.js";
 
@@ -35,6 +36,9 @@ const INDEX_HTML = join(__dirname, "index.html");
 const DASHBOARD_HTML = join(__dirname, "dashboard.html");
 const GAME_HTML = join(__dirname, "game.html");
 const MAP_SVG_PATH = process.env.MAP_SVG || join(__dirname, "map.svg");
+// Лендинг защиты (копия «Защита/Команда — Хранитель Сказки» из корня репозитория;
+// правки вносите там и перекладывайте сюда — chat/ целиком входит в docker-образ)
+const LANDING_DIR = process.env.LANDING_DIR || join(__dirname, "landing");
 
 const PORT = parseInt(process.env.CHAT_PORT || "8130", 10);
 const TURN_TIMEOUT_MS = parseInt(process.env.TURN_TIMEOUT_MS || "120000", 10);
@@ -217,6 +221,58 @@ const json = (res, code, obj) => {
 /* страницы всегда просим свежие: без no-cache WebView/браузер может показать
    старую версию UI после обновления сервера (heuristic-кэширование) */
 const HTML_HEADERS = { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" };
+
+// --- GET /landing, /landing/...: статика лендинга защиты из LANDING_DIR ---
+
+const LANDING_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".txt": "text/plain; charset=utf-8",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+};
+
+async function serveLanding(res, pathname) {
+  // /landing без слеша → редирект: иначе относительные media/... resolve от корня сайта
+  if (pathname === "/landing") {
+    res.writeHead(301, { location: "/landing/" });
+    res.end();
+    return;
+  }
+  const rel = decodeURIComponent(pathname.replace(/^\/landing\//, "")) || "index.html";
+  const filePath = join(LANDING_DIR, rel);
+  if (!filePath.startsWith(LANDING_DIR + sep)) {
+    res.writeHead(403, { "content-type": "text/plain; charset=utf-8" });
+    res.end("403");
+    return;
+  }
+  const type = LANDING_TYPES[filePath.slice(filePath.lastIndexOf(".")).toLowerCase()];
+  if (!type) {
+    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    res.end("404");
+    return;
+  }
+  try {
+    const body = await readFile(filePath);
+    // html просим свежим, как и остальные страницы; медиа можно кэшировать
+    const headers = type.startsWith("text/html")
+      ? HTML_HEADERS
+      : { "content-type": type, "cache-control": "public, max-age=3600" };
+    res.writeHead(200, headers);
+    res.end(body);
+  } catch {
+    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    res.end("404");
+  }
+}
 
 // --- POST /api/chat: запуск runner.js и трансляция его NDJSON в SSE ---
 
@@ -401,6 +457,11 @@ createServer((req, res) => {
   } else if (req.method === "GET" && url.pathname === "/game") {
     res.writeHead(200, HTML_HEADERS);
     res.end(GAME);
+  } else if (req.method === "GET" && (url.pathname === "/landing" || url.pathname.startsWith("/landing/"))) {
+    serveLanding(res, url.pathname).catch(() => {
+      res.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
+      res.end("500");
+    });
   } else if (req.method === "GET" && url.pathname === "/map.svg") {
     if (!MAP_SVG) {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
@@ -440,5 +501,5 @@ createServer((req, res) => {
       process.exit(1);
     })
     .listen(PORT, () => {
-      console.log(`Страница Баюна: http://localhost:${PORT}/  · дашборд: /dashboard  · игра: /game  (runner: ${RUNNER_JS})`);
+      console.log(`Страница Баюна: http://localhost:${PORT}/  · дашборд: /dashboard  · игра: /game  · лендинг: /landing/  (runner: ${RUNNER_JS})`);
     });

@@ -27,3 +27,8 @@ location /bayun/ {
 # location /        { root /var/www/park-skazka/landing; index index.html; }
 # location /game/   { alias /var/www/park-skazka/game/;   index index.html; }
 # location /defense/{ alias /var/www/park-skazka/defense/; index index.html; }
+
+# Лендинг защиты по адресу /landing/: если весь «/» проксируется на node:8130,
+# маршрут отдаётся приложением само (runner/chat/landing) — ничего добавлять не нужно.
+# Если статику раздаёт nginx сам, скопируйте runner/chat/landing на сервер:
+# location /landing/ { alias /var/www/park-skazka/landing/; index index.html; }
