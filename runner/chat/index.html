@@ -100,6 +100,14 @@ input[type=date]:focus{box-shadow:0 0 0 4px rgba(52,180,232,.2)}
 .group-add{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 .seg-note{margin:16px 0 0;font-size:13px;color:var(--muted)}
 
+/* ---------- парад за заголовком «Кто идёт»: растёт вместе с группой ---------- */
+#panelGroup{position:relative}
+.parade{position:absolute;top:0;left:0;width:100%;height:96px;pointer-events:none;z-index:0}
+#panelGroup h2,#panelGroup .sub,#panelGroup .seg-note{position:relative;z-index:1}
+/* читаемость текста поверх шествия: мягкая обводка цветом панели */
+#panelGroup h2{text-shadow:0 1px 0 var(--light),0 0 10px var(--light),0 0 20px var(--light)}
+#panelGroup .sub,#panelGroup .seg-note{text-shadow:0 1px 0 var(--light),0 0 8px var(--light)}
+
 /* ---------- шаг 2: интересы ---------- */
 .filters{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
 .filters button{background:rgba(255,255,255,.55);border:1.5px solid rgba(52,180,232,.3);color:#1E6E9E;border-radius:100px;padding:9px 19px;font-size:13.5px;font-weight:500;transition:.2s}
@@ -274,6 +282,7 @@ body.skz-folded .skz-restore{display:block}
         <div class="nav"><span class="note">Шаг 1 из 2</span><button class="btn primary" id="confirmDate" disabled>Подтвердить дату →</button></div>
       </div>
       <div class="container" id="panelGroup" hidden>
+        <canvas id="parade" class="parade" aria-hidden="true"></canvas>
         <h2>Кто идёт</h2>
         <p class="sub">Рост определяет, какие аттракционы доступны. Имена — чтобы Баюн обращался лично.</p>
         <p class="seg-note" id="dateLine"></p>
@@ -497,6 +506,7 @@ function renderVisit(){
   $('#panelDate').hidden = stage !== 'date';
   $('#panelGroup').hidden = stage !== 'group';
   if (stage === 'date'){
+    paradeOn = false;                                   // шествие видно только на шаге «Кто идёт»
     $('#dateInput').value = state.date || '';
     const quick = [
       ['Сегодня', isoOf(new Date())],
@@ -548,6 +558,7 @@ function renderVisit(){
     ? 'Группы ниже 120 см растут быстрее — рост можно поправить в любой момент.'
     : 'Совет: отметьте рост каждого — от него зависят допуски на аттракционы.';
   $('#toInterests').disabled = !state.group.length;
+  paradeStart();                                        // колонна за заголовком растёт вместе с группой
 }
 $('#dateInput').addEventListener('change', e => { state.date = e.target.value || ''; save(); fetchWeather(); renderVisit(); });
 $('#timeInput').addEventListener('change', e => {
@@ -575,6 +586,97 @@ $('#backDate').addEventListener('click', () => { state.visitStage = 'date'; save
 $('#dateLine').addEventListener('click', e => {
   if (e.target.closest('[data-stage="date"]')){ state.visitStage = 'date'; save(); renderVisit(); }
 });
+/* ================= парад за заголовком «Кто идёт» — фигурки из игры ================= */
+const parade = $('#parade'), pctx = parade.getContext('2d');
+const WALK_ADULT = ['#34B4E8','#00B453','#2AA0D0','#F57C00','#39C2EA'];
+const WALK_KID = ['#CCB5FB','#B882D0','#DDCBFC'];
+let paradeOn = false, paradeT = 0, paradeLast = 0, figures = [];
+function rr(c, x, y, w, h, r){
+  c.beginPath();
+  c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+}
+/* тот же человечек, что ходит по карте в игре (game.html#drawPerson) */
+function paradePerson(c, x, y, color, kid, bob){
+  const s = kid ? 0.78 : 1;
+  c.fillStyle = 'rgba(30,40,30,0.18)';
+  c.beginPath(); c.ellipse(x, y + 9 * s, 7 * s, 3 * s, 0, 0, 7); c.fill();
+  const by = y - Math.abs(Math.sin(bob)) * 1.6;
+  c.fillStyle = color;
+  rr(c, x - 4.5 * s, by - 3 * s, 9 * s, 13 * s, 4 * s); c.fill();
+  c.fillStyle = '#FFD9B3';
+  c.beginPath(); c.arc(x, by - 7 * s, 4.6 * s, 0, 7); c.fill();
+  c.fillStyle = 'rgba(60,40,25,0.85)';
+  c.beginPath(); c.arc(x, by - 8.6 * s, 4.6 * s, Math.PI, 0); c.fill();
+}
+function paradeResize(){
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  parade.width = Math.max(1, Math.round(parade.clientWidth * dpr));
+  parade.height = Math.round(96 * dpr);
+  pctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+/* места в кучке: стройся вокруг центра, в два ряда */
+function slotX(i, n, w){
+  const x = w * 0.46 + (i - (n - 1) / 2) * 24;
+  return Math.max(46, Math.min(w - 46, x));
+}
+const slotY = i => 76 - (i % 2) * 7;
+/* сверка фигурок с группой: новый гость — заходит сбоку, удалённый — уходит вправо */
+function paradeSync(){
+  for (const f of figures) if (f.state !== 'leave') f.gi = -1;
+  for (let i = 0; i < state.group.length; i++){
+    const m = state.group[i];
+    const f = figures.find(f => f.state !== 'leave' && f.gi === -1 && f.name === m.name && f.h === m.h)
+           || figures.find(f => f.state !== 'leave' && f.gi === -1);
+    if (f){ f.gi = i; f.name = m.name; f.h = m.h; }
+  }
+  for (const f of figures) if (f.state !== 'leave' && f.gi === -1) f.state = 'leave';
+  for (let i = 0; i < state.group.length; i++){
+    if (figures.some(f => f.state !== 'leave' && f.gi === i)) continue;
+    const m = state.group[i], kid = m.h < 130, colors = kid ? WALK_KID : WALK_ADULT;
+    figures.push({ name:m.name, h:m.h, gi:i, x:-40 - Math.random() * 40, y:slotY(i),
+      state:'join', bob:Math.random() * 6, color:colors[i % colors.length] });
+  }
+}
+function paradeDraw(dt){
+  const w = parade.clientWidth, n = Math.max(1, state.group.length);
+  pctx.clearRect(0, 0, w, 96);
+  paradeT += dt;
+  for (const f of figures){
+    const kid = f.h < 130;
+    if (f.state === 'join'){                                // новый гость идёт в кучку
+      f.bob += dt * 9; f.x += 64 * dt;
+      const sx = slotX(f.gi, n, w);
+      if (f.x >= sx - 2){ f.state = 'in'; f.x = sx; }
+      paradePerson(pctx, f.x, slotY(f.gi), f.color, kid, f.bob);
+    } else if (f.state === 'leave'){                        // удалённый уходит из кадра
+      f.bob += dt * 9; f.x += 78 * dt;
+      f.dead = f.x > w + 40;
+      paradePerson(pctx, f.x, f.y, f.color, kid, f.bob);
+    } else {                                                // в группе: встаёт на своё место
+      f.bob += dt * 2.2;
+      const sx = slotX(f.gi, n, w), sy = slotY(f.gi);
+      f.x += (sx - f.x) * Math.min(1, dt * 3);
+      f.y += (sy - f.y) * Math.min(1, dt * 3);
+      paradePerson(pctx, f.x, f.y, f.color, kid, f.bob);
+    }
+  }
+  figures = figures.filter(f => !f.dead);
+}
+function paradeLoop(ts){
+  if (!paradeOn) return;
+  const dt = Math.min(0.05, paradeLast ? (ts - paradeLast) / 1000 : 0.016);
+  paradeLast = ts;
+  paradeDraw(dt);
+  requestAnimationFrame(paradeLoop);
+}
+function paradeStart(){
+  paradeResize();
+  paradeSync();
+  if (!paradeOn){ paradeOn = true; paradeLast = 0; requestAnimationFrame(paradeLoop); }
+}
+window.addEventListener('resize', () => { if (paradeOn) paradeResize(); });
+
 /* после даты — только состав гостей: интересы/маршрут/чат закрыты, пока группа не собрана */
 function go(v){
   if (v !== 'visit' && !state.group.length && !EMBED){ toast('Сначала добавьте, кто идёт — шаг 1'); location.hash = '#/visit'; return; }
@@ -586,7 +688,13 @@ function go(v){
 document.addEventListener('click', e => {
   const add = e.target.closest('[data-gadd]');
   if (add){
-    state.group.push(add.dataset.gadd === 'kid' ? { name:`Малыш ${state.group.length + 1}`, h:110 } : { name:'Взрослый', h:175 });
+    /* имена из пула: первое свободное, чтобы в группе не было повторов */
+    const pool = add.dataset.gadd === 'kid'
+      ? ['Соня','Миша','Тима','Лиза','Катя','Сава','Ника','Вера','Мила','Гриша','Ася','Петя','Юля','Даша']
+      : ['Мама','Папа','Бабушка','Дедушка','Аня','Оля','Игорь','Коля'];
+    const name = pool.find(n => !state.group.some(g => g.name === n))
+      || pool[Math.floor(Math.random() * pool.length)] + ' ' + (state.group.length + 1);
+    state.group.push(add.dataset.gadd === 'kid' ? { name, h:110 } : { name, h:175 });
     save(); renderVisit(); return;
   }
   const nav = e.target.closest('[data-go]');
