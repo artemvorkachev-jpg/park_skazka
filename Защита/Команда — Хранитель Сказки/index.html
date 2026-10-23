@@ -133,7 +133,7 @@ ol.steps li b{display:block;margin-bottom:2px}
 .try .qr{width:170px;height:170px;border-radius:18px;padding:8px;background:#fff;border:2px solid #e3edf3}
 .try .txt small{display:block;font-size:14px;color:#5a6b76;margin-top:6px;max-width:22em}
 
-/* ===== медиа: трейлер ===== */
+/* ===== медиа ===== */
 .story{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
 .story div{background:#fff;border-radius:20px;padding:16px 18px;font-size:15px;box-shadow:var(--shadow-sm)}
 .story b{display:block;color:var(--color-aiya-dark);margin-bottom:6px;font-size:14px;letter-spacing:.04em}
@@ -340,23 +340,14 @@ tr:last-child td{border-bottom:0}
   <div class="container">
     <div class="panel panel-pink">
       <span class="num"><i>5</i> Медиа</span>
-      <h2 class="bebas">Минутный трейлер показывает, как <mark>спланировать визит заранее</mark></h2>
-      <video id="trailer" controls preload="metadata" poster="media/site-hero.png">
-        <source id="trsrc" src="media/trailer.mp4" type="video/mp4">
-      </video>
-      <div class="story" id="story" hidden style="margin-top:22px">
-        <div><b>0:00–0:10</b>Вечерний парк «Сказка». Голос Баюна: «Парк оживает, когда о нём заботятся».</div>
-        <div><b>0:10–0:20</b>Проблема: очереди и закрытые аттракционы, о которых гость узнаёт только на месте.</div>
-        <div><b>0:20–0:35</b>Планировщик и Баюн: маршрут за минуту и ответы на вопросы.</div>
-        <div><b>0:35–0:50</b>Игра: настоящая погода, гости из заявок и панель для парка.</div>
-        <div><b>0:50–1:00</b>«Наши идеи сегодня делают будущее завтра».</div>
-      </div>
+      <h2 class="bebas">Один стиль на всё: герои, фото парка и <mark>цвета «Сказки»</mark></h2>
+      <p class="sec-sub">Герои на сайте нарисованы нейросетью в едином стиле, фотографии взяты с официального сайта парка, а оформление повторяет цвета и шрифты «Сказки».</p>
       <div class="strip">
         <img src="media/park-dino-park.jpg" alt="Дино парк">
         <img src="media/park-husky.jpg" alt="Хаски Лэнд">
         <img src="media/park-wheel.jpg" alt="Колесо обозрения">
       </div>
-      <p class="cap">Где его увидят: на сайте парка, на экране у входа и в соцсетях. Фото взяты с parkskazka.com.</p>
+      <p class="cap">Где будет работать: на сайте парка, на экране у входа и в соцсетях. Фото взяты с parkskazka.com.</p>
     </div>
   </div>
 </section>
@@ -424,8 +415,6 @@ const CFG = {
 document.querySelectorAll('.fill').forEach(el => { const v = CFG[el.dataset.id]; if (v) { el.textContent = v; el.className = ''; } });
 const left = document.querySelectorAll('.fill');
 if (left.length) { const t = document.getElementById('todo'); t.hidden = false; t.textContent = 'Осталось заполнить полей: ' + left.length + ' (файл index.html → CFG)'; }
-// если файла trailer.mp4 ещё нет в media/, показываем план трейлера вместо пустого плеера
-document.getElementById('trsrc').addEventListener('error', () => { document.getElementById('trailer').hidden = true; document.getElementById('story').hidden = false; });
 </script>
 
 <!-- ========== Баюн: живой чат для вопросов жюри (бэкенд — docker compose, см. docker-compose.yml) ========== -->

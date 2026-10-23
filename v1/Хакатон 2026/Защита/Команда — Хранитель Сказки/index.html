@@ -144,19 +144,12 @@ th{background:var(--navy);color:var(--white);font-size:22px;text-transform:upper
 <!-- 5. МЕДИА -->
 <section class="blk dark" id="b5">
   <span class="num">5 · Медиа</span>
-  <h2>Минутный трейлер <mark>показывает всю игру</mark></h2>
-  <video id="trailer" controls preload="metadata" poster="media/site-hero.png"><source id="trsrc" src="media/trailer.mp4" type="video/mp4"></video>
-  <div class="grid g5 story" id="story" hidden>
-    <div><b>0:00–0:10</b>Ночной парк «Сказка». Голос Кота Баюна: «Парк оживает, когда о нём заботятся».</div>
-    <div><b>0:10–0:20</b>Проблема: очереди, ветер, ремонты, а гость узнаёт о них только у входа.</div>
-    <div><b>0:20–0:35</b>Игра: ходы, монеты, гости и решения Кота Баюна на экране.</div>
-    <div><b>0:35–0:50</b>Связь с настоящим парком: реальная погода, отметка у аттракциона, бонус ×3.</div>
-    <div><b>0:50–1:00</b>«Наши идеи сегодня делают будущее завтра». WIDE Hackathon team.</div>
-  </div>
+  <h2>Один стиль на всё: герои, фото парка и <mark>цвета «Сказки»</mark></h2>
+  <p class="lead">Герои на сайте нарисованы нейросетью в едином стиле, фотографии взяты с официального сайта парка, а оформление повторяет цвета «Сказки».</p>
   <div class="strip">
     <img src="media/park-dino-park.jpg" alt="Дино парк"><img src="media/park-husky.jpg" alt="Хаски Лэнд"><img src="media/park-wheel.jpg" alt="Колесо обозрения">
   </div>
-  <p class="cap">Где его увидят: на сайте парка, на экране у входа и в соцсетях парка. Фото взяты с сайта parkskazka.com.</p>
+  <p class="cap">Где будет работать: на сайте парка, на экране у входа и в соцсетях парка. Фото взяты с сайта parkskazka.com.</p>
 </section>
 
 <!-- 6. ПРОВЕРКА И КОМАНДА -->
@@ -211,8 +204,6 @@ const CFG = {
 document.querySelectorAll('.fill').forEach(el => { const v = CFG[el.dataset.id]; if (v) { el.textContent = v; el.className = ''; } });
 const left = document.querySelectorAll('.fill');
 if (left.length) { const t = document.getElementById('todo'); t.hidden = false; t.textContent = 'Осталось заполнить полей: ' + left.length + ' (файл index.html → CFG)'; }
-// если файла trailer.mp4 ещё нет в media/, показываем план трейлера вместо пустого плеера
-document.getElementById('trsrc').addEventListener('error', () => { document.getElementById('trailer').hidden = true; document.getElementById('story').hidden = false; });
 </script>
 
 <!-- ========== Баюн: живой чат для вопросов жюри (бэкенд — docker compose, см. docker-compose.yml) ========== -->
