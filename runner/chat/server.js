@@ -240,7 +240,7 @@ const LANDING_TYPES = {
   ".woff2": "font/woff2",
 };
 
-async function serveLanding(res, pathname) {
+async function serveLanding(req, res, pathname) {
   // /landing без слеша → редирект: иначе относительные media/... resolve от корня сайта
   if (pathname === "/landing") {
     res.writeHead(301, { location: "/landing/" });
@@ -254,24 +254,62 @@ async function serveLanding(res, pathname) {
     res.end("403");
     return;
   }
-  const type = LANDING_TYPES[filePath.slice(filePath.lastIndexOf(".")).toLowerCase()];
+  await serveFile(req, res, filePath);
+}
+
+// --- GET /media/...: файлы рядом с чатом (интро-видео и т.п.) ---
+
+const MEDIA_DIR = process.env.CHAT_MEDIA_DIR || join(__dirname, "media");
+
+async function serveMedia(req, res, pathname) {
+  const rel = decodeURIComponent(pathname.replace(/^\/media\//, ""));
+  if (!rel) {
+    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+    res.end("404");
+    return;
+  }
+  const filePath = join(MEDIA_DIR, rel);
+  if (!filePath.startsWith(MEDIA_DIR + sep)) {
+    res.writeHead(403, { "content-type": "text/plain; charset=utf-8" });
+    res.end("403");
+    return;
+  }
+  await serveFile(req, res, filePath);
+}
+
+// отдача одного файла: тип по расширению; Range нужен, иначе видео не играет на iOS/Safari
+async function serveFile(req, res, filePath) {
+  const dot = filePath.lastIndexOf(".");
+  const type = LANDING_TYPES[dot === -1 ? "" : filePath.slice(dot).toLowerCase()];
   if (!type) {
     res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
     res.end("404");
     return;
   }
+  let body;
   try {
-    const body = await readFile(filePath);
-    // html просим свежим, как и остальные страницы; медиа можно кэшировать
-    const headers = type.startsWith("text/html")
-      ? HTML_HEADERS
-      : { "content-type": type, "cache-control": "public, max-age=3600" };
-    res.writeHead(200, headers);
-    res.end(body);
+    body = await readFile(filePath);
   } catch {
     res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
     res.end("404");
+    return;
   }
+  const headers = { "content-type": type, "accept-ranges": "bytes" };
+  // html просим свежим, как и остальные страницы; остальное можно кэшировать
+  headers["cache-control"] = type.startsWith("text/html") ? "no-cache" : "public, max-age=3600";
+  const range = req.headers.range;
+  if (range && /^bytes=\d*-\d*$/.test(range)) {
+    const [a, b] = range.replace("bytes=", "").split("-");
+    const start = a === "" ? Math.max(0, body.length - Number(b)) : Number(a);
+    const end = b === "" ? body.length - 1 : Math.min(Number(b), body.length - 1);
+    if (start >= 0 && start <= end) {
+      res.writeHead(206, { ...headers, "content-range": `bytes ${start}-${end}/${body.length}`, "content-length": end - start + 1 });
+      res.end(body.subarray(start, end + 1));
+      return;
+    }
+  }
+  res.writeHead(200, headers);
+  res.end(body);
 }
 
 // --- POST /api/chat: запуск runner.js и трансляция его NDJSON в SSE ---
@@ -458,7 +496,12 @@ createServer((req, res) => {
     res.writeHead(200, HTML_HEADERS);
     res.end(GAME);
   } else if (req.method === "GET" && (url.pathname === "/landing" || url.pathname.startsWith("/landing/"))) {
-    serveLanding(res, url.pathname).catch(() => {
+    serveLanding(req, res, url.pathname).catch(() => {
+      res.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
+      res.end("500");
+    });
+  } else if (req.method === "GET" && url.pathname.startsWith("/media/")) {
+    serveMedia(req, res, url.pathname).catch(() => {
       res.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
       res.end("500");
     });

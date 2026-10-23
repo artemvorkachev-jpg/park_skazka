@@ -48,8 +48,9 @@ runner/
 │   ├── game.html          # мини-игра «Прогулка по парку» (симуляция визита)
 │   ├── map.svg            # схема парка без легенды для игры
 │   ├── dashboard.html     # маркетинговый дашборд
+│   ├── media/             # интро-видео (intro.mp4) — GET /media/…, показывается до шага «Визит»
 │   ├── landing/           # лендинг защиты (копия «Защита/Команда — Хранитель Сказки»), GET /landing/
-│   ├── server.js          # HTTP: /, /game, /dashboard, /landing/, /map.svg, /api/*
+│   ├── server.js          # HTTP: /, /game, /dashboard, /landing/, /media/…, /map.svg, /api/*
 │   └── store.js           # JSONL-хранилище заявок и диалога
 ├── package.json
 └── .env                   # (create with your API keys)
