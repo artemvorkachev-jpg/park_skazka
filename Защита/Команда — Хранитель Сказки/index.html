@@ -213,7 +213,7 @@ tr:last-child td{border-bottom:0}
 <!-- ===== шапка ===== -->
 <header class="topbar">
   <div class="container topbar-in">
-    <div class="who">WIDE Hackathon team<small>команда № 8 · отряд № <span class="fill" data-id="squadNo">—</span></small></div>
+    <div class="who">WIDE Hackathon team<small>команда № <span class="fill" data-id="teamNo">—</span> · отряд № <span class="fill" data-id="squadNo">—</span></small></div>
     <a class="logo" href="#b1"><span class="word">Хранитель <span>Сказки</span></span></a>
     <a class="btn btn-primary" href="https://skazka.koljanos.ru" target="_blank" rel="noopener">▶ Попробовать</a>
   </div>
@@ -233,7 +233,7 @@ tr:last-child td{border-bottom:0}
       <p class="lead">Мы сделали <b>планировщик визита, чат с котом Баюном и игру-симулятор</b> — семья узнаёт парк ещё до входа.</p>
       <div class="tags">
         <span class="tag">WIDE Hackathon team</span>
-        <span class="tag">Команда № 8</span>
+        <span class="tag">Команда № <span class="fill" data-id="teamNo">—</span></span>
         <span class="tag">Отряд № <span class="fill" data-id="squadNo">—</span></span>
       </div>
       <div class="hero-park">
@@ -418,6 +418,7 @@ tr:last-child td{border-bottom:0}
 <script>
 /* Заполните значения — жёлтые поля исчезнут. Пустая строка = «ещё не заполнено». */
 const CFG = {
+  teamNo: '8',
   squadNo: '',
 };
 document.querySelectorAll('.fill').forEach(el => { const v = CFG[el.dataset.id]; if (v) { el.textContent = v; el.className = ''; } });
